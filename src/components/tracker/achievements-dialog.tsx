@@ -9,7 +9,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { useTrackerStore, escalateSlips } from '@/lib/store'
-import { calculateStats } from '@/lib/tracker/stats'
+import { calculateStats, type Stats } from '@/lib/tracker/stats'
 import { useTrackerUI } from './ui-context'
 import {
   ACHIEVEMENTS,
@@ -28,12 +28,19 @@ export function AchievementsDialog() {
   const rawEntries = useTrackerStore((s) => s.entries)
   const notes = useTrackerStore((s) => s.notes)
 
+  const [selectedAch, setSelectedAch] = React.useState<string | null>(null)
+
   const entries = React.useMemo(() => escalateSlips(rawEntries), [rawEntries])
   const stats = React.useMemo(() => calculateStats(entries, notes), [entries, notes])
 
   const unlockedSet = new Set(unlocked)
   const unlockedCount = ACHIEVEMENTS.filter((a) => unlockedSet.has(a.id)).length
   const level = stats.level
+
+  // Reset selection when dialog closes
+  React.useEffect(() => {
+    if (!isOpen) setSelectedAch(null)
+  }, [isOpen])
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && ui.setView({ kind: 'none' })}>
@@ -101,18 +108,21 @@ export function AchievementsDialog() {
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {tierAch.map((a) => {
                     const isUnlocked = unlockedSet.has(a.id)
+                    const isSelected = selectedAch === a.id
                     return (
                       <div
                         key={a.id}
                         className={cn(
-                          'badge-card group relative overflow-hidden rounded-lg border p-3',
+                          'badge-card group relative overflow-hidden rounded-lg border p-3 cursor-pointer',
                           isUnlocked ? 'unlocked border-hairline bg-card' : 'border-hairline/50 bg-card/30',
+                          isSelected && 'ring-1 ring-ink/30',
                         )}
                         style={
                           isUnlocked
                             ? { boxShadow: `inset 0 0 0 1px ${tierMeta.color}33` }
                             : undefined
                         }
+                        onClick={() => setSelectedAch(isSelected ? null : a.id)}
                       >
                         <div className="flex items-start gap-2.5">
                           <div
@@ -128,7 +138,7 @@ export function AchievementsDialog() {
                           >
                             {isUnlocked ? a.icon : <Lock className="h-3.5 w-3.5" />}
                           </div>
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <div
                               className={cn(
                                 'text-xs font-semibold leading-tight',
@@ -142,6 +152,31 @@ export function AchievementsDialog() {
                             </div>
                           </div>
                         </div>
+                        {/* Expandable details */}
+                        {isSelected && (
+                          <div className="mt-2.5 border-t border-hairline pt-2 animate-fade-in-up">
+                            <div className="flex items-center justify-between text-[0.55rem]">
+                              <span className="label-caps">Status</span>
+                              <span
+                                className={cn(
+                                  'font-semibold uppercase tracking-wider',
+                                  isUnlocked ? 'text-success' : 'text-dim',
+                                )}
+                              >
+                                {isUnlocked ? 'Unlocked' : 'Locked'}
+                              </span>
+                            </div>
+                            <div className="mt-1 flex items-center justify-between text-[0.55rem]">
+                              <span className="label-caps">Tier</span>
+                              <span style={{ color: tierMeta.color }} className="font-semibold uppercase tracking-wider">
+                                {tierMeta.name}
+                              </span>
+                            </div>
+                            <div className="mt-1.5 text-[0.6rem] leading-relaxed text-dim">
+                              {getAchievementHint(a.id, stats)}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )
                   })}
@@ -208,4 +243,46 @@ function AchievementProgress({
       </p>
     </div>
   )
+}
+
+// Get a progress hint for an achievement based on current stats
+function getAchievementHint(id: string, stats: Stats): string {
+  const hints: Record<string, string> = {
+    first_mark: `Mark your first day to unlock. ${stats.totalMarks} mark${stats.totalMarks === 1 ? '' : 's'} so far.`,
+    first_week: `Reach a 7-day streak. Current best: ${stats.bestStreak} day${stats.bestStreak === 1 ? '' : 's'}.`,
+    two_weeks: `Reach a 14-day streak. Current best: ${stats.bestStreak} days.`,
+    kept_3: `${stats.successCount}/3 clean days total.`,
+    kept_10: `${stats.successCount}/10 clean days total.`,
+    first_note: `Write your first note. Open any day and add text.`,
+    tagged: `Use a #tag in any note.`,
+    month_one: `Reach a 30-day streak. Current best: ${stats.bestStreak} days.`,
+    kept_25: `${stats.successCount}/25 clean days total.`,
+    perfect_week: `Every day of a clean calendar week (Mon-Sun).`,
+    comeback: `Reset after 14+ day streak, then 7+ clean days.`,
+    trigger_aware: `Use 5+ unique trigger tags on slip/relapse notes.`,
+    storyteller: `Write 25 notes. Count your notes in the sidebar.`,
+    tag_master: `Use 10+ unique tags across all notes.`,
+    two_months: `Reach a 60-day streak. Current best: ${stats.bestStreak} days.`,
+    quarter_master: `Reach a 90-day streak. Current best: ${stats.bestStreak} days.`,
+    century: `Reach a 100-day streak. Current best: ${stats.bestStreak} days.`,
+    kept_50: `${stats.successCount}/50 clean days total.`,
+    resilient: `Reset 5+ times and bounce back each time.`,
+    iron_will: `30 days without a single slip.`,
+    weekend_warrior: `4 clean weekends (Sat+Sun) in a row.`,
+    unstoppable: `Current streak beats your previous best.`,
+    climbing: `3 streaks in a row, each longer than the last.`,
+    half_year: `Reach a 180-day streak. Current best: ${stats.bestStreak} days.`,
+    kept_100: `${stats.successCount}/100 clean days total.`,
+    perfect_month: `Clean every day of a calendar month.`,
+    phoenix: `Recover from 30+ day relapse to 30+ day streak.`,
+    zero_slip: `90 days with zero slips.`,
+    bounce_master: `10 successful bounce-backs after relapse.`,
+    plateau: `Break a 30+ day plateau.`,
+    year_one: `Reach a 365-day streak. Current best: ${stats.bestStreak} days.`,
+    kept_250: `${stats.successCount}/250 clean days total.`,
+    reflective: `Write a note every day for 14 days.`,
+    reset_survivor: `Relapse 10+ times but keep going 90+ days.`,
+    archivist: `Track for 365 days total. ${stats.totalMarks} marks so far.`,
+  }
+  return hints[id] || ''
 }

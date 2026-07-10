@@ -22,9 +22,17 @@ export function Masthead() {
   const canGoNext = year < thisYear
 
   return (
-    <header className="border-b border-hairline pb-5">
+    <header className="relative border-b border-hairline pb-5">
+      {/* Decorative ornament — top right corner */}
+      <div
+        className="pointer-events-none absolute -right-4 -top-4 select-none font-display text-[8rem] italic leading-none text-ink/[0.03]"
+        aria-hidden
+      >
+        {year}
+      </div>
+
       {/* Year + ornament row */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="relative flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <h1 className="font-display text-5xl italic leading-none text-ink sm:text-6xl">
             {year}

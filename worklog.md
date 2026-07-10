@@ -727,3 +727,62 @@ This was a **critical** fix that affected all mobile users and anyone with conte
 4. **Theme customizer**: Let users pick accent colors beyond the default archival palette.
 5. **Note editor: rich text**: Support basic markdown (bold, italic) in notes.
 6. **Calendar: week numbers**: Option to show ISO week numbers in the calendar grid.
+
+---
+Task ID: 17 (webDevReview cron — round 9)
+Agent: webDevReview
+Task: Stats time-window selector, achievement details popover, masthead ornament
+
+## Current Project Status Assessment
+App is stable and very mature after 8 rounds. Last round fixed a critical scroll bug (grain-overlay clipping). All features working. This round focused on stats time-window selector, achievement details popover, and masthead styling polish.
+
+## QA Verification Results
+- Dev server: HTTP 200, no compile errors, no console errors/warnings
+- Scroll fix from last round verified working (scrollHeight: 2169 > clientHeight: 900)
+- All previously-tested features still work
+- Lint: 0 errors, 2 warnings (in uploaded original app.js, not our code)
+
+## New Features Added
+
+### 1. Stats Time-Window Selector (stats-dialog.tsx)
+- Added a 3-button segmented selector in the Stats dialog header: All / 90d / 30d
+- `timeWindow` state controls which entries are used for stats calculations
+- `windowedEntries` computed via useMemo — filters entries by date cutoff (today - N days)
+- Affects: all stat cards (streak, best, avg, clean, relapse, slips, etc.), danger days, best day of week
+- Does NOT affect: annual heatmap and year trend (these are always all-time annual overviews)
+- Active button shows `bg-ink text-paper`, inactive shows `text-dim hover:text-ink`
+- Verified: clicked "30D" → active, streak: 4, clean: 7 (only last 30 days counted)
+
+### 2. Achievement Details Popover (achievements-dialog.tsx)
+- All 35 achievement badges are now clickable
+- Clicking a badge toggles an expandable details section below the badge content
+- Details show:
+  - **Status**: Unlocked (green) or Locked (dim)
+  - **Tier**: Tier name in tier color (Bronze/Silver/Gold/Platinum/Diamond)
+  - **Progress hint**: Custom hint per achievement showing current progress (e.g., "8 marks so far", "Current best: 4 days", "7/10 clean days total")
+- New `getAchievementHint(id, stats)` function with custom hints for all 35 achievements
+- Selected badge gets `ring-1 ring-ink/30` outline
+- Click again to collapse
+- Selection resets when dialog closes
+- Verified: clicked "First Mark" → details expanded showing "STATUS: UNLOCKED, TIER: BRONZE, Mark your first day to unlock. 8 marks so far."
+
+## Styling Improvements
+
+### 1. Masthead Decorative Ornament (masthead.tsx)
+- Added a giant ghosted year number (`text-[8rem] italic text-ink/[0.03]`) in the top-right corner of the masthead
+- `pointer-events-none select-none` so it doesn't interfere with interactions
+- `absolute -right-4 -top-4` positioning
+- Creates a subtle watermark effect that adds editorial atmosphere
+- The main content sits `relative` above it
+
+## Unresolved Issues / Risks
+- The time-window selector only filters entries, not notes or ratings. The Wellbeing Trends chart and Wellbeing Averages still show all-time ratings. This is intentional — ratings are sparse and windowing them would often show empty data.
+- The achievement hint for `perfect_week`, `comeback`, `climbing`, etc. are static descriptions rather than dynamic progress (harder to compute generically). They still provide useful context.
+
+## Priority Recommendations for Next Phase
+1. **Notification API**: Browser notifications for daily check-in reminders (with user opt-in via Settings).
+2. **Note editor: rich text**: Support basic markdown (bold, italic) in notes.
+3. **Calendar: week numbers**: Option to show ISO week numbers in the calendar grid.
+4. **Theme customizer**: Let users pick accent colors beyond the default archival palette.
+5. **Stats: export chart as image**: Let users export the sparkline/heatmap as a PNG.
+6. **Note: markdown preview**: Render notes with markdown in the sidebar and note modal.

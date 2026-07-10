@@ -44,8 +44,27 @@ export function StatsDialog() {
   const undoSnapshot = useTrackerStore((s) => s.undoSnapshot)
   const openPoster = ui.openPoster
 
+  // Time window state: 'all' | '90d' | '30d'
+  const [timeWindow, setTimeWindow] = React.useState<'all' | '90d' | '30d'>('all')
+
   const entries = React.useMemo(() => escalateSlips(rawEntries), [rawEntries])
-  const stats = React.useMemo(() => calculateStats(entries, notes), [entries, notes])
+
+  // Filter entries by time window for stats calculations
+  const windowedEntries = React.useMemo(() => {
+    if (timeWindow === 'all') return entries
+    const days = timeWindow === '30d' ? 30 : 90
+    const cutoff = new Date()
+    cutoff.setHours(0, 0, 0, 0)
+    cutoff.setDate(cutoff.getDate() - days)
+    const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, '0')}-${String(cutoff.getDate()).padStart(2, '0')}`
+    const filtered: Record<string, number> = {}
+    for (const [dateStr, state] of Object.entries(entries)) {
+      if (dateStr >= cutoffStr) filtered[dateStr] = state
+    }
+    return filtered
+  }, [entries, timeWindow])
+
+  const stats = React.useMemo(() => calculateStats(windowedEntries, notes), [windowedEntries, notes])
 
   const setSettings = useTrackerStore((s) => s.setSettings)
 
@@ -170,11 +189,35 @@ export function StatsDialog() {
     <Dialog open={isOpen} onOpenChange={(o) => !o && ui.setView({ kind: 'none' })}>
       <DialogContent className="max-h-[92vh] w-[95vw] overflow-y-auto border-hairline bg-paper p-0 sm:max-w-2xl">
         <DialogHeader className="border-b border-hairline px-6 pb-4 pt-5">
-          <div className="flex items-center gap-3">
-            <span className="font-display text-2xl italic text-dim">✦</span>
-            <DialogTitle className="font-display text-3xl italic text-ink">
-              Statistics
-            </DialogTitle>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="font-display text-2xl italic text-dim">✦</span>
+              <DialogTitle className="font-display text-3xl italic text-ink">
+                Statistics
+              </DialogTitle>
+            </div>
+            {/* Time window selector */}
+            <div className="flex items-center gap-0.5 rounded-lg border border-hairline bg-card p-0.5">
+              {([
+                { key: 'all', label: 'All' },
+                { key: '90d', label: '90d' },
+                { key: '30d', label: '30d' },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setTimeWindow(opt.key)}
+                  className={cn(
+                    'rounded-md px-2.5 py-1 text-[0.6rem] font-semibold uppercase tracking-wider transition-colors',
+                    timeWindow === opt.key
+                      ? 'bg-ink text-paper'
+                      : 'text-dim hover:text-ink',
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
           <DialogDescription className="sr-only">
             Detailed analytics of your tracking history.
@@ -289,7 +332,7 @@ export function StatsDialog() {
 
           {/* Best day of week */}
           <Section title="Best Day of Week" help="Which weekday you're most often clean. Higher = stronger day">
-            <BestDayOfWeek entries={entries} />
+            <BestDayOfWeek entries={windowedEntries} />
           </Section>
 
           {/* Ornamental divider before charts */}
