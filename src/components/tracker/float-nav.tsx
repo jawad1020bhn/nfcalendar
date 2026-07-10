@@ -12,6 +12,7 @@ import {
   Wind,
   Waves,
   Compass,
+  Settings,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useTrackerUI } from './ui-context'
@@ -34,6 +35,7 @@ export function FloatNav() {
     { icon: Waves, label: 'Urge', onClick: ui.openUrge },
     { icon: Compass, label: 'Why', onClick: ui.openWhy },
     { icon: ImageIcon, label: 'Poster', onClick: ui.openPoster },
+    { icon: Settings, label: 'Settings', onClick: ui.openSettings },
   ]
 
   return (

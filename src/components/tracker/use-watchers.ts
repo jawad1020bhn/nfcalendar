@@ -15,6 +15,8 @@ export function useMilestoneWatcher() {
   const seenMilestones = useTrackerStore((s) => s.seenMilestones)
   const unlockAchievements = useTrackerStore((s) => s.unlockAchievements)
   const markMilestoneSeen = useTrackerStore((s) => s.markMilestoneSeen)
+  const showMilestoneToast = useTrackerStore((s) => s.settings.showMilestoneToast)
+  const showAchievementToast = useTrackerStore((s) => s.settings.showAchievementToast)
 
   const prevStreakRef = React.useRef<number>(0)
   const initRef = React.useRef(false)
@@ -40,15 +42,17 @@ export function useMilestoneWatcher() {
     const newOnes = newlyEarned.filter((id) => !unlocked.includes(id))
     if (newOnes.length > 0) {
       unlockAchievements(newOnes)
-      newOnes.forEach((id) => {
-        const ach = ACHIEVEMENTS.find((a) => a.id === id)
-        if (ach) {
-          toast.success(`Achievement unlocked — ${ach.name}`, {
-            description: ach.desc,
-            duration: 5000,
-          })
-        }
-      })
+      if (showAchievementToast) {
+        newOnes.forEach((id) => {
+          const ach = ACHIEVEMENTS.find((a) => a.id === id)
+          if (ach) {
+            toast.success(`Achievement unlocked — ${ach.name}`, {
+              description: ach.desc,
+              duration: 5000,
+            })
+          }
+        })
+      }
     }
 
     // Milestones (streak crossed a boundary going UP)
@@ -56,10 +60,12 @@ export function useMilestoneWatcher() {
       for (const m of MILESTONE_LIST) {
         if (streak >= m && prev < m && !seenMilestones.includes(m)) {
           markMilestoneSeen(m)
-          toast.success(`Milestone reached — ${MILESTONES[m]} · ${m} days`, {
-            description: 'Your streak has crossed a Roman milestone.',
-            duration: 5000,
-          })
+          if (showMilestoneToast) {
+            toast.success(`Milestone reached — ${MILESTONES[m]} · ${m} days`, {
+              description: 'Your streak has crossed a Roman milestone.',
+              duration: 5000,
+            })
+          }
         }
       }
     }
@@ -71,6 +77,8 @@ export function useMilestoneWatcher() {
     seenMilestones,
     unlockAchievements,
     markMilestoneSeen,
+    showMilestoneToast,
+    showAchievementToast,
   ])
 }
 

@@ -10,6 +10,8 @@ export type TrackerView =
   | { kind: 'why' }
   | { kind: 'urge' }
   | { kind: 'breathing' }
+  | { kind: 'settings' }
+  | { kind: 'onboarding' }
   | { kind: 'note'; date: string }
 
 type Ctx = {
@@ -22,6 +24,8 @@ type Ctx = {
   openWhy: () => void
   openUrge: () => void
   openBreathing: () => void
+  openSettings: () => void
+  openOnboarding: () => void
   notesListOpen: boolean
   setNotesListOpen: (v: boolean) => void
   toggleNotesList: () => void
@@ -49,6 +53,8 @@ export function TrackerUIProvider({ children }: { children: React.ReactNode }) {
       openWhy: () => setView({ kind: 'why' }),
       openUrge: () => setView({ kind: 'urge' }),
       openBreathing: () => setView({ kind: 'breathing' }),
+      openSettings: () => setView({ kind: 'settings' }),
+      openOnboarding: () => setView({ kind: 'onboarding' }),
       toggleNotesList: () => setNotesListOpen((v) => !v),
       jumpToToday: () => jumpFnRef.current?.(),
       registerJumpToToday: (fn) => {

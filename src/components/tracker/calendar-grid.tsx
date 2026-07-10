@@ -18,7 +18,6 @@ import {
   dateKey,
   prettyDate,
 } from '@/lib/tracker/dates'
-import { getCurrentStreak } from '@/lib/tracker/stats'
 import { useTrackerUI } from './ui-context'
 import { cn } from '@/lib/utils'
 import { StickyNote, Pencil } from 'lucide-react'
@@ -60,6 +59,7 @@ export function CalendarGrid({ onOpenNote }: Props) {
   const ratings = useTrackerStore((s) => s.ratings)
   const cycleDay = useTrackerStore((s) => s.cycleDay)
   const setDay = useTrackerStore((s) => s.setDay)
+  const showStreakNumbers = useTrackerStore((s) => s.settings.showStreakNumbers)
   const { registerJumpToToday } = useTrackerUI()
   const todayCellRef = React.useRef<HTMLButtonElement | null>(null)
 
@@ -170,11 +170,6 @@ export function CalendarGrid({ onOpenNote }: Props) {
     }
   }, [contextMenu])
 
-  const currentStreak = React.useMemo(
-    () => getCurrentStreak(entries),
-    [entries],
-  )
-
   // Register jump-to-today handler
   React.useEffect(() => {
     registerJumpToToday(() => {
@@ -229,22 +224,34 @@ export function CalendarGrid({ onOpenNote }: Props) {
                   const isToday = dStr === todayStr
                   const isFuture = dStr > todayStr
                   const hasNote = !!(notes[dStr] && notes[dStr].trim())
-                  const isMilestoneDay =
-                    state === 1 &&
-                    (() => {
-                      // count consecutive clean/slip days ending at dStr
-                      let count = 0
-                      let cursor = parseDateStr(dStr)
-                      while (cursor) {
-                        const cs = dateKey(cursor.getFullYear(), cursor.getMonth(), cursor.getDate())
-                        const st = entries[cs]
-                        if (st === 1 || st === 2) {
-                          count++
-                          cursor.setDate(cursor.getDate() - 1)
-                        } else break
-                      }
-                      return MILESTONES[count] !== undefined
-                    })()
+                  // Compute streak day number (consecutive clean/slip days ending at dStr)
+                  const streakDayNum =
+                    state === 1 || state === 2
+                      ? (() => {
+                          let count = 0
+                          const cursor = parseDateStr(dStr)
+                          if (!cursor) return 0
+                          while (cursor) {
+                            const cs = dateKey(
+                              cursor.getFullYear(),
+                              cursor.getMonth(),
+                              cursor.getDate(),
+                            )
+                            const st = entries[cs]
+                            if (st === 1 || st === 2) {
+                              count++
+                              cursor.setDate(cursor.getDate() - 1)
+                            } else break
+                          }
+                          return count
+                        })()
+                      : 0
+                  const isMilestoneDay = state === 1 && MILESTONES[streakDayNum] !== undefined
+                  const showStreakNum =
+                    showStreakNumbers &&
+                    streakDayNum > 0 &&
+                    streakDayNum <= 99 &&
+                    (state === 1 || state === 2)
                   return (
                     <button
                       key={i}
@@ -270,12 +277,22 @@ export function CalendarGrid({ onOpenNote }: Props) {
                       )}
                     >
                       <span className="relative z-10">{day}</span>
-                      {isMilestoneDay && (
+                      {/* Streak day number — bottom-left, small */}
+                      {showStreakNum && !isMilestoneDay && (
                         <span
-                          className="absolute left-1 top-1 text-[0.45rem] font-semibold text-white/70"
+                          className="absolute bottom-0.5 left-0.5 text-[0.45rem] font-semibold leading-none opacity-70"
                           aria-hidden
                         >
-                          {MILESTONES[currentStreak]}
+                          {streakDayNum}
+                        </span>
+                      )}
+                      {/* Milestone Roman numeral — top-left */}
+                      {isMilestoneDay && (
+                        <span
+                          className="absolute left-1 top-1 text-[0.45rem] font-semibold text-white/80"
+                          aria-hidden
+                        >
+                          {MILESTONES[streakDayNum]}
                         </span>
                       )}
                     </button>

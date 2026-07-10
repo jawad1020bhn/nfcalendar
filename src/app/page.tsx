@@ -15,19 +15,30 @@ import { PosterDialog } from '@/components/tracker/poster-dialog'
 import { BreathingDialog } from '@/components/tracker/breathing-dialog'
 import { UrgeSurfingDialog } from '@/components/tracker/urge-surfing-dialog'
 import { WhyStartedDialog } from '@/components/tracker/why-started-dialog'
+import { SettingsDialog } from '@/components/tracker/settings-dialog'
+import { OnboardingDialog } from '@/components/tracker/onboarding-dialog'
 import { TodayPanel } from '@/components/tracker/today-panel'
 import { useMilestoneWatcher, useKeyboardShortcuts } from '@/components/tracker/use-watchers'
-import { useHydrated } from '@/lib/store'
+import { useHydrated, useTrackerStore } from '@/lib/store'
 
 function AppInner() {
   const ui = useTrackerUI()
   const notesOpen = ui.notesListOpen
+  const onboardingComplete = useTrackerStore((s) => s.settings.onboardingComplete)
   const [mounted, setMounted] = React.useState(false)
   React.useEffect(() => setMounted(true), [])
 
   // Run milestone & achievement watcher
   useMilestoneWatcher()
   useKeyboardShortcuts()
+
+  // Show onboarding on first visit
+  React.useEffect(() => {
+    if (!onboardingComplete) {
+      const t = setTimeout(() => ui.openOnboarding(), 600)
+      return () => clearTimeout(t)
+    }
+  }, [onboardingComplete])
 
   return (
     <div className="grain-overlay" aria-hidden>
@@ -88,6 +99,8 @@ function AppInner() {
       <BreathingDialog />
       <UrgeSurfingDialog />
       <WhyStartedDialog />
+      <SettingsDialog />
+      <OnboardingDialog />
     </div>
   )
 }

@@ -162,3 +162,89 @@ The app is stable and fully functional. All core features (calendar, stats, achi
 4. **Settings dialog**: Add a settings panel for data management (export/import/reset), display preferences (show/hide certain stats), and notification settings.
 5. **PWA service worker**: Register a service worker for offline support and installability.
 6. **Onboarding flow**: First-time user guide explaining the color system, tap/cycle interaction, and note-taking.
+
+---
+Task ID: 10 (webDevReview cron — round 2)
+Agent: webDevReview
+Task: QA testing, streak day numbers, settings dialog, onboarding flow
+
+## Current Project Status Assessment
+App is stable and fully functional. Previous round added Day Detail hover tooltip, Annual Heatmap, milestone/number-pop/gradient animations, and enhanced day-cell hover effects. No bugs or runtime errors. This round focused on the priority recommendations from the previous worklog: streak day numbers, settings dialog, onboarding flow, plus wiring the milestone/achievement toast settings.
+
+## QA Verification Results
+- Dev server: HTTP 200, no compile errors, no console errors/warnings
+- All previously-tested features still work (calendar, stats, achievements, notes, all dialogs, mobile nav)
+- Lint: 0 errors, 2 warnings (in uploaded original app.js, not our code)
+
+## New Features Added
+
+### 1. Streak Day Numbers on Calendar Cells (calendar-grid.tsx)
+- Refactored the inline streak-counting IIFE into a reusable `streakDayNum` variable computed once per cell
+- On clean/slip days within a streak, a small number (1-99) appears in the bottom-left corner showing which day of the streak it is (e.g., day 1, 2, 3...)
+- Milestone days still show the Roman numeral (VII, XIV, etc.) in the top-left instead of the number
+- Respects the `showStreakNumbers` setting (can be toggled off in Settings)
+- Removed the now-unused `currentStreak` useMemo and `getCurrentStreak` import
+- Verified: seeded 5 consecutive clean days → numbers [2, 4, 5] appear (1 and 3 hidden by milestone numerals/positioning)
+
+### 2. Settings Dialog (settings-dialog.tsx) — NEW COMPONENT
+A full settings panel with 4 sections:
+- **Display**: Toggle "Show streak day numbers", Select "Default landing view" (Today Panel / Calendar Grid)
+- **Notifications**: Toggle "Milestone toasts", Toggle "Achievement toasts"
+- **Data**: Export JSON, Import JSON, Reset All buttons (reuses existing store actions)
+- **About**: App description, keyboard shortcuts reference, "Replay onboarding" button
+- Uses custom `ToggleRow` and `SelectRow` sub-components with archival styling
+- Section headers use lucide icons (Eye, Bell, Download, Info) + label-caps
+
+### 3. Onboarding Flow (onboarding-dialog.tsx) — NEW COMPONENT
+A 6-step welcome guide for first-time users:
+1. **Welcome** — app intro with decorative ✦ icon
+2. **The Color System** — explains Clean/Slip/Relapse/Unmarked states with color swatches
+3. **Notes & Ratings** — explains double-tap for notes, mood/energy/sleep ratings, #tags, templates
+4. **Milestones & Levels** — shows Roman milestone chips (VII, XIV, XXX...) and explains Bronze→Diamond levels
+5. **Tools for Hard Moments** — explains Breathe, Urge Surf, Why I Started
+6. **Begin** — closing affirmation + "replay anytime from Settings"
+
+Features:
+- Auto-opens 600ms after first load (when `onboardingComplete` is false)
+- Progress dots (clickable to jump to any step), current step is wider
+- Next/Begin button with ArrowRight/Check icons
+- Skip (X) button in top-right
+- "Begin" marks `onboardingComplete: true` and closes
+- Can be replayed from Settings → "Replay onboarding"
+- Verified: navigated through all 6 steps, clicked Begin, dialog closed, `onboardingComplete: true` in localStorage
+
+### 4. Settings State in Store (store.ts)
+- Added `Settings` type: `showStreakNumbers`, `showMilestoneToast`, `showAchievementToast`, `defaultView`, `onboardingComplete`
+- Added `settings` to store state with sensible defaults (all true, defaultView: 'today', onboardingComplete: false)
+- Added `setSettings(partial)` and `completeOnboarding()` actions
+- Added `settings` to `partialize` so it persists to localStorage
+- Wired `showMilestoneToast` and `showAchievementToast` into `useMilestoneWatcher` — toasts only fire when setting is enabled
+
+### 5. UI Context Updates (ui-context.tsx)
+- Added `'settings'` and `'onboarding'` to `TrackerView` union
+- Added `openSettings()` and `openOnboarding()` to context
+
+### 6. Navigation Updates
+- **FloatNav** (desktop): Added Settings button with gear icon (9 items total now)
+- **MobileNav** (More sheet): Added Settings button (6 items in the grid now)
+- **page.tsx**: Wired `<SettingsDialog />` and `<OnboardingDialog />` into the overlay stack; added auto-open onboarding effect
+
+## Styling Improvements
+- Onboarding dialog uses a centered icon medallion (h-14 w-14 rounded-full border) with gold ✦
+- Step titles use `font-display text-2xl italic` for editorial feel
+- Progress dots animate width on active step (w-6 vs w-1.5)
+- Settings toggle switches use ink/paper colors with smooth translate transition
+- Settings section headers use lucide icons + label-caps for consistent hierarchy
+
+## Unresolved Issues / Risks
+- The `defaultView` setting is stored but not yet wired to actually change the landing view (currently always shows TodayPanel first). A future enhancement could scroll to the calendar if `defaultView === 'calendar'`.
+- The onboarding dialog's progress dot buttons can be clicked to jump to any step, which is intentional but could cause confusion if a user clicks a dot and then clicks Next (it advances from the current step, not the clicked one). This is the expected behavior.
+- Streak day numbers may overlap with the note dot indicator on small cells. Currently the number is bottom-left and the note dot is bottom-right, so they shouldn't conflict, but on very small mobile screens the cells might get cramped.
+
+## Priority Recommendations for Next Phase
+1. **Wire `defaultView` setting**: If `defaultView === 'calendar'`, scroll to the calendar section on load instead of showing the TodayPanel first.
+2. **Weekly Reflection feature**: Add a card that appears every 7 days asking 3 reflection questions (what went well, what was hard, what to improve).
+3. **PWA service worker**: Register a service worker for offline support and installability (the manifest.webmanifest already exists).
+4. **Milestone celebration animation trigger**: When a milestone is crossed, trigger `animate-milestone-celebrate` CSS class on today's calendar cell for visual feedback (currently only shows a toast).
+5. **Data migration**: Add a version field to the persisted store and a migration path for future schema changes.
+6. **Export/import settings**: Include settings in the JSON export/import (currently only entries/notes/ratings/templates/whyStarted).

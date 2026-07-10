@@ -8,6 +8,7 @@ import {
   Award,
   Wind,
   MoreHorizontal,
+  Settings as SettingsIcon,
 } from 'lucide-react'
 import { useTrackerUI } from './ui-context'
 import {
@@ -74,6 +75,7 @@ export function MobileNav() {
                 { icon: Waves, label: 'Urge Surf', onClick: ui.openUrge },
                 { icon: Compass, label: 'Why I Started', onClick: ui.openWhy },
                 { icon: ImageIcon, label: 'Poster', onClick: ui.openPoster },
+                { icon: SettingsIcon, label: 'Settings', onClick: ui.openSettings },
                 {
                   icon: isLight ? Moon : Sun,
                   label: isLight ? 'Dark' : 'Light',

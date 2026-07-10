@@ -18,6 +18,14 @@ type PosterConfig = {
   theme: 'archival' | 'gallery' | 'solstice'
 }
 
+type Settings = {
+  showStreakNumbers: boolean
+  showMilestoneToast: boolean
+  showAchievementToast: boolean
+  defaultView: 'calendar' | 'today'
+  onboardingComplete: boolean
+}
+
 type TrackerState = {
   entries: Entries
   notes: Notes
@@ -28,6 +36,7 @@ type TrackerState = {
   whyStarted: string
   currentYear: number
   hydrated: boolean
+  settings: Settings
 
   // actions
   setDay: (dateStr: string, state: DayState) => void
@@ -41,6 +50,8 @@ type TrackerState = {
   setCurrentYear: (year: number) => void
   unlockAchievements: (ids: string[]) => void
   markMilestoneSeen: (value: number) => void
+  setSettings: (partial: Partial<Settings>) => void
+  completeOnboarding: () => void
 
   // bulk
   importData: (data: {
@@ -78,6 +89,13 @@ export const useTrackerStore = create<TrackerState>()(
       currentYear: new Date().getFullYear(),
       hydrated: false,
       undoSnapshot: null,
+      settings: {
+        showStreakNumbers: true,
+        showMilestoneToast: true,
+        showAchievementToast: true,
+        defaultView: 'today',
+        onboardingComplete: false,
+      },
 
       setDay: (dateStr, state) =>
         set((s) => ({
@@ -150,6 +168,12 @@ export const useTrackerStore = create<TrackerState>()(
             : { seenMilestones: [...s.seenMilestones, value] },
         ),
 
+      setSettings: (partial) =>
+        set((s) => ({ settings: { ...s.settings, ...partial } })),
+
+      completeOnboarding: () =>
+        set((s) => ({ settings: { ...s.settings, onboardingComplete: true } })),
+
       importData: (data) =>
         set((s) => ({
           entries: data.entries || s.entries,
@@ -217,6 +241,7 @@ export const useTrackerStore = create<TrackerState>()(
         seenMilestones: s.seenMilestones,
         whyStarted: s.whyStarted,
         currentYear: s.currentYear,
+        settings: s.settings,
       }),
     },
   ),
