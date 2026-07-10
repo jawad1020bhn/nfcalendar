@@ -20,6 +20,7 @@ import {
   addDaysToDateStr,
 } from '@/lib/tracker/dates'
 import { useTrackerUI } from './ui-context'
+import { renderNoteMarkdown } from '@/lib/tracker/markdown'
 import { cn } from '@/lib/utils'
 import { StickyNote, Pencil } from 'lucide-react'
 
@@ -557,9 +558,10 @@ function DayDetailContent({
             <StickyNote className="h-2.5 w-2.5" />
             Note
           </div>
-          <p className="text-xs leading-relaxed text-ink/80 line-clamp-3 whitespace-pre-wrap break-words">
-            {note}
-          </p>
+          <div
+            className="text-xs leading-relaxed text-ink/80 line-clamp-3 break-words"
+            dangerouslySetInnerHTML={{ __html: renderNoteMarkdown(note) }}
+          />
         </div>
       )}
 

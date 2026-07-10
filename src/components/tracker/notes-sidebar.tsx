@@ -4,6 +4,7 @@ import * as React from 'react'
 import { Search, X, Plus } from 'lucide-react'
 import { useTrackerStore, escalateSlips } from '@/lib/store'
 import { extractNoteTags } from '@/lib/tracker/stats'
+import { renderNoteMarkdown } from '@/lib/tracker/markdown'
 import { parseDateStr } from '@/lib/tracker/dates'
 import { MONTHS, DAYS_OF_WEEK } from '@/lib/tracker/types'
 import { useTrackerUI } from './ui-context'
@@ -268,9 +269,10 @@ export function NotesSidebar() {
                       </span>
                       <span className="label-caps">{dow}</span>
                     </div>
-                    <p className="text-sm leading-relaxed text-ink/90 whitespace-pre-wrap break-words">
-                      {text}
-                    </p>
+                    <p
+                      className="text-sm leading-relaxed text-ink/90 break-words"
+                      dangerouslySetInnerHTML={{ __html: renderNoteMarkdown(text) }}
+                    />
                     {tags.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1">
                         {tags.map((t) => (

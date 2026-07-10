@@ -279,12 +279,12 @@ export function TodayPanel() {
 
 function Metric({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <div className="flex items-baseline justify-between">
+    <div className="flex items-baseline justify-between rounded-md px-2 py-1.5 transition-colors hover:bg-white/[0.03]">
       <div>
-        <div className="text-xs text-dim">{label}</div>
+        <div className="text-xs text-ink">{label}</div>
         <div className="text-[0.6rem] text-dim/70">{sub}</div>
       </div>
-      <span className="stat-numeral text-2xl text-ink">{value}</span>
+      <span className="stat-numeral text-2xl text-ink tabular-nums">{value}</span>
     </div>
   )
 }

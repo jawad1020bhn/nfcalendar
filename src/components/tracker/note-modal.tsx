@@ -237,6 +237,15 @@ export function NoteModal() {
               rows={4}
               className="w-full resize-none rounded-lg border border-hairline bg-card p-3 text-sm text-ink placeholder:text-dim focus:border-rule focus:outline-none"
             />
+            {/* Markdown hint */}
+            <div className="mt-1 flex items-center gap-2 text-[0.55rem] text-dim/70">
+              <span>Supports:</span>
+              <code className="rounded bg-hairline/50 px-1 py-0.5">**bold**</code>
+              <code className="rounded bg-hairline/50 px-1 py-0.5">*italic*</code>
+              <code className="rounded bg-hairline/50 px-1 py-0.5">[link](url)</code>
+              <code className="rounded bg-hairline/50 px-1 py-0.5">`code`</code>
+              <code className="rounded bg-hairline/50 px-1 py-0.5">#tag</code>
+            </div>
             {acActive && autocomplete.length > 0 && (
               <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-md border border-hairline bg-popover shadow-lg">
                 {autocomplete.map((tag, idx) => (
@@ -328,22 +337,42 @@ export function NoteModal() {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-hairline px-5 py-3">
-          <button
-            type="button"
-            onClick={() => ui.setView({ kind: 'none' })}
-            className="rounded-md px-3 py-1.5 text-sm text-dim hover:text-ink"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={save}
-            className="inline-flex items-center gap-1.5 rounded-md bg-ink px-4 py-1.5 text-sm font-medium text-paper hover:opacity-90 active:scale-95"
-          >
-            <Check className="h-3.5 w-3.5" />
-            Save
-          </button>
+        <div className="flex items-center justify-between gap-2 border-t border-hairline px-5 py-3">
+          {/* Word + character count */}
+          <div className="flex items-center gap-3 text-[0.6rem] text-dim">
+            {text.trim() && (
+              <>
+                <span>
+                  {text.trim().split(/\s+/).length} word{text.trim().split(/\s+/).length === 1 ? '' : 's'}
+                </span>
+                <span>·</span>
+                <span>{text.length} char{text.length === 1 ? '' : 's'}</span>
+                {extractNoteTags(text).length > 0 && (
+                  <>
+                    <span>·</span>
+                    <span>{extractNoteTags(text).length} tag{extractNoteTags(text).length === 1 ? '' : 's'}</span>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => ui.setView({ kind: 'none' })}
+              className="rounded-md px-3 py-1.5 text-sm text-dim hover:text-ink"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={save}
+              className="inline-flex items-center gap-1.5 rounded-md bg-ink px-4 py-1.5 text-sm font-medium text-paper hover:opacity-90 active:scale-95"
+            >
+              <Check className="h-3.5 w-3.5" />
+              Save
+            </button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

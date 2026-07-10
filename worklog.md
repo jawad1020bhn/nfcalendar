@@ -786,3 +786,73 @@ App is stable and very mature after 8 rounds. Last round fixed a critical scroll
 4. **Theme customizer**: Let users pick accent colors beyond the default archival palette.
 5. **Stats: export chart as image**: Let users export the sparkline/heatmap as a PNG.
 6. **Note: markdown preview**: Render notes with markdown in the sidebar and note modal.
+
+---
+Task ID: 18 (webDevReview cron — round 10)
+Agent: webDevReview
+Task: Note markdown rendering, word count, metric styling polish
+
+## Current Project Status Assessment
+App is stable and very mature after 9 rounds. All features working: calendar with streak numbers + visualization + day detail hover + month navigation, all dialogs (stats with time-window + achievements with details popover + notes + poster + breathing + urge + why + settings + onboarding + reflection), milestone celebration, weekly reflection, PWA service worker, store migration, reflection insights, backup reminder, reflections CSV, quick-add buttons, wellbeing averages, achievement progress. No bugs or runtime errors. This round focused on note markdown rendering, word count, and styling polish.
+
+## QA Verification Results
+- Dev server: HTTP 200, no compile errors, no console errors/warnings
+- All previously-tested features still work
+- Lint: 0 errors, 2 warnings (in uploaded original app.js, not our code)
+
+## New Features Added
+
+### 1. Note Markdown Rendering (markdown.ts + notes-sidebar.tsx + calendar-grid.tsx)
+- New `src/lib/tracker/markdown.ts` utility with `renderNoteMarkdown(text)` function
+- Supports:
+  - **Bold** `**text**` or `__text__` → `<strong class="font-semibold text-ink">`
+  - *Italic* `*text*` or `_text_` → `<em class="italic">`
+  - [Links](url) → `<a target="_blank" rel="noopener noreferrer">` with hover-gold
+  - `Inline code` → `<code class="rounded bg-hairline/50 font-mono">`
+  - #tags → `<span class="text-gold/80">` (gold-tinted)
+  - Line breaks → `<br/>`
+- **Security**: HTML is escaped first (XSS prevention), then markdown applied
+- Applied to:
+  - Notes sidebar note text (replaced `{text}` with `dangerouslySetInnerHTML`)
+  - Calendar day detail hover tooltip note preview
+- Verified: seeded note with `**great**`, `*calm*`, `[link](url)`, `#Meditated` → all rendered correctly (`hasStrong: true, hasEm: true, hasLink: true, hasTag: true`)
+
+### 2. Note Word + Character + Tag Count (note-modal.tsx)
+- Added live count display in the note modal footer (left side):
+  - Word count: "18 words"
+  - Character count: "140 chars"
+  - Tag count: "2 tags" (only if tags present)
+- Separated by `·` dividers
+- Only shows when text is non-empty
+- Footer changed from `justify-end` to `justify-between` to accommodate counts on left, buttons on right
+- Verified: "18 words · 140 chars · 2 tags" displayed correctly
+
+### 3. Markdown Hint in Note Modal (note-modal.tsx)
+- Added a hint row below the textarea showing supported markdown syntax:
+  - `Supports:` **bold** *italic* [link](url) `code` #tag
+- Each syntax shown in a `code` chip with `bg-hairline/50`
+- Helps users discover the markdown capability
+- Verified: "Supports: **bold** *italic** [link](url)" displayed
+
+## Styling Improvements
+
+### 1. Metric Cards in TodayPanel (today-panel.tsx)
+- Each sobriety metric now has:
+  - `rounded-md px-2 py-1.5` padding (was no padding)
+  - `hover:bg-white/[0.03]` subtle background on hover
+  - `transition-colors` for smooth hover
+  - `tabular-nums` on the value for aligned digits
+  - Label changed from `text-dim` to `text-ink` (more readable)
+- Creates a more tactile, interactive feel for the metrics
+
+## Unresolved Issues / Risks
+- The markdown rendering uses `dangerouslySetInnerHTML` which is safe because the input is HTML-escaped first. However, if the escape logic has a bug, it could expose XSS. The current implementation escapes `&`, `<`, `>` which covers the main vectors.
+- The `#tag` rendering in markdown converts tags to gold-colored spans, but they're not clickable in the sidebar (they're just visual). A future enhancement could make them clickable to filter by that tag.
+
+## Priority Recommendations for Next Phase
+1. **Notification API**: Browser notifications for daily check-in reminders (with user opt-in via Settings).
+2. **Calendar: week numbers**: Option to show ISO week numbers in the calendar grid.
+3. **Theme customizer**: Let users pick accent colors beyond the default archival palette.
+4. **Stats: export chart as image**: Let users export the sparkline/heatmap as a PNG.
+5. **Note: clickable tags in sidebar**: Make #tags in rendered notes clickable to filter.
+6. **Calendar: drag-to-mark**: Allow clicking and dragging across multiple days to mark them all.
