@@ -13,6 +13,7 @@ import {
   Waves,
   Compass,
   Settings,
+  BookOpen,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useTrackerUI } from './ui-context'
@@ -31,6 +32,7 @@ export function FloatNav() {
     { icon: BarChart3, label: 'Stats', onClick: ui.openStats },
     { icon: StickyNote, label: 'Notes', onClick: ui.toggleNotesList },
     { icon: Award, label: 'Awards', onClick: ui.openAchievements },
+    { icon: BookOpen, label: 'Reflect', onClick: ui.openReflection },
     { icon: Wind, label: 'Breathe', onClick: ui.openBreathing },
     { icon: Waves, label: 'Urge', onClick: ui.openUrge },
     { icon: Compass, label: 'Why', onClick: ui.openWhy },

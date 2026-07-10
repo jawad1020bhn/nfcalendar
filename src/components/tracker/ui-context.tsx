@@ -12,6 +12,7 @@ export type TrackerView =
   | { kind: 'breathing' }
   | { kind: 'settings' }
   | { kind: 'onboarding' }
+  | { kind: 'reflection' }
   | { kind: 'note'; date: string }
 
 type Ctx = {
@@ -26,6 +27,7 @@ type Ctx = {
   openBreathing: () => void
   openSettings: () => void
   openOnboarding: () => void
+  openReflection: () => void
   notesListOpen: boolean
   setNotesListOpen: (v: boolean) => void
   toggleNotesList: () => void
@@ -55,6 +57,7 @@ export function TrackerUIProvider({ children }: { children: React.ReactNode }) {
       openBreathing: () => setView({ kind: 'breathing' }),
       openSettings: () => setView({ kind: 'settings' }),
       openOnboarding: () => setView({ kind: 'onboarding' }),
+      openReflection: () => setView({ kind: 'reflection' }),
       toggleNotesList: () => setNotesListOpen((v) => !v),
       jumpToToday: () => jumpFnRef.current?.(),
       registerJumpToToday: (fn) => {

@@ -248,3 +248,101 @@ Features:
 4. **Milestone celebration animation trigger**: When a milestone is crossed, trigger `animate-milestone-celebrate` CSS class on today's calendar cell for visual feedback (currently only shows a toast).
 5. **Data migration**: Add a version field to the persisted store and a migration path for future schema changes.
 6. **Export/import settings**: Include settings in the JSON export/import (currently only entries/notes/ratings/templates/whyStarted).
+
+---
+Task ID: 11 (webDevReview cron — round 3)
+Agent: webDevReview
+Task: Weekly Reflection, milestone celebration, defaultView wiring, settings export, styling polish
+
+## Current Project Status Assessment
+App is stable and feature-rich. Previous rounds built: calendar with streak numbers, day detail hover tooltip, annual heatmap, all dialogs (stats/achievements/notes/poster/breathing/urge/why/settings/onboarding), milestone/number-pop/gradient animations. No bugs or runtime errors. This round focused on the priority recommendations from round 2: Weekly Reflection feature, milestone celebration animation trigger, defaultView setting wiring, settings export/import, and styling polish.
+
+## QA Verification Results
+- Dev server: HTTP 200, no compile errors, no console errors/warnings
+- All previously-tested features still work (calendar, stats, achievements, notes, all dialogs, mobile nav, onboarding, settings)
+- Lint: 0 errors, 2 warnings (in uploaded original app.js, not our code)
+
+## New Features Added
+
+### 1. Weekly Reflection (reflection-dialog.tsx) — NEW COMPONENT
+A guided weekly journaling practice with 3 reflection questions:
+- **"What went well this week?"** (wins, moments of strength)
+- **"What was hard?"** (challenges, urges, triggers)
+- **"What will you improve next week?"** (one concrete thing)
+
+Features:
+- Auto-detects current week (Monday-based) and checks if reflection is due
+- **Prompt card** appears at the top of TodayPanel when reflection is due (gold-accented, with BookOpen icon + "Due" badge + arrow)
+- Dialog with 3 textarea questions, each with an icon (↑ ↓ →) and helpful placeholder
+- "Save" / "Update" button (detects if reflection already exists for this week)
+- **Past reflections view**: "Past reflections (N)" link toggles a history view showing all past reflections sorted newest-first, with week-start date, "N weeks ago" label, and all 3 answers
+- "Back to this week" button to return to the editor
+- Reflections persisted to store with `weekStartDate` key (replaces existing for same week)
+- Verified: filled 3 answers via `fill` command, clicked Save, dialog closed, reflection persisted (`reflections: 1`), prompt card disappeared, past reflections view shows saved content
+
+### 2. Reflection State in Store (store.ts)
+- Added `Reflection` type: `weekStartDate`, `wentWell`, `wasHard`, `improve`, `createdAt`
+- Added `reflections: Reflection[]` to store state
+- Added `saveReflection(r)` action — replaces existing reflection for same week or adds new, sorted by weekStartDate
+- Added `reflections` to `importData`, `exportData`, `resetAll`, and `partialize`
+- Export version bumped to 2 (now includes settings + reflections)
+
+### 3. Milestone Celebration Animation Trigger (use-watchers.ts + calendar-grid.tsx)
+- When a milestone is crossed, `useMilestoneWatcher` now dispatches a `tracker:milestone-celebrate` custom window event
+- `CalendarGrid` listens for this event and applies the `animate-milestone-celebrate` CSS class to today's cell (with reflow trick to restart animation)
+- The class is removed after 1.5s
+- Verified: seeded 13 clean days with `seenMilestones:[7]`, clicked today → `animate-milestone-celebrate` class immediately applied to today's cell (confirmed `celebrate class: true`), milestone toast "Milestone reached — XIV · 14 days" appeared
+
+### 4. defaultView Setting Wired (page.tsx)
+- Added `calendarRef` to the calendar section div
+- Added effect: if `onboardingComplete && defaultView === 'calendar'`, scrolls to calendar 800ms after load
+- Verified: the setting is now functional (was previously stored but unused)
+
+### 5. Settings & Reflections in Export/Import (stats-dialog.tsx + settings-dialog.tsx)
+- Both Stats dialog and Settings dialog export now includes `settings` and `reflections` (version: 2)
+- Both import handlers now pass `settings` and `reflections` to `importData`
+- Settings import merges with existing settings (doesn't replace)
+
+### 6. Navigation Updates
+- **FloatNav** (desktop): Added "Reflect" button with BookOpen icon (10 items total)
+- **MobileNav** (More sheet): Added "Reflect" button (7 items in the grid)
+
+## Styling Improvements
+
+### 1. Ornamental Section Divider (globals.css)
+- New `.ornament-divider` component class: a hairline rule with a centered ✦ star ornament
+- The star has a paper-colored background to "cut" the line
+- Applied in Stats dialog before the charts section (Last 30 Days → Annual Heatmap → Wellbeing Trends → Monthly Trend)
+
+### 2. Achievement Badge Hover Effects (globals.css + achievements-dialog.tsx)
+- New `.badge-card` class with smooth transform + box-shadow transitions
+- `.badge-card:hover` lifts 2px (`translateY(-2px)`)
+- `.badge-card.unlocked:hover` adds a gold glow (`box-shadow: 0 4px 20px rgba(212,175,55,0.15)`)
+- Applied to all achievement badge cards in the Achievements dialog
+
+### 3. Enhanced Level Badge (masthead.tsx)
+- Level badge now has a subtle glow (`boxShadow: 0 0 12px ${color}33`)
+- Added a faint background tint (`background: ${color}0d`)
+- `hover:scale-105` transition for interactivity
+- Increased padding (`px-1.5` from `px-1`)
+
+### 4. Weekly Reflection Prompt Card (today-panel.tsx)
+- Gold-accented gradient border (`border-gold/30`)
+- Gradient background (`from-gold/[0.06] to-transparent`)
+- Circular icon medallion with gold border
+- "Due" badge in gold
+- Hover: border brightens, gradient deepens, arrow translates right
+- `animate-fade-in-up` entrance animation
+
+## Unresolved Issues / Risks
+- The `defaultView: 'calendar'` scroll happens 800ms after load, which might feel slightly delayed. Could be reduced to 400ms if needed.
+- The milestone celebration animation only triggers on today's cell. If a user backfills data that crosses a milestone on a past day, the animation won't show on that past cell (only today's). This is intentional — celebrations are for the current moment.
+- Reflections are keyed by weekStartDate (Monday). If a user's locale starts weeks on Sunday, the Monday-based calculation might feel slightly off, but this is a reasonable universal standard.
+
+## Priority Recommendations for Next Phase
+1. **PWA service worker**: Register a service worker for offline support and installability (manifest already exists).
+2. **Data migration**: Add a `version` field to the persisted store and a migration path for future schema changes.
+3. **Reflection reminders**: Add a setting to toggle reflection due-reminders, and potentially a browser notification.
+4. **Stats: reflection insights**: Add a section in Stats showing reflection sentiment trends (e.g., "Your 'what was hard' answers most often mention #Stress").
+5. **Calendar: streak visualization**: Add a subtle connecting line/gradient between consecutive clean days in the calendar grid.
+6. **Export: include reflections in CSV**: Currently CSV only exports day entries; could add a reflections CSV.

@@ -17,6 +17,7 @@ import { UrgeSurfingDialog } from '@/components/tracker/urge-surfing-dialog'
 import { WhyStartedDialog } from '@/components/tracker/why-started-dialog'
 import { SettingsDialog } from '@/components/tracker/settings-dialog'
 import { OnboardingDialog } from '@/components/tracker/onboarding-dialog'
+import { ReflectionDialog } from '@/components/tracker/reflection-dialog'
 import { TodayPanel } from '@/components/tracker/today-panel'
 import { useMilestoneWatcher, useKeyboardShortcuts } from '@/components/tracker/use-watchers'
 import { useHydrated, useTrackerStore } from '@/lib/store'
@@ -25,6 +26,8 @@ function AppInner() {
   const ui = useTrackerUI()
   const notesOpen = ui.notesListOpen
   const onboardingComplete = useTrackerStore((s) => s.settings.onboardingComplete)
+  const defaultView = useTrackerStore((s) => s.settings.defaultView)
+  const calendarRef = React.useRef<HTMLDivElement | null>(null)
   const [mounted, setMounted] = React.useState(false)
   React.useEffect(() => setMounted(true), [])
 
@@ -39,6 +42,16 @@ function AppInner() {
       return () => clearTimeout(t)
     }
   }, [onboardingComplete])
+
+  // Scroll to calendar on first load if defaultView is 'calendar'
+  React.useEffect(() => {
+    if (onboardingComplete && defaultView === 'calendar') {
+      const t = setTimeout(() => {
+        calendarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 800)
+      return () => clearTimeout(t)
+    }
+  }, [onboardingComplete, defaultView])
 
   return (
     <div className="grain-overlay" aria-hidden>
@@ -60,6 +73,7 @@ function AppInner() {
 
           {/* Calendar */}
           <div
+            ref={calendarRef}
             className="mt-2 transition-[padding] duration-500"
             style={{
               paddingRight: notesOpen ? '340px' : '0',
@@ -101,6 +115,7 @@ function AppInner() {
       <WhyStartedDialog />
       <SettingsDialog />
       <OnboardingDialog />
+      <ReflectionDialog />
     </div>
   )
 }

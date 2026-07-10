@@ -117,10 +117,12 @@ function Stat({
         </span>
         {streak && level && level.name !== 'None' && (
           <span
-            className="rounded-sm border px-1 py-0.5 text-[0.55rem] font-semibold uppercase tracking-wider"
+            className="rounded-sm border px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-wider transition-transform hover:scale-105"
             style={{
               borderColor: level.color,
               color: level.color,
+              boxShadow: `0 0 12px ${level.color}33`,
+              background: `${level.color}0d`,
             }}
             title={`${level.name} — ${level.threshold}d best streak`}
           >

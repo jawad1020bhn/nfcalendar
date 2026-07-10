@@ -99,10 +99,8 @@ export function AchievementsDialog() {
                       <div
                         key={a.id}
                         className={cn(
-                          'group relative overflow-hidden rounded-lg border p-3 transition-all',
-                          isUnlocked
-                            ? 'border-hairline bg-card'
-                            : 'border-hairline/50 bg-card/30',
+                          'badge-card group relative overflow-hidden rounded-lg border p-3',
+                          isUnlocked ? 'unlocked border-hairline bg-card' : 'border-hairline/50 bg-card/30',
                         )}
                         style={
                           isUnlocked

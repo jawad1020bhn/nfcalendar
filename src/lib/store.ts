@@ -26,6 +26,14 @@ type Settings = {
   onboardingComplete: boolean
 }
 
+type Reflection = {
+  weekStartDate: string // YYYY-MM-DD of the Monday of the reflection week
+  wentWell: string
+  wasHard: string
+  improve: string
+  createdAt: string
+}
+
 type TrackerState = {
   entries: Entries
   notes: Notes
@@ -37,6 +45,7 @@ type TrackerState = {
   currentYear: number
   hydrated: boolean
   settings: Settings
+  reflections: Reflection[]
 
   // actions
   setDay: (dateStr: string, state: DayState) => void
@@ -52,6 +61,7 @@ type TrackerState = {
   markMilestoneSeen: (value: number) => void
   setSettings: (partial: Partial<Settings>) => void
   completeOnboarding: () => void
+  saveReflection: (r: Reflection) => void
 
   // bulk
   importData: (data: {
@@ -60,6 +70,8 @@ type TrackerState = {
     ratings?: Ratings
     templates?: string[]
     whyStarted?: string
+    settings?: Settings
+    reflections?: Reflection[]
   }) => void
   exportData: () => {
     entries: Entries
@@ -67,6 +79,8 @@ type TrackerState = {
     ratings: Ratings
     templates: string[]
     whyStarted: string
+    settings: Settings
+    reflections: Reflection[]
   }
   resetAll: () => void
   undoSnapshot: { entries: Entries; notes: Notes; ratings: Ratings } | null
@@ -96,6 +110,7 @@ export const useTrackerStore = create<TrackerState>()(
         defaultView: 'today',
         onboardingComplete: false,
       },
+      reflections: [],
 
       setDay: (dateStr, state) =>
         set((s) => ({
@@ -174,6 +189,17 @@ export const useTrackerStore = create<TrackerState>()(
       completeOnboarding: () =>
         set((s) => ({ settings: { ...s.settings, onboardingComplete: true } })),
 
+      saveReflection: (r) =>
+        set((s) => {
+          // Replace existing reflection for the same week, or add new
+          const existing = s.reflections.filter(
+            (x) => x.weekStartDate !== r.weekStartDate,
+          )
+          return { reflections: [...existing, r].sort((a, b) =>
+            a.weekStartDate.localeCompare(b.weekStartDate),
+          ) }
+        }),
+
       importData: (data) =>
         set((s) => ({
           entries: data.entries || s.entries,
@@ -181,6 +207,8 @@ export const useTrackerStore = create<TrackerState>()(
           ratings: data.ratings || s.ratings,
           templates: data.templates || s.templates,
           whyStarted: data.whyStarted ?? s.whyStarted,
+          settings: data.settings ? { ...s.settings, ...data.settings } : s.settings,
+          reflections: data.reflections || s.reflections,
         })),
 
       exportData: () => {
@@ -191,6 +219,8 @@ export const useTrackerStore = create<TrackerState>()(
           ratings: s.ratings,
           templates: s.templates,
           whyStarted: s.whyStarted,
+          settings: s.settings,
+          reflections: s.reflections,
         }
       },
 
@@ -204,6 +234,7 @@ export const useTrackerStore = create<TrackerState>()(
           seenMilestones: [],
           whyStarted: '',
           undoSnapshot: null,
+          reflections: [],
         }),
 
       snapshot: () => {
@@ -242,6 +273,7 @@ export const useTrackerStore = create<TrackerState>()(
         whyStarted: s.whyStarted,
         currentYear: s.currentYear,
         settings: s.settings,
+        reflections: s.reflections,
       }),
     },
   ),

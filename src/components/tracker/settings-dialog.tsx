@@ -33,6 +33,7 @@ export function SettingsDialog() {
   const ratings = useTrackerStore((s) => s.ratings)
   const templates = useTrackerStore((s) => s.templates)
   const whyStarted = useTrackerStore((s) => s.whyStarted)
+  const reflections = useTrackerStore((s) => s.reflections)
   const importData = useTrackerStore((s) => s.importData)
   const resetAll = useTrackerStore((s) => s.resetAll)
   const completeOnboarding = useTrackerStore((s) => s.completeOnboarding)
@@ -44,8 +45,10 @@ export function SettingsDialog() {
       ratings,
       templates,
       whyStarted,
+      settings,
+      reflections,
       exportedAt: new Date().toISOString(),
-      version: 1,
+      version: 2,
     }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -70,6 +73,8 @@ export function SettingsDialog() {
           ratings: data.ratings,
           templates: data.templates,
           whyStarted: data.whyStarted,
+          settings: data.settings,
+          reflections: data.reflections,
         })
         toast.success('Data restored')
       } catch {

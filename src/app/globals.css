@@ -354,6 +354,38 @@
     letter-spacing: -0.02em;
     line-height: 0.95;
   }
+
+  /* Ornamental section divider — a hairline with a centered star */
+  .ornament-divider {
+    position: relative;
+    height: 1px;
+    background: var(--hairline);
+    margin: 1.5rem 0;
+  }
+  .ornament-divider::after {
+    content: "\2733";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--paper);
+    color: var(--dim);
+    font-size: 0.7rem;
+    padding: 0 0.6rem;
+    line-height: 1;
+  }
+
+  /* Achievement badge hover effect */
+  .badge-card {
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  .badge-card:hover {
+    transform: translateY(-2px);
+  }
+  .badge-card.unlocked:hover {
+    box-shadow: 0 4px 20px rgba(212, 175, 55, 0.15);
+  }
 }
 
 /* ============================================================================

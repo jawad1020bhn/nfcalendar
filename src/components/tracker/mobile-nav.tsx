@@ -9,6 +9,7 @@ import {
   Wind,
   MoreHorizontal,
   Settings as SettingsIcon,
+  BookOpen,
 } from 'lucide-react'
 import { useTrackerUI } from './ui-context'
 import {
@@ -74,6 +75,7 @@ export function MobileNav() {
                 { icon: Wind, label: 'Breathe', onClick: ui.openBreathing },
                 { icon: Waves, label: 'Urge Surf', onClick: ui.openUrge },
                 { icon: Compass, label: 'Why I Started', onClick: ui.openWhy },
+                { icon: BookOpen, label: 'Reflect', onClick: ui.openReflection },
                 { icon: ImageIcon, label: 'Poster', onClick: ui.openPoster },
                 { icon: SettingsIcon, label: 'Settings', onClick: ui.openSettings },
                 {

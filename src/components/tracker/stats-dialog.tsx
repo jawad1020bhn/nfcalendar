@@ -36,6 +36,8 @@ export function StatsDialog() {
   const ratings = useTrackerStore((s) => s.ratings)
   const templates = useTrackerStore((s) => s.templates)
   const whyStarted = useTrackerStore((s) => s.whyStarted)
+  const settings = useTrackerStore((s) => s.settings)
+  const reflections = useTrackerStore((s) => s.reflections)
   const importData = useTrackerStore((s) => s.importData)
   const resetAll = useTrackerStore((s) => s.resetAll)
   const restoreSnapshot = useTrackerStore((s) => s.restoreSnapshot)
@@ -52,8 +54,10 @@ export function StatsDialog() {
       ratings,
       templates,
       whyStarted,
+      settings,
+      reflections,
       exportedAt: new Date().toISOString(),
-      version: 1,
+      version: 2,
     }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -105,6 +109,8 @@ export function StatsDialog() {
           ratings: data.ratings,
           templates: data.templates,
           whyStarted: data.whyStarted,
+          settings: data.settings,
+          reflections: data.reflections,
         })
         toast.success('Data restored')
       } catch {
@@ -243,6 +249,9 @@ export function StatsDialog() {
           <Section title="Danger Days" help="Relapse risk by day of week">
             <DangerBarChart data={stats.dangerDays} />
           </Section>
+
+          {/* Ornamental divider before charts */}
+          <div className="ornament-divider" aria-hidden />
 
           {/* Last 30 days sparkline */}
           <Section title="Last 30 Days">

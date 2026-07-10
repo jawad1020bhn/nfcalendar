@@ -3,19 +3,29 @@
 import * as React from 'react'
 import { useTrackerStore, getDailyAffirmation, escalateSlips } from '@/lib/store'
 import { calculateStats, getCurrentStreak } from '@/lib/tracker/stats'
-import { getTodayStr, getTodayDate } from '@/lib/tracker/dates'
+import { getTodayStr, getTodayDate, formatDateStr } from '@/lib/tracker/dates'
 import { useTrackerUI } from './ui-context'
-import { Wind, Waves, Compass, Plus, Sparkles } from 'lucide-react'
+import { Wind, Waves, Compass, Plus, Sparkles, BookOpen, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // Sobriety "savings" — rough industry estimates for motivation only
 const AVG_MIN_PER_RELAPSE = 20 // minutes lost to the act + scrolling
-const AVG_DOLLARS_PER_RELAPSE_AVOIDED = 0 // placeholder, real calc below uses time
+
+// Get the Monday of the current week
+const getMondayOfWeek = (date: Date): Date => {
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  const day = d.getDay()
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
+  d.setDate(diff)
+  return d
+}
 
 export function TodayPanel() {
   const rawEntries = useTrackerStore((s) => s.entries)
   const notes = useTrackerStore((s) => s.notes)
   const whyStarted = useTrackerStore((s) => s.whyStarted)
+  const reflections = useTrackerStore((s) => s.reflections)
   const ui = useTrackerUI()
 
   const entries = React.useMemo(() => escalateSlips(rawEntries), [rawEntries])
@@ -28,6 +38,13 @@ export function TodayPanel() {
   const hoursSaved = Math.floor(minutesSaved / 60)
   const minsRemainder = minutesSaved % 60
 
+  // Check if this week's reflection is due
+  const reflectionDue = React.useMemo(() => {
+    const monday = formatDateStr(getMondayOfWeek(new Date()))
+    const hasThisWeek = reflections.some((r) => r.weekStartDate === monday)
+    return !hasThisWeek
+  }, [reflections])
+
   // "Brain rewiring" progress (90 days = typical dopamine reset window)
   const rewiringPct = Math.min(100, (streak / 90) * 100)
 
@@ -35,6 +52,32 @@ export function TodayPanel() {
   const todayState = entries[todayStr] ?? 0
 
   return (
+    <div className="space-y-4">
+      {/* Weekly reflection prompt — appears when due */}
+      {reflectionDue && (
+        <button
+          type="button"
+          onClick={ui.openReflection}
+          className="group flex w-full items-center gap-3 rounded-xl border border-gold/30 bg-gradient-to-r from-gold/[0.06] to-transparent p-4 text-left transition-all hover:border-gold/50 hover:from-gold/[0.1] animate-fade-in-up"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gold/30 bg-gold/5">
+            <BookOpen className="h-5 w-5 text-gold" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-ink">Weekly Reflection</span>
+              <span className="rounded-full bg-gold/15 px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-wider text-gold">
+                Due
+              </span>
+            </div>
+            <p className="mt-0.5 text-xs text-dim">
+              Take a moment to look back on your week. 3 quick questions.
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 shrink-0 text-dim transition-transform group-hover:translate-x-0.5 group-hover:text-ink" />
+        </button>
+      )}
+
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       {/* Streak hero card */}
       <div
@@ -172,6 +215,7 @@ export function TodayPanel() {
           </button>
         )}
       </div>
+    </div>
     </div>
   )
 }

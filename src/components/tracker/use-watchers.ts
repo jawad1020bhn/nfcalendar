@@ -66,6 +66,12 @@ export function useMilestoneWatcher() {
               duration: 5000,
             })
           }
+          // Trigger celebration animation on today's calendar cell
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(
+              new CustomEvent('tracker:milestone-celebrate', { detail: { milestone: m } }),
+            )
+          }
         }
       }
     }

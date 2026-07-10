@@ -189,6 +189,23 @@ export function CalendarGrid({ onOpenNote }: Props) {
     })
   }, [registerJumpToToday, year])
 
+  // Listen for milestone celebration events → animate today's cell
+  React.useEffect(() => {
+    const handler = () => {
+      const cell = todayCellRef.current
+      if (!cell) return
+      cell.classList.remove('animate-milestone-celebrate')
+      // Force reflow to restart animation
+      void cell.offsetWidth
+      cell.classList.add('animate-milestone-celebrate')
+      setTimeout(() => {
+        cell.classList.remove('animate-milestone-celebrate')
+      }, 1500)
+    }
+    window.addEventListener('tracker:milestone-celebrate', handler)
+    return () => window.removeEventListener('tracker:milestone-celebrate', handler)
+  }, [])
+
   return (
     <section aria-label="Calendar" className="relative">
       <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
