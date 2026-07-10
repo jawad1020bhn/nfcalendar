@@ -287,6 +287,11 @@ export function StatsDialog() {
             <DangerBarChart data={stats.dangerDays} />
           </Section>
 
+          {/* Best day of week */}
+          <Section title="Best Day of Week" help="Which weekday you're most often clean. Higher = stronger day">
+            <BestDayOfWeek entries={entries} />
+          </Section>
+
           {/* Ornamental divider before charts */}
           <div className="ornament-divider" aria-hidden />
 
@@ -521,6 +526,60 @@ function DangerBarChart({ data }: { data: { day: string; count: number; risk: 'h
         <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm" style={{ background: 'var(--fail)' }} />High</span>
         <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm" style={{ background: 'var(--slip)' }} />Mod</span>
         <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm" style={{ background: 'var(--success)' }} />Low</span>
+      </div>
+    </div>
+  )
+}
+
+// Best day of week — shows clean count per weekday
+function BestDayOfWeek({ entries }: { entries: Record<string, number> }) {
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const counts = [0, 0, 0, 0, 0, 0, 0]
+  let total = 0
+  for (const d of Object.keys(entries)) {
+    if (entries[d] === 1) {
+      const dt = new Date(d)
+      let idx = dt.getDay() - 1
+      if (idx < 0) idx = 6
+      counts[idx]++
+      total++
+    }
+  }
+  const max = Math.max(...counts, 1)
+  const bestIdx = counts.indexOf(max)
+  const bestCount = counts[bestIdx]
+
+  if (total === 0) {
+    return <p className="text-sm text-dim">No clean days yet. Mark days clean to see which weekday is your strongest.</p>
+  }
+
+  return (
+    <div>
+      <div className="mb-2 flex items-baseline justify-between">
+        <span className="text-xs text-dim">Your strongest day</span>
+        <span className="font-display text-lg italic text-success">
+          {dayNames[bestIdx]} · {bestCount}
+        </span>
+      </div>
+      <div className="flex h-20 items-end justify-between gap-1.5">
+        {dayNames.map((day, i) => (
+          <div key={day} className="flex flex-1 flex-col items-center gap-1">
+            <div className="flex w-full flex-1 items-end">
+              <div
+                className={`w-full rounded-t transition-all duration-500 ${i === bestIdx ? '' : 'opacity-60'}`}
+                style={{
+                  height: `${(counts[i] / max) * 100}%`,
+                  minHeight: counts[i] > 0 ? '4px' : '0',
+                  background: i === bestIdx ? 'var(--success)' : 'var(--success)',
+                }}
+                title={`${counts[i]} clean day${counts[i] === 1 ? '' : 's'}`}
+              />
+            </div>
+            <span className={`text-[0.55rem] uppercase tracking-wider ${i === bestIdx ? 'text-success' : 'text-dim'}`}>
+              {day}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   )

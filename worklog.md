@@ -587,3 +587,68 @@ App is stable and very mature after 5 rounds. All features working: calendar wit
 4. **Note search improvements**: Add date presets (today, this week, this month) in the notes sidebar.
 5. **Achievement details popover**: Click an achievement badge to see detailed requirements + progress.
 6. **Theme customizer**: Let users pick accent colors beyond the default archival palette.
+
+---
+Task ID: 15 (webDevReview cron — round 7)
+Agent: webDevReview
+Task: Note date presets, best day-of-week, poster preview themes, dialog animations
+
+## Current Project Status Assessment
+App is stable and very mature after 6 rounds. All features working: calendar with streak numbers + visualization lines + day detail hover, all dialogs (stats/achievements/notes/poster/breathing/urge/why/settings/onboarding/reflection), milestone celebration, weekly reflection, PWA service worker, store migration, reflection insights, backup reminder, reflections CSV, quick-add buttons, wellbeing averages, achievement progress, reflection toggle. No bugs or runtime errors. This round focused on note search date presets, best day-of-week analysis, poster preview theme enhancement, and dialog animations.
+
+## QA Verification Results
+- Dev server: HTTP 200, no compile errors, no console errors/warnings
+- All previously-tested features still work
+- Lint: 0 errors, 2 warnings (in uploaded original app.js, not our code)
+
+## New Features Added
+
+### 1. Note Search Date Presets (notes-sidebar.tsx)
+- Added 5 date preset buttons below the From/To date inputs: Today, 7d, 30d, 90d, 1y
+- "Today" sets both From and To to today's date
+- "7d/30d/90d/1y" set From to N days ago, To to empty (open-ended)
+- "All" button appears when a date filter is active, clears both fields
+- Each preset is a small bordered chip with hover effect
+- Verified: seeded 4 notes (July 8/9, June 15, May 1) → clicked "30d" → 3 cards visible (June 15 + July 8/9 within 30 days, May 1 excluded)
+
+### 2. Best Day of Week Analysis (stats-dialog.tsx)
+- New "Best Day of Week" section in Stats (after Danger Days)
+- Shows which weekday has the most clean days
+- Header: "Your strongest day: [Day] · [Count]" in success-green
+- Bar chart of all 7 weekdays (Mon-Sun), best day highlighted in full opacity green, others at 60% opacity
+- Best day label is green, others are dim
+- Empty state: "No clean days yet" guidance
+- New `BestDayOfWeek` component
+- Verified: seeded 7 clean days → "Your strongest day: Mon · 4" with bar chart showing all weekdays
+
+## Styling Improvements
+
+### 1. Poster Preview Theme-Aware Colors (poster-dialog.tsx)
+- Preview now uses theme-specific backgrounds:
+  - Archival: #181716 (dark paper)
+  - Gallery: #F4F1EA (warm cream)
+  - Solstice: #0E1116 (deep blue-black)
+- Theme-specific text colors (ink varies per theme)
+- Theme-specific empty cell borders
+- Theme-specific success/slip/fail colors for solstice (lighter palette)
+- Added `transition-colors duration-300` for smooth theme switching
+- Added `shadow-lg` to the preview container for depth
+- Added mini stats bar at the bottom of the preview (separator + "Streak" label + ✦ ornament)
+- Verified: Archival bg = rgb(24,23,22), Solstice bg = rgb(14,17,22) — theme switching works
+
+### 2. Dialog Entrance Animation (globals.css)
+- New `@keyframes dialog-enter` animation: fade + scale(0.96) + translateY(4px) → fade in + scale(1) + translateY(0)
+- `.animate-dialog-enter` class with 0.25s cubic-bezier easing
+- Available for use on dialog content wrappers (the existing shadcn dialog already has its own animations, so this is an additional option)
+
+## Unresolved Issues / Risks
+- The Best Day of Week analysis counts all-time clean days per weekday. If a user has data spanning multiple years, this could be dominated by older data. A future enhancement could add a time window (e.g., last 90 days).
+- The note date presets use the user's local timezone for "today" calculation, which is correct for a client-side app.
+
+## Priority Recommendations for Next Phase
+1. **Calendar month navigation**: Add prev/next month buttons to jump between months instead of scrolling the whole year.
+2. **Notification API**: Browser notifications for daily check-in reminders (with user opt-in via Settings).
+3. **Achievement details popover**: Click an achievement badge to see detailed requirements + progress.
+4. **Theme customizer**: Let users pick accent colors beyond the default archival palette.
+5. **Stats: time-windowed analysis**: Add a time range selector (all-time / last 90 days / last 30 days) to stats.
+6. **Note editor: rich text**: Support basic markdown (bold, italic) in notes.

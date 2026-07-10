@@ -283,38 +283,81 @@ export function PosterDialog() {
 
         <div className="space-y-5 px-6 py-5">
           {/* Preview */}
-          <div className="overflow-hidden rounded-lg border border-hairline">
+          <div className="overflow-hidden rounded-lg border border-hairline shadow-lg">
             <div
-              className="aspect-[4/3] p-4"
-              style={{ background: config.theme === 'gallery' ? '#F4F1EA' : '#181716' }}
+              className="aspect-[4/3] p-4 transition-colors duration-300"
+              style={{
+                background:
+                  config.theme === 'gallery'
+                    ? '#F4F1EA'
+                    : config.theme === 'solstice'
+                      ? '#0E1116'
+                      : '#181716',
+              }}
             >
               <div className="flex items-baseline justify-between">
                 <span
                   className="font-display text-3xl italic"
-                  style={{ color: config.theme === 'gallery' ? '#1A1816' : '#EAE6DF' }}
+                  style={{
+                    color:
+                      config.theme === 'gallery'
+                        ? '#1A1816'
+                        : config.theme === 'solstice'
+                          ? '#F0E6D2'
+                          : '#EAE6DF',
+                  }}
                 >
                   {year}
                 </span>
-                <span className="label-caps" style={{ color: config.theme === 'gallery' ? '#8A847C' : '#8A847C' }}>
+                <span
+                  className="label-caps"
+                  style={{
+                    color:
+                      config.theme === 'gallery'
+                        ? '#8A847C'
+                        : config.theme === 'solstice'
+                          ? '#7A736A'
+                          : '#8A847C',
+                  }}
+                >
                   Archive
                 </span>
               </div>
-              <div className="mt-4 grid grid-cols-7 gap-1">
+              <div className="mt-3 grid grid-cols-7 gap-1">
                 {Array.from({ length: 28 }).map((_, i) => {
                   const states = [0, 0, 1, 1, 0, 2, 0, 3, 0, 0, 1, 1, 1, 0, 0, 0, 1, 2, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1]
                   const s = states[i]
+                  const successColor =
+                    config.theme === 'solstice' ? '#3A7A5A' : 'var(--success)'
+                  const slipColor = config.theme === 'solstice' ? '#D49050' : 'var(--slip)'
+                  const failColor = config.theme === 'solstice' ? '#D64530' : 'var(--fail)'
+                  const emptyBorder =
+                    config.theme === 'gallery'
+                      ? '#D6D2C9'
+                      : config.theme === 'solstice'
+                        ? '#2A2D33'
+                        : 'var(--hairline)'
                   return (
                     <div
                       key={i}
-                      className="aspect-square rounded-sm"
+                      className="aspect-square rounded-sm transition-colors"
                       style={{
                         background:
-                          s === 1 ? 'var(--success)' : s === 2 ? 'var(--slip)' : s === 3 ? 'var(--fail)' : 'transparent',
-                        border: s === 0 ? '1px solid var(--hairline)' : 'none',
+                          s === 1 ? successColor : s === 2 ? slipColor : s === 3 ? failColor : 'transparent',
+                        border: s === 0 ? `1px solid ${emptyBorder}` : 'none',
                       }}
                     />
                   )
                 })}
+              </div>
+              {/* Mini stats bar */}
+              <div className="mt-3 flex items-center justify-between border-t pt-2" style={{ borderColor: config.theme === 'gallery' ? '#D6D2C9' : config.theme === 'solstice' ? '#2A2D33' : 'var(--hairline)' }}>
+                <span className="label-caps" style={{ color: config.theme === 'gallery' ? '#8A847C' : config.theme === 'solstice' ? '#7A736A' : '#8A847C' }}>
+                  Streak
+                </span>
+                <span className="font-display text-lg italic" style={{ color: config.theme === 'gallery' ? '#1A1816' : config.theme === 'solstice' ? '#F0E6D2' : '#EAE6DF' }}>
+                  ✦
+                </span>
               </div>
             </div>
           </div>

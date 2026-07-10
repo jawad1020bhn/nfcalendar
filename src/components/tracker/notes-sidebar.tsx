@@ -137,6 +137,51 @@ export function NotesSidebar() {
           </label>
         </div>
 
+        {/* Date presets */}
+        <div className="flex flex-wrap gap-1">
+          {([
+            { label: 'Today', days: 0 },
+            { label: '7d', days: 7 },
+            { label: '30d', days: 30 },
+            { label: '90d', days: 90 },
+            { label: '1y', days: 365 },
+          ] as const).map((p) => (
+            <button
+              key={p.label}
+              type="button"
+              onClick={() => {
+                const now = new Date()
+                if (p.days === 0) {
+                  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+                  setDateFrom(today)
+                  setDateTo(today)
+                } else {
+                  const from = new Date(now.getTime() - p.days * 86400000)
+                  setDateFrom(
+                    `${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, '0')}-${String(from.getDate()).padStart(2, '0')}`,
+                  )
+                  setDateTo('')
+                }
+              }}
+              className="rounded border border-hairline px-1.5 py-0.5 text-[0.6rem] text-dim transition-colors hover:border-rule hover:text-ink"
+            >
+              {p.label}
+            </button>
+          ))}
+          {(dateFrom || dateTo) && (
+            <button
+              type="button"
+              onClick={() => {
+                setDateFrom('')
+                setDateTo('')
+              }}
+              className="rounded border border-hairline px-1.5 py-0.5 text-[0.6rem] text-dim transition-colors hover:text-ink"
+            >
+              All
+            </button>
+          )}
+        </div>
+
         <div className="flex items-center justify-between text-xs text-dim">
           <span>
             {hasFilter
