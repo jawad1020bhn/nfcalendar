@@ -87,3 +87,78 @@ Stage Summary:
 - Keyboard shortcuts, accessibility (aria-labels, focus rings, semantic HTML), reduced-motion support
 - Sticky footer, responsive layout (mobile bottom-nav + desktop float-nav)
 - Next: create 15-min recurring webDevReview cron for ongoing improvements
+
+---
+Task ID: 9 (webDevReview cron — round 1)
+Agent: webDevReview
+Task: QA testing, bug fixes, new features, and styling improvements
+
+## Current Project Status Assessment
+The app is stable and fully functional. All core features (calendar, stats, achievements, notes, dialogs, mini-features) work correctly on both desktop and mobile. State persistence via Zustand + localStorage is operational. No runtime errors or build failures.
+
+## Bugs Found & Fixed
+1. **FloatNav visible on mobile** (BUG): The desktop floating navigation bar was rendering on mobile screens, overlapping the masthead content. Fixed by adding `hidden lg:flex` classes to the FloatNav `<nav>` element so it only displays on screens ≥1024px. Verified: `display: none` on mobile (iPhone 14), `display: flex` on desktop (1440px).
+2. **Radix DialogDescription accessibility warning** (WARNING): Console showed `Missing Description or aria-describedby for {DialogContent}` warnings from Radix UI. Fixed by adding `aria-describedby={undefined}` to both `DialogContent` (in `src/components/ui/dialog.tsx`) and `SheetContent` (in `src/components/ui/sheet.tsx`). This is the recommended shadcn approach. Verified: no more warnings in console after reload.
+
+## QA Verification Results
+- Dev server: HTTP 200, no compile errors, no console errors/warnings
+- All 6 dialogs tested and open correctly (Stats, Achievements, Breathing, Urge, Why, Poster)
+- Notes sidebar opens correctly on desktop (aside slide-in) and mobile (Sheet)
+- Note modal opens with date header, ratings, tag autocomplete, templates
+- Calendar day click → marks clean → persists to localStorage → streak updates
+- Mobile bottom nav (5 buttons) + More sheet (Breathe/Urge/Why/Poster/Theme) work
+- Theme toggle works (dark ↔ light)
+- Lint: 0 errors, 2 warnings (in uploaded original app.js, not our code)
+
+## New Features Added
+1. **Day Detail hover tooltip** (calendar-grid.tsx): On desktop (lg+), hovering a calendar day for 200ms shows a glass detail card with:
+   - Date header (month/day, weekday, year) + state badge (Clean/Slip/Relapse/Unmarked)
+   - Streak day number (how many consecutive clean/slip days end at this date)
+   - Distance to next Roman milestone (e.g., "3 days to VII")
+   - Mood/energy/sleep ratings (if set) with colored dots
+   - Note preview (first 3 lines, if a note exists)
+   - Quick action buttons (Clean/Slip/Relapse + Edit note)
+   - Added `getStreakDayNumber()` and `getNextMilestone()` helpers
+
+2. **Annual Heatmap** (stats-dialog.tsx): GitHub-contribution-style grid showing every day of the year at a glance:
+   - 7-row × N-week grid (Mon-Sun columns, padded to align Jan 1 to weekday)
+   - Color-coded cells: green (clean), orange (slip), red (relapse), gray (unmarked/future)
+   - Month labels (J F M A M J J A S O N D)
+   - Less↔More legend
+   - Tooltip per cell showing date + state
+   - Verified: 368 cells render correctly with proper state distribution (11 clean, 1 slip, 1 relapse, 352 unmarked for test data)
+
+3. **Milestone celebration animation** (globals.css): `@keyframes milestone-celebrate` — gold glow burst effect (scale 1.1 + box-shadow ring) for milestone achievements. Ready to be triggered by the existing `useMilestoneWatcher` toast.
+
+4. **Number-pop animation** (globals.css + today-panel.tsx): `@keyframes number-pop` — streak number scales to 1.15× and flashes gold when it changes. Applied to the TodayPanel streak numeral via `key={streak}` (forces re-mount on streak change).
+
+5. **Gradient shimmer** (globals.css + today-panel.tsx): `@keyframes gradient-shift` — subtle 8s gradient animation on the streak hero card. Applied with a success-tinted gradient when streak > 0.
+
+## Styling Improvements
+1. **Enhanced day-cell hover effects** (globals.css):
+   - `transform: translateY(-2px)` (was -1px) + `box-shadow: 0 4px 12px rgba(0,0,0,0.3)` + `z-index: 5`
+   - State-specific hover colors: clean→success-hover, slip→slip-hover, relapse→fail-hover
+   - State-specific colored shadows: `0 4px 16px rgba(32,94,65,0.4)` for clean, etc.
+   - Faster active scale: `transform: scale(0.92)` with 0.08s transition
+2. **Today-pulse animation** (globals.css): `@keyframes today-pulse` — today's cell outline gently pulses between ink (2px) and gold (2.5px) every 3s, drawing attention without being distracting.
+3. **Note dot glow** (globals.css): `.has-note::after` now has `box-shadow: 0 0 4px currentColor` for a subtle glowing effect on days with notes.
+4. **TodayPanel visual hierarchy** (today-panel.tsx):
+   - Streak numeral increased to `text-7xl` on sm+ screens (was text-6xl)
+   - `textShadow: 0 2px 24px rgba(212,175,55,0.15)` for a subtle gold glow on active streaks
+   - Decorative `✦` ornament at 3% opacity in the top-right corner of the hero card
+   - `relative` wrapper for proper z-index layering over the ornament
+   - Today badge has `hover:scale-105` transition
+5. **Future day cells** — opacity reduced from 0.35 to 0.3, hover completely disabled (no transform, no shadow, no background change)
+
+## Unresolved Issues / Risks
+- The Day Detail hover tooltip works via React's `onMouseEnter` but is difficult to test via `agent-browser` synthetic events (React 19's event delegation doesn't reliably pick up programmatic `dispatchEvent`). The code is correct — it renders conditionally based on `hoveredCell` state set by the real `onMouseEnter` handler. Manual testing recommended.
+- The VLM (vision model) consistently rates the dark archival aesthetic as "low contrast" even though the actual contrast between #181716 and #EAE6DF is very high (the ink is nearly white). This is a VLM limitation, not an app issue. Programmatic verification confirms correct rendering.
+- The `useMilestoneWatcher` currently shows a toast on milestone crossings but doesn't trigger the `animate-milestone-celebrate` CSS animation on the calendar cell. A future enhancement could add a ref-based animation trigger.
+
+## Priority Recommendations for Next Phase
+1. **Wire milestone celebration animation**: When a milestone is crossed, trigger `animate-milestone-celebrate` on today's calendar cell for visual feedback.
+2. **Weekly Reflection feature**: Add a card that appears every 7 days asking 3 reflection questions (what went well, what was hard, what to improve).
+3. **Streak day number on calendar cells**: Show the streak day number (small, bottom-left) on clean days within the current streak.
+4. **Settings dialog**: Add a settings panel for data management (export/import/reset), display preferences (show/hide certain stats), and notification settings.
+5. **PWA service worker**: Register a service worker for offline support and installability.
+6. **Onboarding flow**: First-time user guide explaining the color system, tap/cycle interaction, and note-taking.

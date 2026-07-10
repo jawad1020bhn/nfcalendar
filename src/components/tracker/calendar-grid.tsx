@@ -6,6 +6,7 @@ import {
   DAYS_OF_WEEK,
   MONTHS,
   MILESTONES,
+  MILESTONE_LIST,
   type DayState,
 } from '@/lib/tracker/types'
 import {
@@ -15,19 +16,48 @@ import {
   getTodayDate,
   parseDateStr,
   dateKey,
+  prettyDate,
 } from '@/lib/tracker/dates'
 import { getCurrentStreak } from '@/lib/tracker/stats'
 import { useTrackerUI } from './ui-context'
 import { cn } from '@/lib/utils'
+import { StickyNote, Pencil } from 'lucide-react'
 
 type Props = {
   onOpenNote: (dateStr: string) => void
+}
+
+// Compute the streak-day-number for a given date (how many consecutive clean/slip days end at this date)
+const getStreakDayNumber = (entries: Record<string, DayState>, dStr: string): number => {
+  const state = entries[dStr]
+  if (state !== 1 && state !== 2) return 0
+  let count = 0
+  const cursor = parseDateStr(dStr)
+  if (!cursor) return 0
+  while (cursor) {
+    const cs = dateKey(cursor.getFullYear(), cursor.getMonth(), cursor.getDate())
+    const st = entries[cs]
+    if (st === 1 || st === 2) {
+      count++
+      cursor.setDate(cursor.getDate() - 1)
+    } else break
+  }
+  return count
+}
+
+// Find next milestone after a given streak day number
+const getNextMilestone = (dayNum: number): number | null => {
+  for (const m of MILESTONE_LIST) {
+    if (m > dayNum) return m
+  }
+  return null
 }
 
 export function CalendarGrid({ onOpenNote }: Props) {
   const year = useTrackerStore((s) => s.currentYear)
   const rawEntries = useTrackerStore((s) => s.entries)
   const notes = useTrackerStore((s) => s.notes)
+  const ratings = useTrackerStore((s) => s.ratings)
   const cycleDay = useTrackerStore((s) => s.cycleDay)
   const setDay = useTrackerStore((s) => s.setDay)
   const { registerJumpToToday } = useTrackerUI()
@@ -38,6 +68,36 @@ export function CalendarGrid({ onOpenNote }: Props) {
 
   const todayStr = getTodayStr()
   const todayDate = getTodayDate()
+
+  // Hover tooltip state
+  const [hoveredCell, setHoveredCell] = React.useState<{
+    date: string
+    x: number
+    y: number
+  } | null>(null)
+  const hoverTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleCellHover = (dateStr: string, e: React.MouseEvent) => {
+    if (dateStr > todayStr) return
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current)
+    hoverTimeoutRef.current = setTimeout(() => {
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+      setHoveredCell({ date: dateStr, x: rect.left, y: rect.bottom })
+    }, 200)
+  }
+
+  const handleCellLeave = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current)
+    hoverTimeoutRef.current = setTimeout(() => setHoveredCell(null), 100)
+  }
+
+  const handleTooltipEnter = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current)
+  }
+
+  const handleTooltipLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => setHoveredCell(null), 100)
+  }
 
   // Tap & double-tap disambiguation
   const tapTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -191,6 +251,8 @@ export function CalendarGrid({ onOpenNote }: Props) {
                       ref={isToday ? todayCellRef : undefined}
                       type="button"
                       onClick={(e) => handleCellActivate(dStr, e)}
+                      onMouseEnter={(e) => handleCellHover(dStr, e)}
+                      onMouseLeave={handleCellLeave}
                       onTouchEnd={(e) => {
                         e.preventDefault()
                         handleTouchEnd(dStr)
@@ -266,6 +328,162 @@ export function CalendarGrid({ onOpenNote }: Props) {
           </button>
         </div>
       )}
+
+      {/* Hover detail tooltip — desktop only */}
+      {hoveredCell && (
+        <div
+          className="glass fixed z-[200] hidden w-64 rounded-lg p-3 lg:block animate-fade-in-up"
+          style={{
+            left: Math.min(hoveredCell.x, window.innerWidth - 280),
+            top: Math.min(hoveredCell.y + 8, window.innerHeight - 280),
+          }}
+          onMouseEnter={handleTooltipEnter}
+          onMouseLeave={handleTooltipLeave}
+        >
+          <DayDetailContent
+            dateStr={hoveredCell.date}
+            entries={entries}
+            notes={notes}
+            ratings={ratings}
+            onOpenNote={onOpenNote}
+            onSetDay={setDay}
+            onClose={() => setHoveredCell(null)}
+          />
+        </div>
+      )}
     </section>
+  )
+}
+
+function DayDetailContent({
+  dateStr,
+  entries,
+  notes,
+  ratings,
+  onOpenNote,
+  onSetDay,
+  onClose,
+}: {
+  dateStr: string
+  entries: Record<string, DayState>
+  notes: Record<string, string>
+  ratings: Record<string, { mood?: number; energy?: number; sleep?: number }>
+  onOpenNote: (d: string) => void
+  onSetDay: (d: string, s: DayState) => void
+  onClose: () => void
+}) {
+  const state: DayState = entries[dateStr] ?? 0
+  const note = notes[dateStr]
+  const dayRatings = ratings[dateStr] || {}
+  const streakDay = getStreakDayNumber(entries, dateStr)
+  const nextMilestone = getNextMilestone(streakDay)
+  const d = parseDateStr(dateStr)!
+
+  const stateColors: Record<number, string> = {
+    0: 'var(--dim)',
+    1: 'var(--success)',
+    2: 'var(--slip)',
+    3: 'var(--fail)',
+  }
+  const stateLabels = ['Unmarked', 'Clean', 'Slip', 'Relapse']
+
+  return (
+    <>
+      {/* Date header */}
+      <div className="mb-2 flex items-baseline justify-between border-b border-hairline pb-2">
+        <div>
+          <div className="font-display text-base italic text-ink">
+            {MONTHS[d.getMonth()]} {d.getDate()}
+          </div>
+          <div className="label-caps">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()]}
+            {d.getFullYear()}
+          </div>
+        </div>
+        <span
+          className="rounded-full px-2 py-0.5 text-[0.55rem] font-semibold uppercase tracking-wider text-paper"
+          style={{ background: stateColors[state] }}
+        >
+          {stateLabels[state]}
+        </span>
+      </div>
+
+      {/* Streak day info */}
+      {streakDay > 0 && (
+        <div className="mb-2 flex items-center justify-between text-xs">
+          <span className="text-dim">Streak day</span>
+          <span className="font-display text-base italic text-ink">{streakDay}</span>
+        </div>
+      )}
+      {nextMilestone && streakDay > 0 && (
+        <div className="mb-2 text-[0.65rem] text-dim">
+          {nextMilestone - streakDay} day{nextMilestone - streakDay === 1 ? '' : 's'} to{' '}
+          <span className="text-gold">{MILESTONES[nextMilestone] ?? nextMilestone}</span>
+        </div>
+      )}
+
+      {/* Ratings */}
+      {(dayRatings.mood || dayRatings.energy || dayRatings.sleep) && (
+        <div className="mb-2 flex items-center gap-3 border-t border-hairline pt-2">
+          {(['mood', 'energy', 'sleep'] as const).map((k) => {
+            const v = dayRatings[k]
+            if (!v) return null
+            const colors = { mood: 'var(--mood)', energy: 'var(--energy)', sleep: 'var(--sleep)' }
+            const labels = { mood: 'M', energy: 'E', sleep: 'S' }
+            return (
+              <div key={k} className="flex items-center gap-1">
+                <span className="text-[0.55rem] uppercase text-dim">{labels[k]}</span>
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: colors[k], opacity: v / 5 }}
+                />
+                <span className="text-[0.6rem] text-ink">{v}/5</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Note preview */}
+      {note && note.trim() && (
+        <div className="mb-2 border-t border-hairline pt-2">
+          <div className="mb-0.5 flex items-center gap-1 label-caps">
+            <StickyNote className="h-2.5 w-2.5" />
+            Note
+          </div>
+          <p className="text-xs leading-relaxed text-ink/80 line-clamp-3 whitespace-pre-wrap break-words">
+            {note}
+          </p>
+        </div>
+      )}
+
+      {/* Quick actions */}
+      <div className="mt-2 flex items-center gap-1 border-t border-hairline pt-2">
+        {([1, 2, 3] as DayState[]).map((st) => (
+          <button
+            key={st}
+            type="button"
+            onClick={() => {
+              onSetDay(dateStr, st)
+              onClose()
+            }}
+            className="flex-1 rounded border border-hairline py-1 text-[0.6rem] uppercase tracking-wider text-dim hover:border-rule hover:text-ink"
+          >
+            {['', 'Clean', 'Slip', 'Relapse'][st]}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => {
+            onOpenNote(dateStr)
+            onClose()
+          }}
+          className="flex items-center gap-1 rounded border border-hairline px-2 py-1 text-[0.6rem] uppercase tracking-wider text-dim hover:border-rule hover:text-ink"
+          aria-label="Edit note"
+        >
+          <Pencil className="h-2.5 w-2.5" />
+        </button>
+      </div>
+    </>
   )
 }

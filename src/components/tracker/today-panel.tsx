@@ -37,15 +37,33 @@ export function TodayPanel() {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       {/* Streak hero card */}
-      <div className="relative overflow-hidden rounded-xl border border-hairline bg-gradient-to-br from-card to-paper p-5 lg:col-span-2">
-        <div className="flex items-start justify-between">
+      <div
+        key={streak}
+        className="relative overflow-hidden rounded-xl border border-hairline bg-gradient-to-br from-card to-paper p-5 lg:col-span-2 animate-gradient-shift"
+        style={{
+          backgroundImage:
+            streak > 0
+              ? 'linear-gradient(135deg, var(--card) 0%, var(--paper) 40%, rgba(32, 94, 65, 0.08) 70%, var(--paper) 100%)'
+              : 'linear-gradient(135deg, var(--card) 0%, var(--paper) 100%)',
+        }}
+      >
+        {/* Decorative ornament — top right */}
+        <div
+          className="pointer-events-none absolute -right-8 -top-8 font-display text-9xl italic text-ink/[0.03]"
+          aria-hidden
+        >
+          ✦
+        </div>
+
+        <div className="relative flex items-start justify-between">
           <div>
             <span className="label-caps">Current streak</span>
             <div className="mt-1 flex items-baseline gap-3">
               <span
-                className="stat-numeral text-6xl"
+                className="stat-numeral animate-number-pop text-6xl sm:text-7xl"
                 style={{
                   color: streak > 0 ? 'var(--ink)' : 'var(--dim)',
+                  textShadow: streak > 0 ? '0 2px 24px rgba(212, 175, 55, 0.15)' : 'none',
                 }}
               >
                 {streak}
@@ -57,7 +75,7 @@ export function TodayPanel() {
             <span className="label-caps">Today</span>
             <span
               className={cn(
-                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium uppercase tracking-wider',
+                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium uppercase tracking-wider transition-transform hover:scale-105',
                 todayState === 1 && 'bg-success text-success-ink',
                 todayState === 2 && 'bg-slip text-slip-ink',
                 todayState === 3 && 'bg-fail text-fail-ink',

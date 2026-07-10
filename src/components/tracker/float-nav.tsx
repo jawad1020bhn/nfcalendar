@@ -39,7 +39,7 @@ export function FloatNav() {
   return (
     <nav
       aria-label="Quick actions"
-      className="glass fixed right-3 top-3 z-[60] flex flex-row items-center gap-0.5 rounded-2xl p-1 sm:right-4 sm:top-4 animate-slide-in-right"
+      className="glass fixed right-3 top-3 z-[60] hidden flex-row items-center gap-0.5 rounded-2xl p-1 sm:right-4 sm:top-4 animate-slide-in-right lg:flex"
     >
       {items.map((it) => (
         <button

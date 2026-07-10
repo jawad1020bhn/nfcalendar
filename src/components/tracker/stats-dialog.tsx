@@ -30,6 +30,7 @@ export function StatsDialog() {
   const ui = useTrackerUI()
   const isOpen = ui.view.kind === 'stats'
 
+  const year = useTrackerStore((s) => s.currentYear)
   const rawEntries = useTrackerStore((s) => s.entries)
   const notes = useTrackerStore((s) => s.notes)
   const ratings = useTrackerStore((s) => s.ratings)
@@ -246,6 +247,11 @@ export function StatsDialog() {
           {/* Last 30 days sparkline */}
           <Section title="Last 30 Days">
             <Sparkline entries={entries} days={30} />
+          </Section>
+
+          {/* Annual heatmap */}
+          <Section title="Annual Heatmap" help="Every day of the year at a glance — darker green = longer streak day">
+            <YearHeatmap entries={entries} year={year} />
           </Section>
 
           {/* Mood / Energy / Sleep trends */}
@@ -644,6 +650,80 @@ function YearTrend({ entries }: { entries: Record<string, number> }) {
         {MONTHS.map((m, i) => (
           <span key={i}>{m.slice(0, 1)}</span>
         ))}
+      </div>
+    </div>
+  )
+}
+
+// Annual heatmap — GitHub-contribution-style grid of every day in the year
+function YearHeatmap({ entries, year }: { entries: Record<string, number>; year: number }) {
+  const todayStr = formatDateStr(getTodayDate())
+  // Build weeks: each week is 7 days (Mon-Sun). Start from Jan 1.
+  const days: { date: string; state: number; isFuture: boolean }[] = []
+  for (let m = 0; m < 12; m++) {
+    const dim = new Date(year, m + 1, 0).getDate()
+    for (let d = 1; d <= dim; d++) {
+      const dStr = `${year}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+      days.push({ date: dStr, state: entries[dStr] ?? 0, isFuture: dStr > todayStr })
+    }
+  }
+  // Group into weeks (Mon-Sun). Pad start so Jan 1 aligns to its weekday.
+  const firstDay = new Date(year, 0, 1).getDay()
+  const firstDayMon = firstDay === 0 ? 6 : firstDay - 1
+  const padded: (typeof days[0] | null)[] = []
+  for (let i = 0; i < firstDayMon; i++) padded.push(null)
+  padded.push(...days)
+
+  const weeks: (typeof days[0] | null)[][] = []
+  for (let i = 0; i < padded.length; i += 7) {
+    weeks.push(padded.slice(i, i + 7))
+  }
+
+  const cellColor = (state: number, isFuture: boolean) => {
+    if (isFuture) return 'bg-hairline/30'
+    if (state === 0) return 'bg-hairline/50'
+    if (state === 1) return 'bg-success'
+    if (state === 2) return 'bg-slip'
+    if (state === 3) return 'bg-fail'
+    return 'bg-hairline/50'
+  }
+
+  const monthLabels = MONTHS.map((m) => m.slice(0, 1))
+
+  return (
+    <div className="overflow-x-auto">
+      <div className="inline-block min-w-full">
+        {/* Month labels */}
+        <div className="mb-1 flex gap-[2px] pl-0 text-[0.5rem] text-dim">
+          {monthLabels.map((m, i) => (
+            <span key={i} className="w-[calc(7*10px+6*2px)] text-center">
+              {m}
+            </span>
+          ))}
+        </div>
+        {/* Weeks grid */}
+        <div className="flex gap-[2px]">
+          {weeks.map((week, wi) => (
+            <div key={wi} className="flex flex-col gap-[2px]">
+              {week.map((day, di) => (
+                <div
+                  key={di}
+                  className={`h-[10px] w-[10px] rounded-[2px] ${day ? cellColor(day.state, day.isFuture) : 'bg-transparent'}`}
+                  title={day ? `${day.date} — ${['Unmarked', 'Clean', 'Slip', 'Relapse'][day.state]}` : ''}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+        {/* Legend */}
+        <div className="mt-2 flex items-center justify-end gap-1.5 text-[0.5rem] text-dim">
+          <span>Less</span>
+          <div className="h-[10px] w-[10px] rounded-[2px] bg-hairline/50" />
+          <div className="h-[10px] w-[10px] rounded-[2px] bg-success/40" />
+          <div className="h-[10px] w-[10px] rounded-[2px] bg-success/70" />
+          <div className="h-[10px] w-[10px] rounded-[2px] bg-success" />
+          <span>More</span>
+        </div>
       </div>
     </div>
   )
