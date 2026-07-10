@@ -26,6 +26,9 @@ export function TodayPanel() {
   const notes = useTrackerStore((s) => s.notes)
   const whyStarted = useTrackerStore((s) => s.whyStarted)
   const reflections = useTrackerStore((s) => s.reflections)
+  const showReflectionReminder = useTrackerStore((s) => s.settings.showReflectionReminder)
+  const setDay = useTrackerStore((s) => s.setDay)
+  const clearDay = useTrackerStore((s) => s.clearDay)
   const ui = useTrackerUI()
 
   const entries = React.useMemo(() => escalateSlips(rawEntries), [rawEntries])
@@ -54,7 +57,7 @@ export function TodayPanel() {
   return (
     <div className="space-y-4">
       {/* Weekly reflection prompt — appears when due */}
-      {reflectionDue && (
+      {reflectionDue && showReflectionReminder && (
         <button
           type="button"
           onClick={ui.openReflection}
@@ -191,15 +194,69 @@ export function TodayPanel() {
           <QuickAction icon={Compass} label="Why" onClick={ui.openWhy} />
         </div>
 
-        {/* Log today */}
-        <button
-          type="button"
-          onClick={() => ui.openNote(todayStr)}
-          className="mt-2 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-ink text-sm font-medium text-paper hover:opacity-90 active:scale-95"
-        >
-          <Plus className="h-4 w-4" />
-          Log today
-        </button>
+        {/* Quick-add buttons — one-click mark today */}
+        <div className="mt-3">
+          <span className="label-caps mb-1.5 block">Quick mark today</span>
+          <div className="grid grid-cols-4 gap-1.5">
+            <button
+              type="button"
+              onClick={() => setDay(todayStr, 1)}
+              aria-label="Mark today clean"
+              className={cn(
+                'flex h-9 items-center justify-center rounded-md border text-[0.6rem] font-semibold uppercase tracking-wider transition-all active:scale-95',
+                todayState === 1
+                  ? 'border-success bg-success text-success-ink'
+                  : 'border-hairline text-dim hover:border-success hover:text-success',
+              )}
+            >
+              Clean
+            </button>
+            <button
+              type="button"
+              onClick={() => setDay(todayStr, 2)}
+              aria-label="Mark today slip"
+              className={cn(
+                'flex h-9 items-center justify-center rounded-md border text-[0.6rem] font-semibold uppercase tracking-wider transition-all active:scale-95',
+                todayState === 2
+                  ? 'border-slip bg-slip text-slip-ink'
+                  : 'border-hairline text-dim hover:border-slip hover:text-slip',
+              )}
+            >
+              Slip
+            </button>
+            <button
+              type="button"
+              onClick={() => setDay(todayStr, 3)}
+              aria-label="Mark today relapse"
+              className={cn(
+                'flex h-9 items-center justify-center rounded-md border text-[0.6rem] font-semibold uppercase tracking-wider transition-all active:scale-95',
+                todayState === 3
+                  ? 'border-fail bg-fail text-fail-ink'
+                  : 'border-hairline text-dim hover:border-fail hover:text-fail',
+              )}
+            >
+              Relapse
+            </button>
+            <button
+              type="button"
+              onClick={() => ui.openNote(todayStr)}
+              aria-label="Open note editor for today"
+              className="flex h-9 items-center justify-center gap-1 rounded-md border border-hairline text-[0.6rem] font-semibold uppercase tracking-wider text-dim transition-all hover:border-rule hover:text-ink active:scale-95"
+            >
+              <Plus className="h-3 w-3" />
+              Note
+            </button>
+          </div>
+          {todayState !== 0 && (
+            <button
+              type="button"
+              onClick={() => clearDay(todayStr)}
+              className="mt-1.5 w-full text-center text-[0.6rem] text-dim underline-offset-2 hover:text-ink hover:underline"
+            >
+              Clear today's mark
+            </button>
+          )}
+        </div>
 
         {/* Why reminder */}
         {whyStarted && (

@@ -77,6 +77,9 @@ export function AchievementsDialog() {
           <div className="mt-2 h-px w-24 bg-hairline" />
         </div>
 
+        {/* Next achievement progress */}
+        <AchievementProgress stats={stats} unlockedSet={unlockedSet} />
+
         <div className="space-y-6 px-6 pb-6">
           {TIER_ORDER.map((tier) => {
             const tierAch = ACHIEVEMENTS.filter((a) => a.tier === tier)
@@ -149,5 +152,60 @@ export function AchievementsDialog() {
         </div>
       </DialogContent>
     </Dialog>
+  )
+}
+
+// Achievement progress — shows the next streak-based achievement with a progress bar
+function AchievementProgress({
+  stats,
+  unlockedSet,
+}: {
+  stats: ReturnType<typeof calculateStats>
+  unlockedSet: Set<string>
+}) {
+  // Find the next locked streak-based achievement
+  const streakAch = [
+    { id: 'first_week', threshold: 7, label: 'First Week', current: stats.currentStreak },
+    { id: 'two_weeks', threshold: 14, label: 'Two Weeks', current: stats.currentStreak },
+    { id: 'month_one', threshold: 30, label: 'Month One', current: stats.currentStreak },
+    { id: 'two_months', threshold: 60, label: 'Two Months', current: stats.currentStreak },
+    { id: 'quarter_master', threshold: 90, label: 'Quarter Master', current: stats.currentStreak },
+    { id: 'century', threshold: 100, label: 'Century', current: stats.currentStreak },
+    { id: 'half_year', threshold: 180, label: 'Half Year', current: stats.currentStreak },
+    { id: 'year_one', threshold: 365, label: 'Year One', current: stats.currentStreak },
+  ]
+  const next = streakAch.find((a) => !unlockedSet.has(a.id))
+  if (!next) return null
+
+  const pct = Math.min(100, (next.current / next.threshold) * 100)
+  const remaining = Math.max(0, next.threshold - next.current)
+
+  return (
+    <div className="mx-6 mb-2 rounded-xl border border-hairline bg-card p-4">
+      <div className="mb-2 flex items-baseline justify-between">
+        <div>
+          <span className="label-caps">Next streak achievement</span>
+          <div className="mt-0.5 font-display text-lg italic text-ink">{next.label}</div>
+        </div>
+        <div className="text-right">
+          <span className="stat-numeral text-2xl text-ink">{next.current}</span>
+          <span className="text-sm text-dim"> / {next.threshold}</span>
+        </div>
+      </div>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-hairline">
+        <div
+          className="h-full rounded-full transition-all duration-700"
+          style={{
+            width: `${pct}%`,
+            background: 'linear-gradient(90deg, var(--success) 0%, var(--gold) 100%)',
+          }}
+        />
+      </div>
+      <p className="mt-1.5 text-[0.65rem] text-dim">
+        {remaining > 0
+          ? `${remaining} day${remaining === 1 ? '' : 's'} to unlock "${next.label}"`
+          : 'Achievement unlocked! It will register on your next visit.'}
+      </p>
+    </div>
   )
 }

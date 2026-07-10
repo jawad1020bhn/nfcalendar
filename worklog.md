@@ -506,3 +506,84 @@ App is stable and mature after 4 rounds. All features working: calendar with str
 4. **Stats: mood/energy/sleep averages**: Add average mood/energy/sleep ratings to the Stats dialog.
 5. **Calendar: quick-add buttons**: Add quick "mark today clean" button in the TodayPanel for one-click logging.
 6. **Achievement progress**: Show progress toward the next achievement (e.g., "3/7 days to First Week").
+
+---
+Task ID: 14 (webDevReview cron — round 6)
+Agent: webDevReview
+Task: Quick-add buttons, wellbeing averages, achievement progress, reflection toggle, urge styling
+
+## Current Project Status Assessment
+App is stable and very mature after 5 rounds. All features working: calendar with streak numbers + visualization lines + day detail hover, all dialogs (stats/achievements/notes/poster/breathing/urge/why/settings/onboarding/reflection), milestone celebration, weekly reflection, PWA service worker, store migration, reflection insights, backup reminder, reflections CSV. No bugs or runtime errors. This round focused on quick-add buttons, wellbeing averages, achievement progress, reflection reminder toggle, and urge-surfing styling.
+
+## QA Verification Results
+- Dev server: HTTP 200, no compile errors, no console errors/warnings
+- All previously-tested features still work
+- Lint: 0 errors, 2 warnings (in uploaded original app.js, not our code)
+
+## New Features Added
+
+### 1. Quick-Add Buttons in TodayPanel (today-panel.tsx)
+- Replaced the single "Log today" button with a 4-button quick-add row:
+  - **Clean** (green when active, green hover)
+  - **Slip** (orange when active, orange hover)
+  - **Relapse** (red when active, red hover)
+  - **Note** (opens note editor)
+- Each state button shows its active state with filled background matching the day state color
+- Added "Clear today's mark" link that appears when today is marked
+- Added `setDay` and `clearDay` store actions to TodayPanel
+- Verified: clicked "Mark today clean" → today state = 1, Clean button shows green background (`rgb(32, 94, 65)`)
+
+### 2. Wellbeing Averages in Stats (stats-dialog.tsx)
+- New "Wellbeing Averages" section (before Wellbeing Trends chart)
+- Shows average mood, energy, and sleep ratings with colored progress bars:
+  - Mood (blue bar, `var(--mood)`)
+  - Energy (orange bar, `var(--energy)`)
+  - Sleep (purple bar, `var(--sleep)`)
+- Each row shows: label, progress bar (avg/5 × 100%), average value (1 decimal), count of days
+- Footer: "Based on N total ratings across M days"
+- Empty state: "No ratings yet" guidance
+- New `WellbeingAverages` component with `calc` helper
+- Verified: seeded 3 days of ratings → Mood 4.0, Energy 3.0, Sleep 4.0, "9 total ratings across 3 days"
+
+### 3. Achievement Progress in Achievements Dialog (achievements-dialog.tsx)
+- New "Achievement Progress" card after the crest, showing the next locked streak-based achievement
+- Displays: achievement name, current/threshold (e.g., "1 / 7"), progress bar (green→gold gradient), days remaining
+- Covers 8 streak achievements: First Week (7d) → Year One (365d)
+- Finds the first locked streak achievement and shows progress toward it
+- New `AchievementProgress` component
+- Verified: with 1-day streak → "First Week | 1 / 7 | 6 days to unlock 'First Week'"
+
+### 4. Reflection Reminder Toggle in Settings (store.ts + settings-dialog.tsx + today-panel.tsx)
+- Added `showReflectionReminder: boolean` to Settings type (default: true)
+- Updated store defaults and migration path (v1→v2 adds showReflectionReminder: true)
+- New toggle in Settings → Notifications: "Reflection reminder — Show the weekly reflection prompt card when a new week starts"
+- TodayPanel now only shows the reflection prompt card when `showReflectionReminder` is true
+- Verified: Settings dialog shows "Reflection reminder" toggle
+
+## Styling Improvements
+
+### 1. Urge-Surfing Dialog Enhanced Visualization (urge-surfing-dialog.tsx)
+- **Outer glow ring**: When running, a 40px box-shadow glow appears (orange when rising, green when fading)
+- **Thicker progress ring**: Increased from strokeWidth 2 to 3
+- **Drop-shadow glow**: The progress ring has a `drop-shadow(0 0 6px ...)` filter when running
+- **Pulsing wave background**: A radial-gradient circle that breathes (animate-breathe) behind the timer — orange when rising, green when fading
+- **Dynamic timer color**: The timer number transitions from ink to success-green when the urge starts fading (after 3 min)
+- Creates a much more immersive, calming visual experience
+
+### 2. Quick-Add Button States (today-panel.tsx)
+- Active state: filled background with the state color (green/orange/red)
+- Inactive state: border-only with hover that brightens to the state color
+- `active:scale-95` for tactile press feedback
+- Consistent uppercase tracking-wider typography
+
+## Unresolved Issues / Risks
+- The Achievement Progress only covers streak-based achievements (8 of 35). Non-streak achievements (e.g., "First Note", "Tag Master") don't have a progress indicator since their progress is harder to quantify generically.
+- The quick-add buttons set the day state immediately. If a user accidentally clicks "Relapse", they can undo with ⌘Z or click "Clear today's mark".
+
+## Priority Recommendations for Next Phase
+1. **Calendar month navigation**: Add prev/next month buttons to jump between months instead of scrolling the whole year.
+2. **Notification API**: Browser notifications for daily check-in reminders (with user opt-in via Settings).
+3. **Stats: best day-of-week analysis**: Show which day of the week you're most often clean.
+4. **Note search improvements**: Add date presets (today, this week, this month) in the notes sidebar.
+5. **Achievement details popover**: Click an achievement badge to see detailed requirements + progress.
+6. **Theme customizer**: Let users pick accent colors beyond the default archival palette.

@@ -144,6 +144,12 @@ export function SettingsDialog() {
               checked={settings.showAchievementToast}
               onChange={(v) => setSettings({ showAchievementToast: v })}
             />
+            <ToggleRow
+              label="Reflection reminder"
+              desc="Show the weekly reflection prompt card when a new week starts"
+              checked={settings.showReflectionReminder}
+              onChange={(v) => setSettings({ showReflectionReminder: v })}
+            />
           </SettingsSection>
 
           {/* Data management */}

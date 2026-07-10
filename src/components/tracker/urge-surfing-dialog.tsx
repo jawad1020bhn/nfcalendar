@@ -65,6 +65,15 @@ export function UrgeSurfingDialog() {
         <div className="flex flex-col items-center gap-6 px-6 py-8">
           {/* Wave visualization */}
           <div className="relative flex h-44 w-44 items-center justify-center">
+            {/* Outer glow ring when running */}
+            {running && (
+              <div
+                className="absolute inset-0 rounded-full transition-opacity duration-700"
+                style={{
+                  boxShadow: `0 0 40px ${fading ? 'rgba(32, 94, 65, 0.2)' : 'rgba(200, 119, 46, 0.2)'}`,
+                }}
+              />
+            )}
             <svg className="absolute inset-0 -rotate-90" viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="44" fill="none" stroke="var(--hairline)" strokeWidth="2" />
               <circle
@@ -73,15 +82,32 @@ export function UrgeSurfingDialog() {
                 r="44"
                 fill="none"
                 stroke={fading ? 'var(--success)' : 'var(--slip)'}
-                strokeWidth="2"
+                strokeWidth="3"
                 strokeLinecap="round"
                 strokeDasharray={`${2 * Math.PI * 44}`}
                 strokeDashoffset={`${2 * Math.PI * 44 * (1 - progress / 100)}`}
                 className="transition-all duration-1000"
+                style={{
+                  filter: running ? `drop-shadow(0 0 6px ${fading ? 'var(--success)' : 'var(--slip)'})` : 'none',
+                }}
               />
             </svg>
+            {/* Pulsing wave in background */}
+            {running && (
+              <div
+                className="absolute h-20 w-20 rounded-full opacity-20 animate-breathe"
+                style={{
+                  background: `radial-gradient(circle, ${fading ? 'var(--success)' : 'var(--slip)'} 0%, transparent 70%)`,
+                }}
+              />
+            )}
             <div className="relative z-10 flex flex-col items-center">
-              <span className="stat-numeral text-4xl text-ink tabular-nums">{timeStr}</span>
+              <span
+                className="stat-numeral text-4xl tabular-nums transition-colors duration-500"
+                style={{ color: fading ? 'var(--success)' : 'var(--ink)' }}
+              >
+                {timeStr}
+              </span>
               <span className="label-caps mt-1">
                 {seconds === 0 ? 'Ready' : fading ? 'Fading' : 'Rising'}
               </span>

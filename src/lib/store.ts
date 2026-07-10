@@ -22,6 +22,7 @@ type Settings = {
   showStreakNumbers: boolean
   showMilestoneToast: boolean
   showAchievementToast: boolean
+  showReflectionReminder: boolean
   defaultView: 'calendar' | 'today'
   onboardingComplete: boolean
   lastExportDate: string | null
@@ -108,6 +109,7 @@ export const useTrackerStore = create<TrackerState>()(
         showStreakNumbers: true,
         showMilestoneToast: true,
         showAchievementToast: true,
+        showReflectionReminder: true,
         defaultView: 'today',
         onboardingComplete: false,
         lastExportDate: null,
@@ -292,11 +294,16 @@ export const useTrackerStore = create<TrackerState>()(
             lastExportDate: null,
           }
         }
-        // v1 → v2: ensure reflections array exists + lastExportDate
+        // v1 → v2: ensure reflections array exists + lastExportDate + showReflectionReminder
         if (version < 2) {
           persisted.reflections = persisted.reflections || []
-          if (persisted.settings && persisted.settings.lastExportDate === undefined) {
-            persisted.settings.lastExportDate = null
+          if (persisted.settings) {
+            if (persisted.settings.lastExportDate === undefined) {
+              persisted.settings.lastExportDate = null
+            }
+            if (persisted.settings.showReflectionReminder === undefined) {
+              persisted.settings.showReflectionReminder = true
+            }
           }
         }
         return persisted

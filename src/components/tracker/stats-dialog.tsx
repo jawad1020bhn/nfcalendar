@@ -300,6 +300,11 @@ export function StatsDialog() {
             <YearHeatmap entries={entries} year={year} />
           </Section>
 
+          {/* Wellbeing averages */}
+          <Section title="Wellbeing Averages" help="Average mood, energy, and sleep ratings across all logged days">
+            <WellbeingAverages ratings={ratings} />
+          </Section>
+
           {/* Mood / Energy / Sleep trends */}
           <Section title="Wellbeing Trends (30d)">
             <WellbeingTrends ratings={ratings} days={30} />
@@ -582,6 +587,69 @@ function Sparkline({ entries, days }: { entries: Record<string, number>; days: n
     })
   }, [entries, days])
   return <canvas ref={canvasRef} className="h-16 w-full" />
+}
+
+// Wellbeing averages — shows avg mood/energy/sleep with bars
+function WellbeingAverages({
+  ratings,
+}: {
+  ratings: Record<string, { mood?: number; energy?: number; sleep?: number }>
+}) {
+  const calc = (key: 'mood' | 'energy' | 'sleep') => {
+    const vals = Object.values(ratings)
+      .map((r) => r[key])
+      .filter((v): v is number => typeof v === 'number')
+    if (vals.length === 0) return { avg: 0, count: 0 }
+    return { avg: vals.reduce((a, b) => a + b, 0) / vals.length, count: vals.length }
+  }
+  const mood = calc('mood')
+  const energy = calc('energy')
+  const sleep = calc('sleep')
+  const total = mood.count + energy.count + sleep.count
+
+  if (total === 0) {
+    return (
+      <p className="text-sm text-dim">
+        No ratings yet. Open a day's note to rate your mood, energy, and sleep (1–5 dots).
+      </p>
+    )
+  }
+
+  const items = [
+    { label: 'Mood', data: mood, color: 'var(--mood)', icon: '♥' },
+    { label: 'Energy', data: energy, color: 'var(--energy)', icon: '⚡' },
+    { label: 'Sleep', data: sleep, color: 'var(--sleep)', icon: '☾' },
+  ]
+
+  return (
+    <div className="space-y-2.5">
+      {items.map((it) => (
+        <div key={it.label} className="flex items-center gap-3">
+          <span className="w-16 text-xs text-ink">{it.label}</span>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-2 overflow-hidden rounded-full bg-hairline">
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{
+                    width: `${(it.data.avg / 5) * 100}%`,
+                    background: it.color,
+                  }}
+                />
+              </div>
+              <span className="stat-numeral text-lg text-ink tabular-nums" style={{ minWidth: '2.5rem' }}>
+                {it.data.avg.toFixed(1)}
+              </span>
+            </div>
+          </div>
+          <span className="label-caps">{it.data.count}d</span>
+        </div>
+      ))}
+      <div className="border-t border-hairline pt-1.5 text-[0.65rem] text-dim">
+        Based on {mood.count + energy.count + sleep.count} total ratings across {Object.keys(ratings).length} days.
+      </div>
+    </div>
+  )
 }
 
 function WellbeingTrends({ ratings, days }: { ratings: Record<string, { mood?: number; energy?: number; sleep?: number }>; days: number }) {
