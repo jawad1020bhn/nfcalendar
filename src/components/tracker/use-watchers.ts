@@ -125,9 +125,34 @@ export function useKeyboardShortcuts() {
         ui.toggleNotesList()
       } else if (e.key === 'a' || e.key === 'A') {
         ui.openAchievements()
+      } else if (e.key === 'r' || e.key === 'R') {
+        ui.openReflection()
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [ui])
+}
+
+// Backup reminder — shows a toast if data hasn't been exported in 30+ days
+export function useBackupReminder() {
+  const lastExportDate = useTrackerStore((s) => s.settings.lastExportDate)
+  const entries = useTrackerStore((s) => s.entries)
+  React.useEffect(() => {
+    // Only remind if there's actual data to back up
+    if (Object.keys(entries).length < 7) return
+    const now = Date.now()
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000
+    if (!lastExportDate || now - new Date(lastExportDate).getTime() > thirtyDays) {
+      const t = setTimeout(() => {
+        toast.info('Consider backing up your data', {
+          description: lastExportDate
+            ? `Last export was ${Math.round((now - new Date(lastExportDate).getTime()) / (7 * 24 * 60 * 60 * 1000))} weeks ago. Export via Stats → Archive.`
+            : 'You have not exported yet. Export via Stats → Archive (JSON).',
+          duration: 7000,
+        })
+      }, 3000)
+      return () => clearTimeout(t)
+    }
+  }, [lastExportDate, entries])
 }

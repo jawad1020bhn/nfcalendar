@@ -72,9 +72,15 @@ export function BreathingDialog() {
 
         <div className="flex flex-col items-center gap-6 px-6 py-8">
           <div className="relative flex h-48 w-48 items-center justify-center">
-            {/* Outer ring */}
-            <div className="absolute inset-0 rounded-full border border-hairline" />
-            {/* Pulsing circle */}
+            {/* Outer ring with gradient glow */}
+            <div
+              className="absolute inset-0 rounded-full border-2 transition-colors duration-500"
+              style={{
+                borderColor: running ? 'var(--gold)' : 'var(--hairline)',
+                boxShadow: running ? '0 0 32px rgba(212, 175, 55, 0.15)' : 'none',
+              }}
+            />
+            {/* Inner pulsing circle */}
             <div
               className="absolute h-24 w-24 rounded-full bg-gradient-to-br from-success/80 to-gold/60 transition-transform duration-[3500ms] ease-in-out"
               style={{

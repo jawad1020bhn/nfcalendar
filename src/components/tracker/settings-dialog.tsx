@@ -57,6 +57,7 @@ export function SettingsDialog() {
     a.download = `daily-tracker-${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
+    setSettings({ lastExportDate: new Date().toISOString() })
     toast.success('Archive downloaded')
   }
 

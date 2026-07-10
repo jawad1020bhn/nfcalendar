@@ -24,6 +24,7 @@ type Settings = {
   showAchievementToast: boolean
   defaultView: 'calendar' | 'today'
   onboardingComplete: boolean
+  lastExportDate: string | null
 }
 
 type Reflection = {
@@ -109,6 +110,7 @@ export const useTrackerStore = create<TrackerState>()(
         showAchievementToast: true,
         defaultView: 'today',
         onboardingComplete: false,
+        lastExportDate: null,
       },
       reflections: [],
 
@@ -287,11 +289,15 @@ export const useTrackerStore = create<TrackerState>()(
             showAchievementToast: true,
             defaultView: 'today',
             onboardingComplete: false,
+            lastExportDate: null,
           }
         }
-        // v1 → v2: ensure reflections array exists
+        // v1 → v2: ensure reflections array exists + lastExportDate
         if (version < 2) {
           persisted.reflections = persisted.reflections || []
+          if (persisted.settings && persisted.settings.lastExportDate === undefined) {
+            persisted.settings.lastExportDate = null
+          }
         }
         return persisted
       },

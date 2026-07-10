@@ -47,6 +47,8 @@ export function StatsDialog() {
   const entries = React.useMemo(() => escalateSlips(rawEntries), [rawEntries])
   const stats = React.useMemo(() => calculateStats(entries, notes), [entries, notes])
 
+  const setSettings = useTrackerStore((s) => s.setSettings)
+
   const handleExport = () => {
     const data = {
       entries,
@@ -66,6 +68,7 @@ export function StatsDialog() {
     a.download = `daily-tracker-${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
+    setSettings({ lastExportDate: new Date().toISOString() })
     toast.success('Archive downloaded')
   }
 
@@ -94,6 +97,32 @@ export function StatsDialog() {
     a.click()
     URL.revokeObjectURL(url)
     toast.success('CSV exported')
+  }
+
+  const handleExportReflectionsCSV = () => {
+    if (reflections.length === 0) {
+      toast.error('No reflections to export')
+      return
+    }
+    const rows = [['weekStartDate', 'wentWell', 'wasHard', 'improve', 'createdAt']]
+    reflections.forEach((r) => {
+      rows.push([
+        r.weekStartDate,
+        `"${(r.wentWell || '').replace(/"/g, '""')}"`,
+        `"${(r.wasHard || '').replace(/"/g, '""')}"`,
+        `"${(r.improve || '').replace(/"/g, '""')}"`,
+        r.createdAt,
+      ])
+    })
+    const csv = rows.map((r) => r.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `daily-tracker-reflections-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success('Reflections CSV exported')
   }
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -233,6 +262,11 @@ export function StatsDialog() {
             )}
           </Section>
 
+          {/* Reflection insights */}
+          <Section title="Reflection Insights" help="Tag patterns from your weekly reflections — what you said was hard, and what went well">
+            <ReflectionInsights reflections={reflections} />
+          </Section>
+
           {/* Relapse cycle length */}
           <Section title="Relapse Cycle Length" help="Average days between relapses. Increasing = improving">
             <BigNumber value={stats.relapseCycleLength !== null ? `${stats.relapseCycleLength}d` : '—'} />
@@ -282,6 +316,7 @@ export function StatsDialog() {
             <ActionBtn onClick={openPoster} icon={ImageIcon} label="Poster" />
             <ActionBtn onClick={handleExport} icon={Download} label="Archive (JSON)" />
             <ActionBtn onClick={handleExportCSV} icon={Download} label="Archive (CSV)" />
+            <ActionBtn onClick={handleExportReflectionsCSV} icon={Download} label="Reflections (CSV)" disabled={reflections.length === 0} />
             <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-hairline px-3 py-1.5 text-xs text-ink hover:bg-white/5">
               <Upload className="h-3 w-3" />
               Restore
@@ -311,7 +346,7 @@ function StatCard({
   levelColor?: string
 }) {
   return (
-    <div className="group relative rounded-lg border border-hairline bg-card p-3">
+    <div className="group relative rounded-lg border border-hairline bg-card p-3 transition-all hover:border-rule hover:translate-y-[-1px] hover:shadow-[0_4px_12px_rgba(0,0,0,0.2)]">
       <div className="flex items-center justify-between">
         <span className="label-caps">{label}</span>
         {level && (
@@ -736,6 +771,89 @@ function YearHeatmap({ entries, year }: { entries: Record<string, number>; year:
           <div className="h-[10px] w-[10px] rounded-[2px] bg-success" />
           <span>More</span>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// Reflection insights — extracts #tags from reflection answers
+function ReflectionInsights({
+  reflections,
+}: {
+  reflections: { weekStartDate: string; wentWell: string; wasHard: string; improve: string; createdAt: string }[]
+}) {
+  if (reflections.length === 0) {
+    return (
+      <p className="text-sm text-dim">
+        No reflections yet. Complete a weekly reflection to see tag patterns from your answers.
+      </p>
+    )
+  }
+
+  // Extract tags from each field
+  const extractTags = (text: string): string[] => text.match(/#[A-Za-z0-9_-]+/g) || []
+  const hardTags = new Map<string, number>()
+  const wellTags = new Map<string, number>()
+  reflections.forEach((r) => {
+    extractTags(r.wasHard).forEach((t) => {
+      const n = t.toLowerCase()
+      hardTags.set(n, (hardTags.get(n) || 0) + 1)
+    })
+    extractTags(r.wentWell).forEach((t) => {
+      const n = t.toLowerCase()
+      wellTags.set(n, (wellTags.get(n) || 0) + 1)
+    })
+  })
+
+  const hardSorted = [...hardTags.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6)
+  const wellSorted = [...wellTags.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6)
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <div className="mb-1.5 flex items-center gap-1.5">
+          <span className="font-display text-sm text-fail">↓</span>
+          <span className="label-caps">What was hard — recurring tags</span>
+        </div>
+        {hardSorted.length === 0 ? (
+          <p className="text-xs text-dim">No tags in your "hard" answers yet.</p>
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {hardSorted.map(([tag, count]) => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1 rounded-full border border-fail/30 bg-fail/5 px-2 py-0.5 text-xs text-ink"
+              >
+                {tag}
+                <span className="text-fail/70">·{count}</span>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      <div>
+        <div className="mb-1.5 flex items-center gap-1.5">
+          <span className="font-display text-sm text-success">↑</span>
+          <span className="label-caps">What went well — recurring tags</span>
+        </div>
+        {wellSorted.length === 0 ? (
+          <p className="text-xs text-dim">No tags in your "went well" answers yet.</p>
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {wellSorted.map(([tag, count]) => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success/5 px-2 py-0.5 text-xs text-ink"
+              >
+                {tag}
+                <span className="text-success/70">·{count}</span>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="border-t border-hairline pt-2 text-xs text-dim">
+        {reflections.length} reflection{reflections.length === 1 ? '' : 's'} recorded. Add #tags to your reflection answers to surface patterns.
       </div>
     </div>
   )

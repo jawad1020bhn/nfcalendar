@@ -19,7 +19,7 @@ import { SettingsDialog } from '@/components/tracker/settings-dialog'
 import { OnboardingDialog } from '@/components/tracker/onboarding-dialog'
 import { ReflectionDialog } from '@/components/tracker/reflection-dialog'
 import { TodayPanel } from '@/components/tracker/today-panel'
-import { useMilestoneWatcher, useKeyboardShortcuts } from '@/components/tracker/use-watchers'
+import { useMilestoneWatcher, useKeyboardShortcuts, useBackupReminder } from '@/components/tracker/use-watchers'
 import { useHydrated, useTrackerStore } from '@/lib/store'
 
 function AppInner() {
@@ -34,6 +34,7 @@ function AppInner() {
   // Run milestone & achievement watcher
   useMilestoneWatcher()
   useKeyboardShortcuts()
+  useBackupReminder()
 
   // Show onboarding on first visit
   React.useEffect(() => {
@@ -96,6 +97,7 @@ function AppInner() {
                 <kbd className="rounded border border-hairline px-1">N</kbd> note ·{' '}
                 <kbd className="rounded border border-hairline px-1">S</kbd> stats ·{' '}
                 <kbd className="rounded border border-hairline px-1">A</kbd> awards ·{' '}
+                <kbd className="rounded border border-hairline px-1">R</kbd> reflect ·{' '}
                 <kbd className="rounded border border-hairline px-1">/</kbd> notes ·{' '}
                 <kbd className="rounded border border-hairline px-1">⌘Z</kbd> retract
               </p>

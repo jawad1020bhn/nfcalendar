@@ -429,3 +429,80 @@ App is stable and mature after 3 rounds of development. All features working: ca
 4. **Notification API**: Browser notifications for daily check-in reminders (with user opt-in).
 5. **Data backup reminder**: Periodic toast reminding users to export their data.
 6. **Keyboard shortcut for reflection**: Add `R` key to open the reflection dialog.
+
+---
+Task ID: 13 (webDevReview cron — round 5)
+Agent: webDevReview
+Task: Reflection insights, keyboard shortcut R, backup reminder, reflections CSV, styling polish
+
+## Current Project Status Assessment
+App is stable and mature after 4 rounds. All features working: calendar with streak numbers + visualization lines + day detail hover, all dialogs (stats/achievements/notes/poster/breathing/urge/why/settings/onboarding/reflection), milestone celebration, weekly reflection, PWA service worker, store migration. No bugs or runtime errors. This round focused on reflection insights, keyboard shortcut R, data backup reminder, reflections CSV export, and styling polish.
+
+## QA Verification Results
+- Dev server: HTTP 200, no compile errors, no console errors/warnings
+- All previously-tested features still work
+- Lint: 0 errors, 2 warnings (in uploaded original app.js, not our code)
+
+## New Features Added
+
+### 1. Reflection Insights in Stats (stats-dialog.tsx)
+- New "Reflection Insights" section in the Stats dialog (after "Repeating Triggers")
+- Extracts #tags from reflection answers and shows frequency:
+  - **"What was hard — recurring tags"**: red-accented chips with counts (border-fail/30, bg-fail/5)
+  - **"What went well — recurring tags"**: green-accented chips with counts (border-success/30, bg-success/5)
+- Shows total reflection count + hint to add #tags
+- Empty state: "No reflections yet" message
+- New `ReflectionInsights` component with tag extraction logic
+- Verified: seeded 2 reflections with tags → "What was hard: #stress ·2, #boredom ·1, #insomnia ·1", "What went well: #meditated ·2, #workout ·1, #read ·1", "2 reflections recorded"
+
+### 2. Keyboard Shortcut 'R' for Reflection (use-watchers.ts + page.tsx)
+- Added `r`/`R` key handler to `useKeyboardShortcuts` → opens reflection dialog
+- Added `R` to the keyboard shortcuts legend in the footer (between A and /)
+- Verified: pressed R → Reflection dialog opened
+
+### 3. Data Backup Reminder (store.ts + use-watchers.ts + stats-dialog.tsx + settings-dialog.tsx)
+- Added `lastExportDate: string | null` to Settings type
+- Updated store defaults, migration path (v1→v2 adds lastExportDate: null)
+- Both Stats and Settings export handlers now call `setSettings({ lastExportDate: new Date().toISOString() })`
+- New `useBackupReminder` hook: checks on load if entries ≥ 7 AND (no lastExportDate OR last export > 30 days ago) → shows info toast after 3s
+  - Toast message: "Consider backing up your data" with description showing weeks since last export (or "not exported yet")
+  - 7-second duration
+- Wired into page.tsx alongside other watchers
+- Verified: seeded 10 entries with no export date → after 3s, toast "Consider backing up your data — You have not exported yet. Export via Stats → Archive"
+
+### 4. Reflections CSV Export (stats-dialog.tsx)
+- New `handleExportReflectionsCSV` function: exports all reflections as CSV with columns [weekStartDate, wentWell, wasHard, improve, createdAt]
+- Downloads as `daily-tracker-reflections-YYYY-MM-DD.csv`
+- New "Reflections (CSV)" action button in Stats dialog actions row (disabled when no reflections)
+- Empty state: toast.error "No reflections to export"
+- Verified: clicked "Reflections (CSV)" → toast "Reflections CSV exported"
+
+### 5. Store Settings Update
+- `lastExportDate` added to Settings type, initial state, and migration
+- `setSettings` action reused for updating lastExportDate on export
+
+## Styling Improvements
+
+### 1. Stat Card Hover Effects (stats-dialog.tsx)
+- StatCard now has `transition-all hover:border-rule hover:translate-y-[-1px] hover:shadow-[0_4px_12px_rgba(0,0,0,0.2)]`
+- Cards lift 1px on hover with a subtle shadow + border brightens
+- Creates a tactile, responsive feel across the 8-card grid
+
+### 2. Breathing Dialog Gradient Ring (breathing-dialog.tsx)
+- Outer ring upgraded from `border border-hairline` to `border-2` with dynamic color
+- When running: border becomes gold (`var(--gold)`) with glow (`boxShadow: 0 0 32px rgba(212,175,55,0.15)`)
+- When idle: border is hairline color, no glow
+- `transition-colors duration-500` for smooth state changes
+- Creates a clear visual distinction between active/inactive states
+
+## Unresolved Issues / Risks
+- The backup reminder fires 3s after load, which could overlap with the onboarding dialog on first visit. However, the reminder only fires when entries ≥ 7, so a new user won't see it until they have a week of data.
+- The Reflection Insights section only extracts #tags. If users don't tag their reflection answers, the section will show "No tags in your X answers yet." — this is expected and guides users to add tags.
+
+## Priority Recommendations for Next Phase
+1. **Calendar month navigation**: Add prev/next month buttons to jump between months instead of scrolling the whole year.
+2. **Notification API**: Browser notifications for daily check-in reminders (with user opt-in via Settings).
+3. **Reflection reminders setting**: Add a toggle in Settings to enable/disable the reflection due-reminder card.
+4. **Stats: mood/energy/sleep averages**: Add average mood/energy/sleep ratings to the Stats dialog.
+5. **Calendar: quick-add buttons**: Add quick "mark today clean" button in the TodayPanel for one-click logging.
+6. **Achievement progress**: Show progress toward the next achievement (e.g., "3/7 days to First Week").
