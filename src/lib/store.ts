@@ -1,5 +1,6 @@
 'use client'
 
+import * as React from 'react'
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { DayState, TAG_KEYWORD_MAP, AFFIRMATIONS } from './tracker/types'
@@ -203,7 +204,9 @@ export const useTrackerStore = create<TrackerState>()(
       name: 'daily-tracker-v1',
       storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state) => {
-        if (state) state.hydrated = true
+        if (state) {
+          state.hydrated = true
+        }
       },
       partialize: (s) => ({
         entries: s.entries,
@@ -219,7 +222,19 @@ export const useTrackerStore = create<TrackerState>()(
   ),
 )
 
-// Auto-escalate consecutive slips to relapse (two slips in a row = relapse on the 2nd)
+// Hook to know when the store has hydrated (safe for SSR)
+export const useHydrated = () => {
+  const [hydrated, setHydrated] = React.useState(false)
+  React.useEffect(() => {
+    // persist API: hasHydrated() becomes true after rehydration finishes
+    const unsub = useTrackerStore.persist.onFinishHydration(() => setHydrated(true))
+    // Already hydrated?
+    if (useTrackerStore.persist.hasHydrated()) setHydrated(true)
+    return () => unsub()
+  }, [])
+  return hydrated
+}
+
 export const escalateSlips = (entries: Entries): Entries => {
   const slipDates = Object.keys(entries)
     .filter((d) => entries[d] === 2)
