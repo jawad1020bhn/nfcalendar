@@ -1,0 +1,400 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-ui);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-ui);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-dim: var(--dim);
+  --color-hairline: var(--hairline);
+  --color-rule: var(--rule);
+  --color-success: var(--success);
+  --color-fail: var(--fail);
+  --color-slip: var(--slip);
+  --color-neutral: var(--neutral);
+  --color-today: var(--today);
+  --color-gold: var(--gold);
+  --color-ring: var(--ring);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* ============================================================================
+   ARCHIVAL DESIGN TOKENS — Dark is the default (paper-and-ink editorial)
+   ========================================================================== */
+:root {
+  --radius: 0.5rem;
+
+  /* Paper & ink */
+  --paper: #181716;
+  --ink: #EAE6DF;
+  --dim: #8A847C;
+  --hairline: #2A2927;
+  --rule: #3D3B38;
+
+  /* Day states */
+  --success: #205E41;
+  --success-ink: #EAE6DF;
+  --fail: #C9412F;
+  --fail-ink: #FFEDE9;
+  --slip: #C8772E;
+  --slip-ink: #FFEFD9;
+  --neutral: #221F1D;
+  --today: #EAE6DF;
+
+  /* Accents */
+  --gold: #D4AF37;
+  --mood: #4A90E2;
+  --energy: #D4783F;
+  --sleep: #9B7BC9;
+
+  /* shadcn bridge */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: #201F1D;
+  --card-foreground: var(--ink);
+  --popover: #201F1D;
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: #2A2826;
+  --secondary-foreground: var(--ink);
+  --muted: #242220;
+  --muted-foreground: var(--dim);
+  --accent: #2A2826;
+  --accent-foreground: var(--ink);
+  --destructive: #C9412F;
+  --border: var(--hairline);
+  --input: #2A2826;
+  --ring: #54514D;
+
+  /* Glass */
+  --glass-bg: rgba(24, 23, 22, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 10px 40px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Light — warm paper, charcoal ink */
+.light {
+  --paper: #EFECE5;
+  --ink: #1A1816;
+  --dim: #6A645B;
+  --hairline: #D6D2C9;
+  --rule: #B5B0A6;
+
+  --success: #1E5033;
+  --success-ink: #EAE6DF;
+  --fail: #B8331F;
+  --fail-ink: #FFEAE5;
+  --slip: #A25A1E;
+  --slip-ink: #2A1B0A;
+  --neutral: #E2DED5;
+  --today: #1A1816;
+
+  --gold: #B8860B;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: #FFFFFF;
+  --card-foreground: var(--ink);
+  --popover: #FFFFFF;
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: #E2DED5;
+  --secondary-foreground: var(--ink);
+  --muted: #E7E3DB;
+  --muted-foreground: var(--dim);
+  --accent: #E2DED5;
+  --accent-foreground: var(--ink);
+  --destructive: #B8331F;
+  --border: var(--hairline);
+  --input: #E2DED5;
+  --ring: #A8A39A;
+
+  --glass-bg: rgba(239, 236, 229, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-shadow: 0 10px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-paper text-ink;
+    font-family: var(--font-ui), system-ui, sans-serif;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  /* Refined scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--hairline);
+    border-radius: 6px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--rule);
+  }
+
+  /* Selection */
+  ::selection {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  /* Focus rings — subtle, on-brand */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+/* ============================================================================
+   Utility components — archival paper, hairlines, ornaments
+   ========================================================================== */
+@layer components {
+  /* Display serif for headings */
+  .font-display {
+    font-family: var(--font-display), Georgia, serif;
+  }
+
+  /* Subtle grain texture overlay (very faint) */
+  .grain-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9998;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.4' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Glass surface for floating navs and overlays */
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(40px) saturate(1.4);
+    -webkit-backdrop-filter: blur(40px) saturate(1.4);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+
+  /* Hairline rule with center ornament */
+  .rule-ornament {
+    position: relative;
+    height: 1px;
+    background: var(--hairline);
+  }
+  .rule-ornament::after {
+    content: "\2733"; /* six-pointed star */
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--paper);
+    color: var(--dim);
+    font-size: 0.7rem;
+    padding: 0 0.6rem;
+    line-height: 1;
+  }
+
+  /* Editorial small-caps label */
+  .label-caps {
+    font-family: var(--font-ui);
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--dim);
+  }
+
+  /* Day cell base — used in calendar grid */
+  .day-cell {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+      background-color 0.18s ease, box-shadow 0.18s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: var(--dim);
+    user-select: none;
+    border: 1px solid var(--hairline);
+    background: var(--neutral);
+  }
+  .day-cell:hover {
+    background: var(--hover, #2a2826);
+    transform: translateY(-1px);
+  }
+  .day-cell:active {
+    transform: scale(0.95);
+  }
+  .day-cell.is-today {
+    outline: 1.5px solid var(--ink);
+    outline-offset: -1.5px;
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .day-cell.is-clean {
+    background: var(--success);
+    color: var(--success-ink);
+    border-color: transparent;
+  }
+  .day-cell.is-slip {
+    background: var(--slip);
+    color: var(--slip-ink);
+    border-color: transparent;
+  }
+  .day-cell.is-relapse {
+    background: var(--fail);
+    color: var(--fail-ink);
+    border-color: transparent;
+  }
+  .day-cell.is-future {
+    opacity: 0.35;
+    cursor: default;
+  }
+  .day-cell.is-future:hover {
+    transform: none;
+  }
+  .day-cell.has-note::after {
+    content: "";
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.85;
+  }
+
+  /* Ornament characters (used sparingly) */
+  .ornament {
+    color: var(--dim);
+    line-height: 1;
+  }
+
+  /* Stat value — large serif numeral */
+  .stat-numeral {
+    font-family: var(--font-display), Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+  }
+}
+
+/* ============================================================================
+   Animations
+   ========================================================================== */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.animate-slide-in-right {
+  animation: slide-in-right 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+}
+.animate-breathe {
+  animation: breathe 4s ease-in-out infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(234, 230, 223, 0.35);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(234, 230, 223, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(234, 230, 223, 0);
+  }
+}
+.animate-pulse-ring {
+  animation: pulse-ring 2s cubic-bezier(0.66, 0, 0, 1) infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
