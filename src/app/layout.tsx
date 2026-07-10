@@ -59,7 +59,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${instrumentSerif.variable} ${epilogue.variable} antialiased bg-paper text-ink min-h-screen`}
+        className={`${instrumentSerif.variable} ${epilogue.variable} antialiased bg-paper text-ink`}
       >
         <ThemeProvider
           attribute="class"

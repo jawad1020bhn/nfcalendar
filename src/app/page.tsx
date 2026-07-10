@@ -55,7 +55,8 @@ function AppInner() {
   }, [onboardingComplete, defaultView])
 
   return (
-    <div className="grain-overlay" aria-hidden>
+    <>
+      <div className="grain-overlay" aria-hidden />
       <FloatNav />
       <MobileNav />
 
@@ -84,22 +85,31 @@ function AppInner() {
           </div>
 
           {/* Colophon footer */}
-          <footer className="mt-12 border-t border-hairline pt-6 pb-8 text-center">
-            <div className="mx-auto flex max-w-2xl flex-col items-center gap-2">
-              <div className="font-display text-xl italic text-dim">✦</div>
+          <footer className="mt-12 border-t border-hairline pt-8 pb-8 text-center">
+            <div className="mx-auto flex max-w-2xl flex-col items-center gap-3">
+              {/* Ornamental divider */}
+              <div className="flex w-full max-w-xs items-center gap-3">
+                <div className="h-px flex-1 bg-hairline" />
+                <span className="font-display text-lg italic text-dim">✦</span>
+                <div className="h-px flex-1 bg-hairline" />
+              </div>
               <p className="text-xs leading-relaxed text-dim">
                 All marks stay on this device. Tap a day to cycle: <span className="text-success">Clean</span> →{' '}
                 <span className="text-slip">Slip</span> → <span className="text-fail">Relapse</span>.
-                Double-tap (or press <kbd className="rounded border border-hairline px-1 text-[0.6rem]">N</kbd>) to leave a note.
+                Double-tap (or press <kbd className="rounded border border-hairline bg-card px-1.5 py-0.5 font-mono text-[0.6rem] text-ink">N</kbd>) to leave a note.
               </p>
               <p className="text-[0.65rem] text-dim/70">
-                Shortcuts: <kbd className="rounded border border-hairline px-1">T</kbd> today ·{' '}
-                <kbd className="rounded border border-hairline px-1">N</kbd> note ·{' '}
-                <kbd className="rounded border border-hairline px-1">S</kbd> stats ·{' '}
-                <kbd className="rounded border border-hairline px-1">A</kbd> awards ·{' '}
-                <kbd className="rounded border border-hairline px-1">R</kbd> reflect ·{' '}
-                <kbd className="rounded border border-hairline px-1">/</kbd> notes ·{' '}
-                <kbd className="rounded border border-hairline px-1">⌘Z</kbd> retract
+                Shortcuts:{' '}
+                <kbd className="rounded border border-hairline bg-card px-1.5 py-0.5 font-mono text-[0.6rem] text-ink">T</kbd> today ·{' '}
+                <kbd className="rounded border border-hairline bg-card px-1.5 py-0.5 font-mono text-[0.6rem] text-ink">N</kbd> note ·{' '}
+                <kbd className="rounded border border-hairline bg-card px-1.5 py-0.5 font-mono text-[0.6rem] text-ink">S</kbd> stats ·{' '}
+                <kbd className="rounded border border-hairline bg-card px-1.5 py-0.5 font-mono text-[0.6rem] text-ink">A</kbd> awards ·{' '}
+                <kbd className="rounded border border-hairline bg-card px-1.5 py-0.5 font-mono text-[0.6rem] text-ink">R</kbd> reflect ·{' '}
+                <kbd className="rounded border border-hairline bg-card px-1.5 py-0.5 font-mono text-[0.6rem] text-ink">/</kbd> notes ·{' '}
+                <kbd className="rounded border border-hairline bg-card px-1.5 py-0.5 font-mono text-[0.6rem] text-ink">⌘Z</kbd> retract
+              </p>
+              <p className="mt-2 font-display text-sm italic text-dim/60">
+                The Daily Tracker — a quiet record of staying
               </p>
             </div>
           </footer>
@@ -118,7 +128,7 @@ function AppInner() {
       <SettingsDialog />
       <OnboardingDialog />
       <ReflectionDialog />
-    </div>
+    </>
   )
 }
 

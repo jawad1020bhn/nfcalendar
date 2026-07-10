@@ -209,6 +209,9 @@ export function CalendarGrid({ onOpenNote }: Props) {
 
   return (
     <section aria-label="Calendar" className="relative">
+      {/* Month navigation bar */}
+      <MonthNav year={year} />
+
       <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {MONTHS.map((monthName, m) => {
           const daysInMonth = getDaysInMonth(m, year)
@@ -219,7 +222,12 @@ export function CalendarGrid({ onOpenNote }: Props) {
           while (cells.length % 7 !== 0) cells.push(null)
 
           return (
-            <div key={m} className="animate-fade-in-up" style={{ animationDelay: `${m * 30}ms` }}>
+            <div
+              key={m}
+              id={`month-${year}-${m}`}
+              className="scroll-mt-20 animate-fade-in-up"
+              style={{ animationDelay: `${m * 30}ms` }}
+            >
               <div className="mb-2 flex items-baseline justify-between border-b border-hairline pb-1.5">
                 <h3 className="font-display text-lg italic text-ink">{monthName}</h3>
                 <span className="label-caps">{daysInMonth}d</span>
@@ -395,6 +403,61 @@ export function CalendarGrid({ onOpenNote }: Props) {
         </div>
       )}
     </section>
+  )
+}
+
+// Month navigation bar — lets users jump to a specific month
+function MonthNav({ year }: { year: number }) {
+  const [activeMonth, setActiveMonth] = React.useState<number | null>(null)
+
+  const scrollToMonth = (m: number) => {
+    const el = document.getElementById(`month-${year}-${m}`)
+    if (el) {
+      const offset = 80 // offset for sticky nav + masthead
+      const top = el.getBoundingClientRect().top + window.scrollY - offset
+      window.scrollTo({ top, behavior: 'smooth' })
+      setActiveMonth(m)
+    }
+  }
+
+  // Detect which month is in view on scroll
+  React.useEffect(() => {
+    const handler = () => {
+      const months = MONTHS.map((_, m) => document.getElementById(`month-${year}-${m}`)).filter(Boolean)
+      const scrollY = window.scrollY + 120
+      let current = null
+      for (let i = 0; i < months.length; i++) {
+        const el = months[i]!
+        if (el.offsetTop <= scrollY) current = i
+      }
+      setActiveMonth(current)
+    }
+    window.addEventListener('scroll', handler, { passive: true })
+    handler()
+    return () => window.removeEventListener('scroll', handler)
+  }, [year])
+
+  return (
+    <div className="sticky top-0 z-30 mb-4 -mx-4 border-b border-hairline bg-paper/80 px-4 py-2 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <div className="flex items-center gap-1 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+        <span className="label-caps mr-2 shrink-0">Jump to</span>
+        {MONTHS.map((monthName, m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => scrollToMonth(m)}
+            className={cn(
+              'shrink-0 rounded-md px-2.5 py-1 text-[0.65rem] font-medium uppercase tracking-wider transition-colors',
+              activeMonth === m
+                ? 'bg-ink text-paper'
+                : 'text-dim hover:bg-white/5 hover:text-ink',
+            )}
+          >
+            {monthName.slice(0, 3)}
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }
 

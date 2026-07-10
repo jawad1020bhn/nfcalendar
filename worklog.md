@@ -652,3 +652,78 @@ App is stable and very mature after 6 rounds. All features working: calendar wit
 4. **Theme customizer**: Let users pick accent colors beyond the default archival palette.
 5. **Stats: time-windowed analysis**: Add a time range selector (all-time / last 90 days / last 30 days) to stats.
 6. **Note editor: rich text**: Support basic markdown (bold, italic) in notes.
+
+---
+Task ID: 16 (webDevReview cron — round 8)
+Agent: webDevReview
+Task: Calendar month navigation, critical scroll bug fix, footer/legend styling polish
+
+## Current Project Status Assessment
+App is stable and very mature after 7 rounds. All features working. This round focused on calendar month navigation, a critical scroll bug fix, and styling polish for the footer and legend.
+
+## QA Verification Results
+- Dev server: HTTP 200, no compile errors, no console errors/warnings
+- All previously-tested features still work
+- Lint: 0 errors, 2 warnings (in uploaded original app.js, not our code)
+
+## Critical Bug Fix
+
+### Grain Overlay Clipping Content (page.tsx + layout.tsx)
+**BUG**: The `grain-overlay` CSS class (which has `position: fixed; inset: 0`) was applied to the `<div>` that WRAPPED all app content, causing the entire app to be positioned fixed and clipped to the viewport. This meant the page couldn't scroll on mobile or when content exceeded the viewport height.
+
+**FIX**:
+1. Separated the grain texture into its own `<div className="grain-overlay" aria-hidden />` element (self-closing, pure overlay)
+2. Changed the app wrapper from `<div className="grain-overlay">` to a fragment `<>`
+3. Removed `min-h-screen` from the body className in layout.tsx (was setting a fixed height)
+
+**VERIFIED**:
+- Before: `scrollHeight: 844 = clientHeight: 844` (page couldn't scroll)
+- After: `scrollHeight: 5892, clientHeight: 844` (page scrolls naturally)
+- Month navigation scroll works: clicked JUL → `scrollY: 3300`, July at `top: 80px`
+- Desktop: `scrollHeight: 2169` (content flows correctly)
+
+This was a **critical** fix that affected all mobile users and anyone with content taller than their viewport.
+
+## New Features Added
+
+### 1. Calendar Month Navigation (calendar-grid.tsx)
+- New `MonthNav` component — a sticky bar at the top of the calendar with 12 month buttons (JAN-DEC)
+- Clicking a month smoothly scrolls to that month (with 80px offset for the sticky nav + masthead)
+- Active month is highlighted with `bg-ink text-paper` based on scroll position
+- Scroll detection via passive scroll listener
+- Each month div gets `id="month-{year}-{m}"` and `scroll-mt-20` for anchor offset
+- Sticky positioning with `backdrop-blur-md` and semi-transparent background
+- Horizontal scroll on mobile (overflow-x-auto) with hidden scrollbar
+- "Jump to" label prefix
+- Verified: clicked JUL → scrolled to July (scrollY: 3300, July top: 80px), JUL button active
+
+## Styling Improvements
+
+### 1. Footer Enhancement (page.tsx)
+- Added ornamental divider at the top: hairline + ✦ + hairline (max-w-xs)
+- Better `<kbd>` styling: `bg-card px-1.5 py-0.5 font-mono text-ink` (was border-only, dim)
+- Increased top padding to `pt-8` (was pt-6)
+- Added closing tagline: "The Daily Tracker — a quiet record of staying" in italic display font
+- Better spacing with `gap-3` (was gap-2)
+
+### 2. Legend Enhancement (legend.tsx)
+- Wrapped in a bordered card with `bg-card/50` background
+- Added "Legend" label prefix (hidden on mobile)
+- Each legend item now has:
+  - `hover:scale-105` transform
+  - `group-hover:shadow-[0_0_8px_currentColor]` on the color swatch (glow on hover)
+  - `group-hover:text-ink` on the label (brightens on hover)
+  - `title` attribute with description tooltip
+- Better spacing with `gap-x-4` (was gap-x-5)
+
+## Unresolved Issues / Risks
+- The month navigation active-month detection uses `offsetTop` which can be slightly inaccurate with complex layouts. The current implementation is "good enough" — it highlights the month whose top is closest to the scroll position.
+- The grain texture overlay is now a separate fixed element. If the z-index of other elements changes, it could appear above content. Currently `z-index: 9998` which is below dialogs (z-50) but above regular content.
+
+## Priority Recommendations for Next Phase
+1. **Stats time-window selector**: Add a time range selector (all-time / last 90 days / last 30 days) affecting key metrics.
+2. **Notification API**: Browser notifications for daily check-in reminders (with user opt-in via Settings).
+3. **Achievement details popover**: Click an achievement badge to see detailed requirements + progress.
+4. **Theme customizer**: Let users pick accent colors beyond the default archival palette.
+5. **Note editor: rich text**: Support basic markdown (bold, italic) in notes.
+6. **Calendar: week numbers**: Option to show ISO week numbers in the calendar grid.
