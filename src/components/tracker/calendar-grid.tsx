@@ -17,6 +17,7 @@ import {
   parseDateStr,
   dateKey,
   prettyDate,
+  addDaysToDateStr,
 } from '@/lib/tracker/dates'
 import { useTrackerUI } from './ui-context'
 import { cn } from '@/lib/utils'
@@ -269,6 +270,13 @@ export function CalendarGrid({ onOpenNote }: Props) {
                     streakDayNum > 0 &&
                     streakDayNum <= 99 &&
                     (state === 1 || state === 2)
+                  // Streak continuation: previous cell in the same week row is also clean/slip
+                  const cellIndex = firstDay + day - 1
+                  const colInRow = cellIndex % 7
+                  const prevDateStr = addDaysToDateStr(dStr, -1)
+                  const prevInStreak =
+                    prevDateStr && (entries[prevDateStr] === 1 || entries[prevDateStr] === 2)
+                  const streakContinues = colInRow > 0 && prevInStreak === true
                   return (
                     <button
                       key={i}
@@ -291,6 +299,7 @@ export function CalendarGrid({ onOpenNote }: Props) {
                         isToday && 'is-today',
                         isFuture && 'is-future',
                         hasNote && 'has-note',
+                        streakContinues && 'streak-continues',
                       )}
                     >
                       <span className="relative z-10">{day}</span>

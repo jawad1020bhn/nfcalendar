@@ -141,9 +141,12 @@ export function StatsDialog() {
     <Dialog open={isOpen} onOpenChange={(o) => !o && ui.setView({ kind: 'none' })}>
       <DialogContent className="max-h-[92vh] w-[95vw] overflow-y-auto border-hairline bg-paper p-0 sm:max-w-2xl">
         <DialogHeader className="border-b border-hairline px-6 pb-4 pt-5">
-          <DialogTitle className="font-display text-3xl italic text-ink">
-            Statistics
-          </DialogTitle>
+          <div className="flex items-center gap-3">
+            <span className="font-display text-2xl italic text-dim">✦</span>
+            <DialogTitle className="font-display text-3xl italic text-ink">
+              Statistics
+            </DialogTitle>
+          </div>
           <DialogDescription className="sr-only">
             Detailed analytics of your tracking history.
           </DialogDescription>

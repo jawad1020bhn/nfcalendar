@@ -2,21 +2,23 @@
 
 import * as React from 'react'
 import { Search, X, Plus } from 'lucide-react'
-import { useTrackerStore } from '@/lib/store'
+import { useTrackerStore, escalateSlips } from '@/lib/store'
 import { extractNoteTags } from '@/lib/tracker/stats'
 import { parseDateStr } from '@/lib/tracker/dates'
 import { MONTHS, DAYS_OF_WEEK } from '@/lib/tracker/types'
 import { useTrackerUI } from './ui-context'
+import { cn } from '@/lib/utils'
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { cn } from '@/lib/utils'
 
 export function NotesSidebar() {
   const notes = useTrackerStore((s) => s.notes)
+  const rawEntries = useTrackerStore((s) => s.entries)
+  const entries = React.useMemo(() => escalateSlips(rawEntries), [rawEntries])
   const ui = useTrackerUI()
 
   // lg breakpoint = 1024px. Desktop uses aside slide-in; mobile uses Sheet.
@@ -198,12 +200,22 @@ export function NotesSidebar() {
               const dayNum = d.getDate()
               const dow = DAYS_OF_WEEK[(d.getDay() + 6) % 7]
               const tags = extractNoteTags(text)
+              const dayState = entries[dateStr] ?? 0
+              const stateColor =
+                dayState === 1
+                  ? 'var(--success)'
+                  : dayState === 2
+                    ? 'var(--slip)'
+                    : dayState === 3
+                      ? 'var(--fail)'
+                      : null
               return (
                 <li key={dateStr}>
                   <button
                     type="button"
                     onClick={() => openNote(dateStr)}
-                    className="group block w-full rounded-lg border border-hairline bg-card p-3 text-left transition-colors hover:border-rule"
+                    className="note-card group block w-full rounded-lg border border-hairline bg-card p-3 text-left transition-all hover:border-rule hover:translate-x-[-2px]"
+                    style={stateColor ? { borderLeft: `3px solid ${stateColor}` } : undefined}
                   >
                     <div className="mb-1 flex items-baseline justify-between">
                       <span className="font-display text-sm italic text-ink">
@@ -219,7 +231,7 @@ export function NotesSidebar() {
                         {tags.map((t) => (
                           <span
                             key={t}
-                            className="inline-flex items-center gap-0.5 rounded-full bg-hairline px-1.5 py-0.5 text-[0.6rem] text-dim"
+                            className="inline-flex items-center gap-0.5 rounded-full border border-hairline bg-paper/50 px-1.5 py-0.5 text-[0.6rem] text-dim transition-colors group-hover:border-rule group-hover:text-ink"
                           >
                             {t}
                           </span>

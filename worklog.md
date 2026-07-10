@@ -346,3 +346,86 @@ Features:
 4. **Stats: reflection insights**: Add a section in Stats showing reflection sentiment trends (e.g., "Your 'what was hard' answers most often mention #Stress").
 5. **Calendar: streak visualization**: Add a subtle connecting line/gradient between consecutive clean days in the calendar grid.
 6. **Export: include reflections in CSV**: Currently CSV only exports day entries; could add a reflections CSV.
+
+---
+Task ID: 12 (webDevReview cron — round 4)
+Agent: webDevReview
+Task: PWA service worker, streak visualization, store migration, styling polish
+
+## Current Project Status Assessment
+App is stable and mature after 3 rounds of development. All features working: calendar with streak numbers + day detail hover tooltip, all dialogs (stats/achievements/notes/poster/breathing/urge/why/settings/onboarding/reflection), milestone celebration animation, weekly reflection, export/import with settings+reflections. No bugs or runtime errors. This round focused on PWA support, streak visualization, data migration, and styling polish.
+
+## QA Verification Results
+- Dev server: HTTP 200, no compile errors, no console errors/warnings
+- All previously-tested features still work
+- Lint: 0 errors, 2 warnings (in uploaded original app.js, not our code)
+
+## New Features Added
+
+### 1. PWA Service Worker (public/sw.js + service-worker-register.tsx + layout.tsx)
+- Created `public/sw.js`: a service worker with:
+  - **Install**: pre-caches app shell (`/`, `/manifest.webmanifest`)
+  - **Activate**: cleans old cache versions, claims clients
+  - **Fetch strategy**: network-first for navigation requests (falls back to cache), cache-first for static assets
+- Created `ServiceWorkerRegister` client component: registers SW in production only (avoids dev-time caching issues)
+- Wired into `layout.tsx` alongside ThemeProvider + Toaster
+- Verified: SW file accessible at `/sw.js` (HTTP 200), manifest at `/manifest.webmanifest` (HTTP 200)
+- App is now installable and works offline (after first visit caches the shell)
+
+### 2. Streak Visualization Line (calendar-grid.tsx + globals.css)
+- Added `streakContinues` flag to each calendar day cell: true when the previous day (in the same week row) is also clean/slip
+- Computes `colInRow` from `firstDay + day - 1` to detect row boundaries (no connector across week breaks)
+- Uses `addDaysToDateStr(dStr, -1)` to check the previous calendar day's state
+- Added `streak-continues` CSS class to day cells
+- CSS `.day-cell.streak-continues::before` renders a 5px-wide connector bar at `left: -5px`, vertically centered, 60% height
+- Color matches state: green (success), orange (slip), red (relapse)
+- Moved the CSS outside `@layer components` to a plain block to ensure Tailwind v4 includes it (the `@layer components` version was being purged)
+- Verified: 5 consecutive clean days → 4 cells get `streak-continues` class, `::before` renders with `content: ""`, `width: 5px`, `background: rgb(32, 94, 65)` (success green)
+
+### 3. Store Version + Migration Path (store.ts)
+- Added `version: 2` to the persist config
+- Added `migrate` function that handles:
+  - v0 → v1: ensures `settings` object exists with defaults
+  - v1 → v2: ensures `reflections` array exists
+- Future schema changes can add v2 → v3 etc. migrations
+- Verified: store now persists with `version: 2` in localStorage
+
+### 4. Store Version in Export
+- Export version bumped to 2 (was already done in round 3, confirmed here)
+- Export includes `settings` and `reflections`
+
+## Styling Improvements
+
+### 1. Notes Sidebar State Accent (notes-sidebar.tsx)
+- Each note card now has a 3px left border colored by the day's state:
+  - Clean → green (`var(--success)`)
+  - Slip → orange (`var(--slip)`)
+  - Relapse → red (`var(--fail)`)
+  - Unmarked → no accent (default border)
+- Added `hover:translate-x-[-2px]` for a subtle left-shift on hover
+- Added `note-card` class for future styling hooks
+- Verified: July 9 (relapse) has red border, July 8 (clean) has green border
+
+### 2. Notes Sidebar Tag Chips (notes-sidebar.tsx)
+- Tag chips upgraded from flat `bg-hairline` to `border border-hairline bg-paper/50`
+- Added `transition-colors group-hover:border-rule group-hover:text-ink` — chips brighten when the parent note card is hovered
+- Creates a cohesive hover state where the whole card + tags respond together
+
+### 3. Dialog Header Ornaments (stats-dialog.tsx + achievements-dialog.tsx)
+- Added a decorative `✦` medallion (font-display text-2xl italic text-dim) next to the dialog title
+- Applied to both Statistics and Achievements dialogs
+- Creates a consistent editorial flourish across dialogs
+- Verified: Stats dialog ornament present (`ornament: YES`)
+
+## Unresolved Issues / Risks
+- The service worker only registers in production (`process.env.NODE_ENV === 'production'`), so it won't be active during dev. This is intentional to avoid dev-time caching issues, but means PWA features (offline, installability) only work in the deployed build.
+- The streak continuation line only connects within a week row (Mon-Sun). Streaks that span across weeks won't have a connector at the row break — this is a reasonable visual limitation since the grid layout breaks there anyway.
+- The `streak-continues` CSS had to be moved outside `@layer components` because Tailwind v4's layer processing was purging it. This is a known quirk — custom component classes that use pseudo-elements may need to be outside layers.
+
+## Priority Recommendations for Next Phase
+1. **Reflection insights in Stats**: Add a section showing reflection sentiment trends (e.g., most common tags in "what was hard" answers).
+2. **CSV export for reflections**: Currently CSV only exports day entries; add a reflections CSV export.
+3. **Calendar month navigation**: Add prev/next month buttons to jump between months instead of scrolling the whole year.
+4. **Notification API**: Browser notifications for daily check-in reminders (with user opt-in).
+5. **Data backup reminder**: Periodic toast reminding users to export their data.
+6. **Keyboard shortcut for reflection**: Add `R` key to open the reflection dialog.

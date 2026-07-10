@@ -389,6 +389,28 @@
 }
 
 /* ============================================================================
+   Streak continuation line (outside layer to ensure inclusion)
+   ========================================================================== */
+.day-cell.streak-continues::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 5px;
+  height: 60%;
+  background: var(--success);
+  z-index: 0;
+  pointer-events: none;
+}
+.day-cell.streak-continues.is-slip::before {
+  background: var(--slip);
+}
+.day-cell.streak-continues.is-relapse::before {
+  background: var(--fail);
+}
+
+/* ============================================================================
    Animations
    ========================================================================== */
 @keyframes fade-in-up {

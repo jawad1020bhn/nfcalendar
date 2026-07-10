@@ -275,6 +275,26 @@ export const useTrackerStore = create<TrackerState>()(
         settings: s.settings,
         reflections: s.reflections,
       }),
+      version: 2,
+      migrate: (persisted: any, version: number) => {
+        // Migration path for future schema changes
+        if (!persisted) return persisted
+        // v0 → v1: ensure settings object exists
+        if (version < 1) {
+          persisted.settings = persisted.settings || {
+            showStreakNumbers: true,
+            showMilestoneToast: true,
+            showAchievementToast: true,
+            defaultView: 'today',
+            onboardingComplete: false,
+          }
+        }
+        // v1 → v2: ensure reflections array exists
+        if (version < 2) {
+          persisted.reflections = persisted.reflections || []
+        }
+        return persisted
+      },
     },
   ),
 )
