@@ -856,3 +856,87 @@ App is stable and very mature after 9 rounds. All features working: calendar wit
 4. **Stats: export chart as image**: Let users export the sparkline/heatmap as a PNG.
 5. **Note: clickable tags in sidebar**: Make #tags in rendered notes clickable to filter.
 6. **Calendar: drag-to-mark**: Allow clicking and dragging across multiple days to mark them all.
+
+---
+Task ID: 19 (webDevReview cron — round 11 — COMPLETE REDESIGN)
+Agent: webDevReview
+Task: Complete Material 3 redesign — native mobile app feel
+
+## Current Project Status Assessment
+The user requested a complete redesign from scratch using Material 3 (M3) design language, optimized for mobile to look like a native phone app. This was a major departure from the previous archival/editorial dark aesthetic. All domain logic (store, stats, dates, types, markdown) was preserved; the entire UI layer was rewritten.
+
+## What Changed
+- **App name**: "The Daily Tracker" → "Steady"
+- **Design system**: Archival editorial → Material 3 (Google's design language)
+- **Fonts**: Instrument Serif + Epilogue → Fraunces (display, characterful serif with optical sizing) + Figtree (UI, geometric modern)
+- **Color**: Paper #181716 + ink → M3 dark scheme with forest-green primary (#6ED69E), warm amber tertiary (#FFB86B), tonal surfaces
+- **Layout**: Desktop-first 12-month grid → Mobile-first view-based navigation (Today / Calendar / Stats / More)
+- **Navigation**: Float nav + mobile bottom nav → M3 NavigationBar (4 destinations with pill indicators)
+- **Dialogs**: Centered modals → M3 bottom sheets (slide up with drag handle)
+- **Calendar**: Full-year 12-month grid → Single month view with prev/next navigation (native feel)
+- **Primary action**: "Log today" button → M3 FAB (Floating Action Button)
+
+## New Architecture
+
+### Design Tokens (globals.css)
+- Complete M3 color system: primary/secondary/tertiary/error with container variants
+- Tonal elevation shadows (elev-1/2/3)
+- Shape scale: xs(4px) → sm(8px) → md(12px) → lg(16px) → xl(28px) → full(9999px)
+- State layers (hover 8% / active 12% overlays)
+- M3 component classes: m3-card, m3-btn-filled, m3-btn-outlined, m3-btn-text, m3-fab, m3-chip, m3-segmented, m3-nav-bar, m3-progress-track
+- Dark (default) + Light schemes
+- M3 motion: spring-like easing, slide-up, fade-scale, stagger, breathe, pulse-ring, number-pop
+
+### Components
+1. **app-ui-context.tsx** — View state (today/calendar/stats/more) + sheet state (note/achievements/breathing/etc.)
+2. **bottom-nav.tsx** — M3 NavigationBar with 4 destinations + QuickAddFAB
+3. **today-view.tsx** — Streak hero card, 90-day rewiring progress, reflection prompt, quick mark buttons, affirmation, metrics, tools, level
+4. **calendar-view.tsx** — Month grid with prev/next, large circular day cells, tap to cycle, double-tap for note, long-press for context menu, streak day numbers, milestone Roman numerals, legend
+5. **stats-view.tsx** — Time-window selector (All/90D/30D), days-since-relapse hero, 8-card stat grid, wellbeing averages, velocity, risk score, danger days, best day of week, reflection insights, action buttons
+6. **more-view.tsx** — Menu list with icons + descriptions (Achievements, Notes, Reflect, Breathe, Urge, Why, Poster, Settings, Theme toggle)
+7. **sheet-manager.tsx** — Routes sheet views to the correct component
+8. **sheets/note-sheet.tsx** — Date header, ratings, quick tags, textarea with autocomplete, markdown hint, suggested tags, templates, word count
+9. **sheets/achievements-sheet.tsx** — Level crest, 5 tier sections, clickable badges with expandable hints
+10. **sheets/breathing-sheet.tsx** — Pulsing circle with gradient, phase indicators, cycle counter
+11. **sheets/urge-sheet.tsx** — Progress ring with glow, pulsing wave, affirmation, tips
+12. **sheets/why-sheet.tsx** — Textarea to save personal reason
+13. **sheets/poster-sheet.tsx** — Theme-aware preview, composition toggles, canvas PNG generation
+14. **sheets/settings-sheet.tsx** — Display/Notifications/Data/About sections with M3 toggle switches
+15. **sheets/reflection-sheet.tsx** — 3 questions, past reflections history
+16. **sheets/notes-list-sheet.tsx** — Search, tag filter, markdown-rendered note cards with state accent
+
+### Preserved Domain Logic
+- store.ts (Zustand + localStorage, all actions, settings, reflections, migration)
+- tracker/types.ts (achievements, milestones, levels, tags, affirmations)
+- tracker/dates.ts (all date helpers)
+- tracker/stats.ts (all stat calculations + achievement detection)
+- tracker/markdown.ts (note markdown rendering)
+
+## QA Verification Results
+- Dev server: HTTP 200, no compile errors, no console errors
+- Lint: 0 errors (2 pre-existing warnings in uploaded original)
+- All 4 views render correctly (Today, Calendar, Stats, More)
+- Calendar day tap → marks clean → persists to localStorage
+- FAB → opens note sheet with date header + ratings + textarea
+- All sheets open correctly from More menu (Achievements, Settings, Breathing tested)
+- VLM analysis: 8/10 design quality, "highly mobile-optimized", "looks like a native Android app"
+
+## VLM Feedback
+- "Clean, cohesive dark theme; clear hierarchy; intuitive navigation; mobile-first layout"
+- "Touch targets are large enough for easy tapping"
+- "Looks like a native Android app (Material 3)"
+- "Strong example of a mobile app UI"
+- Suggestions: More vibrant accent on reflection card, more visual differentiation on stats
+
+## Unresolved Issues / Risks
+- The onboarding flow was auto-completed (marked complete) to avoid showing the old onboarding which references the old design. A new M3-styled onboarding could be built in a future round.
+- The calendar uses a 300ms tap delay for double-tap detection. This is standard for mobile but synthetic test clicks need to account for it.
+- The poster canvas generation uses `roundRect` which may not be available in all browsers (but is in modern Chrome/Firefox/Safari).
+
+## Priority Recommendations for Next Phase
+1. **M3 onboarding flow**: Build a new onboarding matching the Material 3 design.
+2. **Swipe gestures**: Add swipe-left/right to navigate between months in calendar.
+3. **Pull-to-refresh**: Native pull-to-refresh on the Today view.
+4. **Haptic feedback**: Use navigator.vibrate on button presses for native feel.
+5. **Dynamic color**: Implement Material You dynamic color from a user-picked seed.
+6. **Widget**: Add a home screen widget showing the current streak (PWA).

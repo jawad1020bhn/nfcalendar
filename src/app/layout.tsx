@@ -1,19 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Instrument_Serif, Epilogue } from "next/font/google";
+import { Fraunces, Figtree } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
 
-const instrumentSerif = Instrument_Serif({
+const fraunces = Fraunces({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["400"],
+  weight: ["300", "400", "500", "600"],
   style: ["normal", "italic"],
   display: "swap",
 });
 
-const epilogue = Epilogue({
+const figtree = Figtree({
   variable: "--font-ui",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
@@ -21,34 +21,20 @@ const epilogue = Epilogue({
 });
 
 export const metadata: Metadata = {
-  title: "The Daily Tracker — A quiet record of staying",
-  description:
-    "A beautiful archival daily tracker. Color-code every day, journal margin notes, and watch your streak grow.",
-  keywords: [
-    "nofap",
-    "tracker",
-    "streak",
-    "habit",
-    "journal",
-    "self-improvement",
-  ],
-  authors: [{ name: "The Daily Tracker" }],
-  icons: {
-    icon: [
-      {
-        url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23181716'/%3E%3Ccircle cx='50' cy='50' r='28' fill='none' stroke='%23EAE6DF' stroke-width='4'/%3E%3C/svg%3E",
-        type: "image/svg+xml",
-      },
-    ],
-  },
+  title: "Steady — Track your streak",
+  description: "A calm, native-feeling streak tracker. Mark each day, journal notes, and grow.",
+  keywords: ["nofap", "tracker", "streak", "habit", "journal", "self-improvement"],
+  authors: [{ name: "Steady" }],
   manifest: "/manifest.webmanifest",
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
-  themeColor: "#181716",
+  themeColor: "#0E1512",
 };
 
 export default function RootLayout({
@@ -59,7 +45,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${instrumentSerif.variable} ${epilogue.variable} antialiased bg-paper text-ink`}
+        className={`${fraunces.variable} ${figtree.variable} antialiased bg-background text-foreground`}
       >
         <ThemeProvider
           attribute="class"

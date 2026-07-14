@@ -1,156 +1,98 @@
 'use client'
 
 import * as React from 'react'
-import { TrackerUIProvider, useTrackerUI } from '@/components/tracker/ui-context'
-import { FloatNav } from '@/components/tracker/float-nav'
-import { MobileNav } from '@/components/tracker/mobile-nav'
-import { Masthead } from '@/components/tracker/masthead'
-import { Legend } from '@/components/tracker/legend'
-import { CalendarGrid } from '@/components/tracker/calendar-grid'
-import { NotesSidebar } from '@/components/tracker/notes-sidebar'
-import { NoteModal } from '@/components/tracker/note-modal'
-import { StatsDialog } from '@/components/tracker/stats-dialog'
-import { AchievementsDialog } from '@/components/tracker/achievements-dialog'
-import { PosterDialog } from '@/components/tracker/poster-dialog'
-import { BreathingDialog } from '@/components/tracker/breathing-dialog'
-import { UrgeSurfingDialog } from '@/components/tracker/urge-surfing-dialog'
-import { WhyStartedDialog } from '@/components/tracker/why-started-dialog'
-import { SettingsDialog } from '@/components/tracker/settings-dialog'
-import { OnboardingDialog } from '@/components/tracker/onboarding-dialog'
-import { ReflectionDialog } from '@/components/tracker/reflection-dialog'
-import { TodayPanel } from '@/components/tracker/today-panel'
+import { AppUIProvider, useAppUI } from '@/components/tracker/app-ui-context'
+import { BottomNav, QuickAddFAB } from '@/components/tracker/bottom-nav'
+import { TodayView } from '@/components/tracker/today-view'
+import { CalendarView } from '@/components/tracker/calendar-view'
+import { StatsView } from '@/components/tracker/stats-view'
+import { MoreView } from '@/components/tracker/more-view'
+import { SheetManager } from '@/components/tracker/sheet-manager'
 import { useMilestoneWatcher, useKeyboardShortcuts, useBackupReminder } from '@/components/tracker/use-watchers'
 import { useHydrated, useTrackerStore } from '@/lib/store'
+import { getTodayStr } from '@/lib/tracker/dates'
 
 function AppInner() {
-  const ui = useTrackerUI()
-  const notesOpen = ui.notesListOpen
+  const { view, openNote, setView } = useAppUI()
   const onboardingComplete = useTrackerStore((s) => s.settings.onboardingComplete)
   const defaultView = useTrackerStore((s) => s.settings.defaultView)
-  const calendarRef = React.useRef<HTMLDivElement | null>(null)
-  const [mounted, setMounted] = React.useState(false)
-  React.useEffect(() => setMounted(true), [])
+  const [loaded, setLoaded] = React.useState(false)
 
-  // Run milestone & achievement watcher
   useMilestoneWatcher()
   useKeyboardShortcuts()
   useBackupReminder()
 
+  // Set default view on first load
+  React.useEffect(() => {
+    if (!loaded) {
+      setView(defaultView)
+      setLoaded(true)
+    }
+  }, [defaultView, loaded, setView])
+
   // Show onboarding on first visit
   React.useEffect(() => {
     if (!onboardingComplete) {
-      const t = setTimeout(() => ui.openOnboarding(), 600)
-      return () => clearTimeout(t)
+      // For the redesign, mark onboarding complete by default to avoid showing old onboarding
+      useTrackerStore.getState().completeOnboarding()
     }
   }, [onboardingComplete])
 
-  // Scroll to calendar on first load if defaultView is 'calendar'
-  React.useEffect(() => {
-    if (onboardingComplete && defaultView === 'calendar') {
-      const t = setTimeout(() => {
-        calendarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 800)
-      return () => clearTimeout(t)
-    }
-  }, [onboardingComplete, defaultView])
-
   return (
-    <>
-      <div className="grain-overlay" aria-hidden />
-      <FloatNav />
-      <MobileNav />
-
-      <div className="mx-auto flex min-h-screen w-full max-w-[1400px] flex-col px-4 pb-24 pt-4 sm:px-6 lg:pb-8 lg:pl-8 lg:pr-[24px]">
-        <main className="flex-1">
-          {/* Today panel + affirmation */}
-          <div className="mb-6 mt-12 lg:mt-4">
-            <TodayPanel />
-          </div>
-
-          {/* Masthead */}
-          <Masthead />
-
-          {/* Legend */}
-          <Legend />
-
-          {/* Calendar */}
-          <div
-            ref={calendarRef}
-            className="mt-2 transition-[padding] duration-500"
-            style={{
-              paddingRight: notesOpen ? '340px' : '0',
-            }}
-          >
-            <CalendarGrid onOpenNote={ui.openNote} />
-          </div>
-
-          {/* Colophon footer */}
-          <footer className="mt-12 border-t border-hairline pt-8 pb-8 text-center">
-            <div className="mx-auto flex max-w-2xl flex-col items-center gap-3">
-              {/* Ornamental divider */}
-              <div className="flex w-full max-w-xs items-center gap-3">
-                <div className="h-px flex-1 bg-hairline" />
-                <span className="font-display text-lg italic text-dim">✦</span>
-                <div className="h-px flex-1 bg-hairline" />
-              </div>
-              <p className="text-xs leading-relaxed text-dim">
-                All marks stay on this device. Tap a day to cycle: <span className="text-success">Clean</span> →{' '}
-                <span className="text-slip">Slip</span> → <span className="text-fail">Relapse</span>.
-                Double-tap (or press <kbd className="rounded border border-hairline bg-card px-1.5 py-0.5 font-mono text-[0.6rem] text-ink">N</kbd>) to leave a note.
-              </p>
-              <p className="text-[0.65rem] text-dim/70">
-                Shortcuts:{' '}
-                <kbd className="rounded border border-hairline bg-card px-1.5 py-0.5 font-mono text-[0.6rem] text-ink">T</kbd> today ·{' '}
-                <kbd className="rounded border border-hairline bg-card px-1.5 py-0.5 font-mono text-[0.6rem] text-ink">N</kbd> note ·{' '}
-                <kbd className="rounded border border-hairline bg-card px-1.5 py-0.5 font-mono text-[0.6rem] text-ink">S</kbd> stats ·{' '}
-                <kbd className="rounded border border-hairline bg-card px-1.5 py-0.5 font-mono text-[0.6rem] text-ink">A</kbd> awards ·{' '}
-                <kbd className="rounded border border-hairline bg-card px-1.5 py-0.5 font-mono text-[0.6rem] text-ink">R</kbd> reflect ·{' '}
-                <kbd className="rounded border border-hairline bg-card px-1.5 py-0.5 font-mono text-[0.6rem] text-ink">/</kbd> notes ·{' '}
-                <kbd className="rounded border border-hairline bg-card px-1.5 py-0.5 font-mono text-[0.6rem] text-ink">⌘Z</kbd> retract
-              </p>
-              <p className="mt-2 font-display text-sm italic text-dim/60">
-                The Daily Tracker — a quiet record of staying
-              </p>
+    <div className="min-h-screen bg-background">
+      {/* Top app bar */}
+      <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-md">
+        <div className="flex items-center justify-between px-4 py-3 pb-2">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
+              <span className="font-display text-sm font-bold text-on-primary">S</span>
             </div>
-          </footer>
-        </main>
-      </div>
+            <span className="font-display text-lg italic text-on-surface">Steady</span>
+          </div>
+          <span className="text-[0.6rem] uppercase tracking-wider text-on-surface-variant">
+            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+          </span>
+        </div>
+      </header>
 
-      {/* Overlays & panels */}
-      <NotesSidebar />
-      <NoteModal />
-      <StatsDialog />
-      <AchievementsDialog />
-      <PosterDialog />
-      <BreathingDialog />
-      <UrgeSurfingDialog />
-      <WhyStartedDialog />
-      <SettingsDialog />
-      <OnboardingDialog />
-      <ReflectionDialog />
-    </>
+      {/* View content */}
+      <main className="pb-32">
+        {view === 'today' && <TodayView />}
+        {view === 'calendar' && <CalendarView />}
+        {view === 'stats' && <StatsView />}
+        {view === 'more' && <MoreView />}
+      </main>
+
+      {/* FAB — only on today and calendar views */}
+      {(view === 'today' || view === 'calendar') && (
+        <QuickAddFAB onClick={() => openNote(getTodayStr())} />
+      )}
+
+      {/* Bottom navigation */}
+      <BottomNav />
+
+      {/* All sheets */}
+      <SheetManager />
+    </div>
   )
 }
 
 export default function Home() {
-  return (
-    <TrackerUIProvider>
-      <HydrationGate>
-        <AppInner />
-      </HydrationGate>
-    </TrackerUIProvider>
-  )
-}
-
-// Gate to avoid hydration mismatch from persisted store
-function HydrationGate({ children }: { children: React.ReactNode }) {
   const hydrated = useHydrated()
   if (!hydrated) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="font-display text-2xl italic text-dim animate-pulse">✦</div>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary animate-m3-pulse-ring">
+            <span className="font-display text-lg font-bold text-on-primary">S</span>
+          </div>
+        </div>
       </div>
     )
   }
-  return <>{children}</>
+  return (
+    <AppUIProvider>
+      <AppInner />
+    </AppUIProvider>
+  )
 }
