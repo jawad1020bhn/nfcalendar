@@ -9,10 +9,12 @@ import { StatsView } from '@/components/tracker/stats-view'
 import { MoreView } from '@/components/tracker/more-view'
 import { SheetManager } from '@/components/tracker/sheet-manager'
 import { useMilestoneWatcher, useKeyboardShortcuts, useBackupReminder } from '@/components/tracker/use-watchers'
+import { useInstallPrompt } from '@/components/tracker/use-install-prompt'
 import { useHydrated, useTrackerStore } from '@/lib/store'
 import { getTodayStr } from '@/lib/tracker/dates'
 import { generatePalette, applyPalette, resetPalette } from '@/lib/tracker/dynamic-color'
 import { cn } from '@/lib/utils'
+import { Download, X } from 'lucide-react'
 
 function AppInner() {
   const { view, openNote, setView } = useAppUI()
@@ -24,6 +26,8 @@ function AppInner() {
   useMilestoneWatcher()
   useKeyboardShortcuts()
   useBackupReminder()
+
+  const { showPrompt: showInstallPrompt, promptInstall, dismiss: dismissInstall } = useInstallPrompt()
 
   // Apply dynamic color palette on load and when seed changes
   React.useEffect(() => {
@@ -101,6 +105,44 @@ function AppInner() {
 
       <BottomNav />
       <SheetManager />
+
+      {/* M3 Install prompt — snackbar style */}
+      {showInstallPrompt && (
+        <div
+          className="fixed inset-x-4 z-50 animate-m3-slide-up"
+          style={{ bottom: 'calc(96px + env(safe-area-inset-bottom))' }}
+        >
+          <div
+            className="m3-card flex items-center gap-3 p-3"
+            style={{ background: 'var(--surface-container-high)', boxShadow: 'var(--elev-3)' }}
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--primary-container)' }}>
+              <Download className="h-5 w-5" style={{ color: 'var(--on-primary-container)' }} />
+            </div>
+            <div className="flex-1">
+              <p className="m3-body-medium text-on-surface">Install Steady</p>
+              <p className="m3-body-small text-on-surface-variant">Add to your home screen for a native app experience</p>
+            </div>
+            <button
+              type="button"
+              onClick={promptInstall}
+              className="m3-pill-btn m3-pill-btn-filled"
+              style={{ minHeight: '36px', padding: '0 1rem', fontSize: '0.8rem' }}
+            >
+              Install
+            </button>
+            <button
+              type="button"
+              onClick={dismissInstall}
+              className="m3-icon-btn"
+              style={{ minHeight: '36px', minWidth: '36px' }}
+              aria-label="Dismiss"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

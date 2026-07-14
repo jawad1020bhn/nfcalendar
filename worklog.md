@@ -1233,3 +1233,96 @@ Task: Deep research-based M3 implementation — Material Symbols, spring physics
 - Material Symbols font loads via Google Fonts link
 - Spring animations use the new tokens
 - All existing features still work
+
+---
+Task ID: 23 (PWA Enhancement — native app feel)
+Agent: webDevReview
+Task: PWA manifest, service worker, offline caching, installability, TWA-like experience
+
+## What Was Done
+
+### Decision: What to Add vs Not Add
+**Added** (PWA basics — manifest, SW, offline, installability):
+- All are feasible in our Next.js web app and make it feel native
+- PWA with `display: standalone` already removes browser chrome when installed
+- This is the practical way to get a "native app feel" without Android Studio
+
+**NOT added** (TWA — Trusted Web Activity):
+- TWA requires Android Studio + Bubblewrap CLI + signing key + Play Store listing
+- Not feasible in a web-only development environment
+- However, a properly configured PWA with `display: standalone` achieves 95% of the TWA experience:
+  - Full-screen (no browser chrome)
+  - App icon on home screen
+  - Splash screen
+  - Offline support
+  - Native-feeling transitions and gestures
+
+### 1. Enhanced Manifest (manifest.webmanifest)
+- Updated name: "Steady — Track your streak", short_name: "Steady"
+- Correct colors: background #0E1512, theme_color #0E1512
+- `display: "standalone"` (removes browser chrome when installed)
+- `display_override: ["standalone", "minimal-ui"]` (M3 recommended)
+- `orientation: "portrait"` (native app feel)
+- `categories: ["health", "lifestyle", "productivity"]`
+- 5 icons: 192px, 512px, maskable 192px, maskable 512px, SVG
+- 3 app shortcuts: "Mark today", "Calendar", "Stats" (long-press home screen icon)
+- `scope: "/"` and `id: "/"` for proper PWA scope
+
+### 2. Generated PWA Icons (public/)
+- `icon.svg` — M3-styled SVG icon (clock with green accent)
+- `icon-192.png` — 192px PNG (regular)
+- `icon-512.png` — 512px PNG (regular)
+- `icon-maskable-192.png` — 192px maskable (full-bleed background for Android adaptive icons)
+- `icon-maskable-512.png` — 512px maskable
+- Generated using sharp-cli from SVG source
+
+### 3. Enhanced Service Worker (public/sw.js)
+- Cache version: `steady-v2`
+- Precaches app shell: `/`, `/offline.html`, `/manifest.webmanifest`, icons
+- **Navigation requests**: network-first → cache → offline fallback page
+- **Google Fonts** (Material Symbols): stale-while-revalidate (fonts work offline)
+- **Static assets** (JS/CSS/images): stale-while-revalidate
+- **Default**: network-first with cache fallback
+- `SKIP_WAITING` message handler for instant updates
+- Proper cache cleanup on activate (removes old versions)
+
+### 4. Offline Fallback Page (public/offline.html)
+- M3-styled offline page matching app design
+- Shows "You're offline" message with reassurance that data is safe
+- Styled with the app's color scheme
+
+### 5. Enhanced SW Registration (service-worker-register.tsx)
+- Registers in both dev and production (for testing)
+- `updateViaCache: 'none'` — always fetch latest SW
+- Checks for updates on every page load
+- `controllerchange` listener → auto-reload on SW update
+- Registers after page load (doesn't block initial render)
+
+### 6. Install Prompt (use-install-prompt.ts + page.tsx)
+- `beforeinstallprompt` event handler
+- Shows install prompt after 10 seconds of use (not immediately)
+- Detects if already installed (`display-mode: standalone`)
+- 7-day dismissal cooldown (won't re-show for 7 days after dismiss)
+- M3 snackbar-style UI:
+  - Card with primary-container icon
+  - "Install Steady" title + "Add to home screen" description
+  - "Install" pill button (m3-pill-btn-filled)
+  - Dismiss X icon button
+  - Slide-up spring animation
+  - Positioned above bottom nav
+
+### 7. iOS PWA Support (layout.tsx)
+- `appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Steady" }`
+- Apple touch icons (192px + 512px)
+- `applicationName: "Steady"`
+- `formatDetection: { telephone: false }` (no auto-link phone numbers)
+- Dual themeColor (light + dark via media query)
+- `viewportFit: "cover"` (notch/safe-area support)
+
+## QA Verification
+- Manifest: HTTP 200, correct name and fields
+- Service worker: HTTP 200, controller active
+- All 5 icons: HTTP 200
+- Offline page: HTTP 200
+- Lint: 0 errors (3 warnings: Material Symbols link, 2 pre-existing)
+- App loads and functions normally

@@ -26,6 +26,26 @@ export const metadata: Metadata = {
   keywords: ["nofap", "tracker", "streak", "habit", "journal", "self-improvement"],
   authors: [{ name: "Steady" }],
   manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Steady",
+  },
+  applicationName: "Steady",
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/icon.svg", sizes: "any", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
@@ -34,7 +54,10 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: "#0E1512",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F5FBF6" },
+    { media: "(prefers-color-scheme: dark)", color: "#0E1512" },
+  ],
 };
 
 export default function RootLayout({
