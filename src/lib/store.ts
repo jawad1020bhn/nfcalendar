@@ -26,6 +26,7 @@ type Settings = {
   defaultView: 'calendar' | 'today'
   onboardingComplete: boolean
   lastExportDate: string | null
+  seedColor: string | null // hex color for dynamic color theming
 }
 
 type Reflection = {
@@ -113,6 +114,7 @@ export const useTrackerStore = create<TrackerState>()(
         defaultView: 'today',
         onboardingComplete: false,
         lastExportDate: null,
+        seedColor: null,
       },
       reflections: [],
 
@@ -294,7 +296,7 @@ export const useTrackerStore = create<TrackerState>()(
             lastExportDate: null,
           }
         }
-        // v1 → v2: ensure reflections array exists + lastExportDate + showReflectionReminder
+        // v1 → v2: ensure reflections array exists + lastExportDate + showReflectionReminder + seedColor
         if (version < 2) {
           persisted.reflections = persisted.reflections || []
           if (persisted.settings) {
@@ -303,6 +305,9 @@ export const useTrackerStore = create<TrackerState>()(
             }
             if (persisted.settings.showReflectionReminder === undefined) {
               persisted.settings.showReflectionReminder = true
+            }
+            if (persisted.settings.seedColor === undefined) {
+              persisted.settings.seedColor = null
             }
           }
         }

@@ -1152,3 +1152,84 @@ Completely rewrote the day-cell-m3 styling:
 - "Pill shape with rounded corners consistent with M3's Filled Tonal Button style"
 - "Dark theme, bottom navigation, swipe-to-navigate align with Android's native design patterns"
 - "Spacing is balanced, touch target ~48x48dp per M3 guidelines"
+
+---
+Task ID: 22 (webDevReview — M3 research implementation)
+Agent: webDevReview
+Task: Deep research-based M3 implementation — Material Symbols, spring physics, shape system, dynamic color, loading indicators, micro-CSS
+
+## What Was Added (based on M3 research audit)
+
+### Audit Results — What We Already Had vs What Was Missing
+**Already had**: Color roles ✓, tonal palettes (surface containers) ✓, M3 type scale ✓, shape system (partial — 6 steps) ✓, tonal elevation ✓, M3 motion easing ✓, micro-CSS (partial) ✓
+
+**Missing → Added in this round**:
+
+### 1. Material Symbols Variable Icon Font (layout.tsx + globals.css)
+- Added Material Symbols Rounded variable font via Google Fonts link
+- Variable axes: FILL (0/1), wght (100-700), GRAD (-50 to 200), opsz (20-48)
+- New `.ms` CSS class with proper font-variation-settings
+- Variants: `.ms-fill` (filled), `.ms-weight-300/500/700`, `.ms-grad-1`
+- Available alongside existing lucide-react icons (can be used interchangeably)
+
+### 2. Spring-Based Motion Physics (globals.css)
+- M3 Expressive 2025 replaces easing/duration with spring tokens
+- 6 spring presets (each with duration + custom cubic-bezier approximation):
+  - `--spring-default` (0.45s, overshoot 1.56)
+  - `--spring-slow` (0.6s, gentle overshoot)
+  - `--spring-fast` (0.25s, snappy overshoot)
+  - `--spring-bouncy` (0.5s, negative control point for bounce)
+  - `--spring-snappy` (0.2s, fast overshoot)
+  - `--spring-gentle` (0.5s, mild overshoot)
+- Motion duration tokens: `--dur-short-1` through `--dur-long-4` (12 steps)
+- Updated all existing animations to use spring tokens
+- New spring animations: `spring-pop`, `spring-slide-up`, `spring-scale-in`
+
+### 3. 10-Step Shape System (globals.css)
+- Expanded from 6 to 10 shape steps per M3 spec:
+  - xs(4px), sm(8px), md(12px), lg(16px), xl(20px), 2xl(24px), 3xl(28px), 4xl(32px), 5xl(40px), full(9999px)
+- Added shape morphing: all elements now have `transition: border-radius` using emphasized easing
+- Elements can morph their corner radius on interaction (M3 Expressive feature)
+
+### 4. Dynamic Color — Material You Theming (dynamic-color.ts + settings-sheet.tsx + page.tsx)
+- New `src/lib/tracker/dynamic-color.ts` utility:
+  - `generatePalette(seedHex)` — generates M3 tonal palette from seed color using HSL approximation of HCT
+  - Creates primary/secondary/tertiary with container variants from a single seed
+  - Primary = seed hue, Secondary = analogous (+30°), Tertiary = complementary-adjacent (+150°)
+  - `applyPalette(palette)` — sets CSS custom properties on document root
+  - `resetPalette()` — removes custom properties, reverts to default
+  - 8 preset seed colors: Forest, Ocean, Sunset, Amber, Violet, Teal, Coral, Lime
+- Added `seedColor: string | null` to Settings (persisted, migrated)
+- Settings sheet has a new "Dynamic Color" section with 8 color swatches + default reset
+- Palette applied on app load and when seed changes (via useEffect in page.tsx)
+- Verified: clicked Ocean → primary changed from #6ED69E (green) to #A8D3F0 (blue), reset → back to green
+
+### 5. M3 Expressive Loading Indicators (globals.css)
+- `m3-loading-circular` — circular indeterminate spinner (1.4s linear rotate)
+- `m3-loading-linear` — linear indeterminate bar (1.8s ease-standard, expanding/shrinking)
+- `m3-circular-indeterminate-dash` — stroke-dashoffset animation for SVG circles
+- Ready to use in any loading state
+
+### 6. Micro-CSS Native Tweaks (globals.css)
+- `-webkit-tap-highlight-color: transparent` on all elements (no blue flash on tap)
+- `text-size-adjust: 100%` (proper text scaling on mobile)
+- `-webkit-overflow-scrolling: touch` (momentum scrolling on iOS)
+- `scrollbar-width: none` + `::-webkit-scrollbar { display: none }` on ALL elements (no scrollbars anywhere — native app feel)
+- `-ms-overflow-style: none` (IE/Edge)
+- `overscroll-behavior-y: none` on body (no rubber-band bounce)
+- `touch-action: manipulation` on buttons (no double-tap zoom delay)
+- Shape morphing: `transition: border-radius` on all elements (M3 Expressive)
+
+## What Was NOT Added (and why)
+- **Material Web (@material/web) components**: Would require a complete migration from our custom React components to web components. Not practical for an existing React app.
+- **Material Components for Web (MDC Web)**: Legacy, superseded by @material/web. Not needed.
+- **Material Theme Builder tool**: This is a Figma/online tool, not something to embed in the app. Our `generatePalette()` function serves the same purpose programmatically.
+- **Canonical/adaptive layouts for foldables/tablets/desktop**: Our app is mobile-first and works on all screen sizes already. A separate tablet/desktop layout would be a larger architectural change.
+
+## QA Verification
+- Dev server: HTTP 200, no errors
+- Lint: 0 errors (3 warnings: Material Symbols link, 2 pre-existing in upload/app.js)
+- Dynamic Color: 8 presets work, palette changes apply instantly, reset works
+- Material Symbols font loads via Google Fonts link
+- Spring animations use the new tokens
+- All existing features still work

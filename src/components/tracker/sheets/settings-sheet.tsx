@@ -6,6 +6,7 @@ import { useAppUI } from '../app-ui-context'
 import { cn } from '@/lib/utils'
 import { Download, Upload, Trash2, RotateCcw, Info } from 'lucide-react'
 import { toast } from 'sonner'
+import { generatePalette, applyPalette, resetPalette, SEED_PRESETS } from '@/lib/tracker/dynamic-color'
 
 export function SettingsSheet() {
   const { closeSheet, openOnboarding } = useAppUI()
@@ -13,6 +14,15 @@ export function SettingsSheet() {
   const setSettings = useTrackerStore((s) => s.setSettings)
   const importData = useTrackerStore((s) => s.importData)
   const resetAll = useTrackerStore((s) => s.resetAll)
+
+  // Apply seed color on mount and when it changes
+  React.useEffect(() => {
+    if (settings.seedColor) {
+      applyPalette(generatePalette(settings.seedColor))
+    } else {
+      resetPalette()
+    }
+  }, [settings.seedColor])
   const exportData = useTrackerStore((s) => s.exportData)
 
   const handleExport = () => {
@@ -49,9 +59,43 @@ export function SettingsSheet() {
         <ToggleRow label="Streak day numbers" desc="Show the day number on calendar cells" checked={settings.showStreakNumbers} onChange={(v) => setSettings({ showStreakNumbers: v })} />
         <div className="mt-3 flex items-center justify-between">
           <div><p className="text-sm text-on-surface">Default view</p><p className="text-xs text-on-surface-variant">Which tab opens first</p></div>
-          <select value={settings.defaultView} onChange={(e) => setSettings({ defaultView: e.target.value as 'today' | 'calendar' })} className="rounded-lg border border-outline-variant bg-surface px-2 py-1 text-xs text-on-surface">
+          <select value={settings.defaultView} onChange={(e) => setSettings({ defaultView: e.target.value as 'today' | 'calendar' })} className="rounded-full border border-outline-variant bg-surface px-3 py-1.5 text-xs text-on-surface">
             <option value="today">Today</option><option value="calendar">Calendar</option>
           </select>
+        </div>
+      </div>
+
+      {/* Dynamic Color — M3 Material You */}
+      <div className="m3-card mb-3 p-4">
+        <p className="mb-1 text-xs font-medium uppercase tracking-wider text-on-surface-variant">Dynamic Color</p>
+        <p className="mb-3 text-xs text-on-surface-variant">Personalize your palette — M3 Material You</p>
+        <div className="flex flex-wrap gap-2">
+          {/* Default / reset */}
+          <button
+            type="button"
+            onClick={() => { setSettings({ seedColor: null }); resetPalette(); toast.success('Reset to default') }}
+            className={cn(
+              'flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all active:scale-90',
+              !settings.seedColor ? 'border-primary' : 'border-outline-variant'
+            )}
+            aria-label="Default color"
+          >
+            <span className="text-xs font-bold text-on-surface-variant">✦</span>
+          </button>
+          {SEED_PRESETS.map((preset) => (
+            <button
+              key={preset.color}
+              type="button"
+              onClick={() => { setSettings({ seedColor: preset.color }); toast.success(`${preset.name} palette applied`) }}
+              className={cn(
+                'h-10 w-10 rounded-full border-2 transition-all active:scale-90',
+                settings.seedColor === preset.color ? 'border-primary' : 'border-transparent'
+              )}
+              style={{ background: preset.color }}
+              aria-label={preset.name}
+              title={preset.name}
+            />
+          ))}
         </div>
       </div>
 

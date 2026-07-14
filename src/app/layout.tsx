@@ -47,6 +47,11 @@ export default function RootLayout({
       <body
         className={`${fraunces.variable} ${figtree.variable} antialiased bg-background text-foreground`}
       >
+        {/* Material Symbols Rounded — variable icon font (FILL, wght, GRAD, opsz axes) */}
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

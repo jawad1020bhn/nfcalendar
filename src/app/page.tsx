@@ -11,17 +11,28 @@ import { SheetManager } from '@/components/tracker/sheet-manager'
 import { useMilestoneWatcher, useKeyboardShortcuts, useBackupReminder } from '@/components/tracker/use-watchers'
 import { useHydrated, useTrackerStore } from '@/lib/store'
 import { getTodayStr } from '@/lib/tracker/dates'
+import { generatePalette, applyPalette, resetPalette } from '@/lib/tracker/dynamic-color'
 import { cn } from '@/lib/utils'
 
 function AppInner() {
   const { view, openNote, setView } = useAppUI()
   const onboardingComplete = useTrackerStore((s) => s.settings.onboardingComplete)
   const defaultView = useTrackerStore((s) => s.settings.defaultView)
+  const seedColor = useTrackerStore((s) => s.settings.seedColor)
   const [loaded, setLoaded] = React.useState(false)
 
   useMilestoneWatcher()
   useKeyboardShortcuts()
   useBackupReminder()
+
+  // Apply dynamic color palette on load and when seed changes
+  React.useEffect(() => {
+    if (seedColor) {
+      applyPalette(generatePalette(seedColor))
+    } else {
+      resetPalette()
+    }
+  }, [seedColor])
 
   React.useEffect(() => {
     if (!loaded) {
