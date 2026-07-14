@@ -1055,3 +1055,100 @@ The VLM noted:
 4. **M3 Search bar**: Full M3 search bar with search view in notes
 5. **Navigation drawer**: Side drawer for tablet/desktop
 6. **M3 Snackbar**: Replace sonner toasts with proper M3 snackbar
+
+---
+Task ID: 21 (webDevReview — Calendar rebuild + unified buttons)
+Agent: webDevReview
+Task: Complete calendar rebuild with M3 date containers, unified pill buttons, curved angles
+
+## What Was Done
+
+### 1. Complete Calendar Rebuild (calendar-view.tsx)
+The calendar was completely rebuilt from scratch with a focus on visual excellence and M3 authenticity:
+
+**Hero Header**: Large display font for the month name (m3-display-small), year label above, prev/next icon buttons (m3-icon-btn, 48dp circular), and a month progress bar showing "% clean" with a gradient fill.
+
+**Calendar Card**: M3 card containing the day grid with:
+- Proper M3 day headers (M T W T F S S)
+- Day cells using `day-cell-m3` class — circular (border-radius: full), 0.9rem font, proper M3 state layers
+- Today: filled with primary color (green), bold
+- Clean days: filled green with hover lightening (color-mix)
+- Slip days: filled amber with hover lightening
+- Relapse days: filled red with hover lightening
+- Future days: 30% opacity, disabled
+- Has-note indicator: dot in bottom-right with glow
+- Milestone glow: gold ring around milestone days
+- Selected: ring-2 ring-primary outline
+- State layers: hover 8%, active 12% opacity overlays
+
+**Month Summary**: Unified pill-shaped chips showing clean/slip/relapse counts with colored dots.
+
+**Day Detail Panel**: Appears when long-pressing or right-clicking a day:
+- Shows weekday, date, current state badge
+- Streak day number + milestone Roman numeral
+- Mood/energy/sleep ratings (if set)
+- Note preview (3-line clamp)
+- Quick action buttons using unified m3-pill-btn classes:
+  - Clean (success/outlined)
+  - Slip (slip/outlined)
+  - Relapse (danger/outlined)
+  - Edit note (text)
+
+**Today Jump Button**: "Jump to today" pill button appears when viewing a non-current month.
+
+**Interactions**:
+- Tap: cycle state (300ms delay for double-tap detection)
+- Double-tap: open note editor
+- Long-press (500ms): open detail panel
+- Swipe left/right: navigate months
+- Haptic feedback on all interactions
+
+### 2. Unified Pill Button System (globals.css)
+Created a complete unified button system with curved (pill-shaped) angles:
+
+**m3-pill-btn** — Base pill button (border-radius: full, 48dp min-height):
+- m3-pill-btn-filled (primary)
+- m3-pill-btn-tonal (secondary container)
+- m3-pill-btn-outlined (outline border)
+- m3-pill-btn-text (transparent)
+- m3-pill-btn-danger (error)
+- m3-pill-btn-success (success green)
+- m3-pill-btn-slip (slip amber)
+
+**m3-icon-btn** — Circular icon button (48dp, border-radius: full):
+- m3-icon-btn-filled (primary)
+- m3-icon-btn-tonal (secondary container)
+
+All buttons have:
+- State layers (hover 8%, active 12%)
+- Scale animations on active (0.96 for pill, 0.90 for icon)
+- M3 emphasized easing
+- Overflow hidden for ripple containment
+
+### 3. Enhanced Day Cell CSS (globals.css)
+Completely rewrote the day-cell-m3 styling:
+- Proper ::before state layers
+- Today: filled primary (not just outlined)
+- Today + marked: double ring (surface + primary)
+- Color-mix hover lightening for clean/slip/relapse
+- Milestone glow (gold box-shadow ring)
+- Note dot adapts color (white on colored cells)
+- Selected ring-2 outline
+
+## QA Verification
+- Dev server: HTTP 200, no errors
+- Lint: 0 errors
+- Calendar renders with 31 day cells, proper M3 styling
+- Month progress bar shows "50% clean"
+- Streak day numbers and milestone Roman numerals visible
+- Summary chips render with colored dots
+- Tap to cycle works (day 15 marked, persisted)
+- VLM rating: 8/10 — "polished, user-friendly design that effectively communicates the app's purpose"
+
+## VLM Feedback (8/10)
+- "Clear hierarchy: month dominates the top, progress bar provides immediate context"
+- "Circular day cells align with Material 3's container design language"
+- "Color coding is intuitive: Green for clean, amber for slip, red for relapse"
+- "Pill shape with rounded corners consistent with M3's Filled Tonal Button style"
+- "Dark theme, bottom navigation, swipe-to-navigate align with Android's native design patterns"
+- "Spacing is balanced, touch target ~48x48dp per M3 guidelines"
