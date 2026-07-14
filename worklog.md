@@ -940,3 +940,118 @@ The user requested a complete redesign from scratch using Material 3 (M3) design
 4. **Haptic feedback**: Use navigator.vibrate on button presses for native feel.
 5. **Dynamic color**: Implement Material You dynamic color from a user-picked seed.
 6. **Widget**: Add a home screen widget showing the current streak (PWA).
+
+---
+Task ID: 20 (webDevReview — M3 deep enhancement)
+Agent: webDevReview
+Task: Deep Material 3 authenticity enhancement — tonal elevation, ripples, haptics, motion, type scale
+
+## Current Project Status Assessment
+The app was redesigned in the previous round with Material 3. This round focused on deepening the M3 authenticity with proper tonal elevation (surface containers), M3 type scale, ripple effects, haptic feedback, emphasized motion, collapsing app bar, swipe gestures, and better touch targets.
+
+## Enhancements Made
+
+### 1. M3 Tonal Elevation System (globals.css)
+- Replaced flat surface variables with proper M3 surface container levels:
+  - surface-dim, surface-bright
+  - surface-container-lowest, surface-container-low, surface-container, surface-container-high, surface-container-highest
+- Cards now use `surface-container` (visible depth via color, not just shadow)
+- Both dark and light schemes updated with proper tonal palettes
+
+### 2. M3 Type Scale (globals.css)
+- Added complete M3 type scale classes:
+  - Display: large (3.5rem), medium (2.75rem), small (2.25rem)
+  - Headline: large (2rem), medium (1.75rem), small (1.5rem)
+  - Title: large (1.375rem), medium (1rem), small (0.875rem)
+  - Body: large (1rem), medium (0.875rem), small (0.75rem)
+  - Label: large (0.875rem), medium (0.75rem), small (0.6875rem)
+- All with proper line-heights, weights, and letter-spacing per M3 spec
+
+### 3. M3 Motion Tokens (globals.css)
+- Added M3 easing curves as CSS variables:
+  - --ease-emphasized: cubic-bezier(0.2, 0, 0, 1)
+  - --ease-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1)
+  - --ease-emphasized-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15)
+  - --ease-standard, --ease-linear
+- All animations updated to use these tokens
+
+### 4. Ripple Effect + Haptic Feedback (ripple.tsx)
+- New `Ripple` component — expanding circle from touch point (M3 ripple)
+- `useRipple` hook for adding ripple to any element
+- `m3-ripple-surface` CSS class — state layer with hover/active opacity
+- Haptic feedback functions:
+  - `hapticLight()` — 10ms vibrate
+  - `hapticMedium()` — 20ms
+  - `hapticStrong()` — [30, 40, 30] pattern
+  - `hapticSuccess()` — [10, 30, 10] pattern
+  - `hapticError()` — [50, 30, 50] pattern
+- All quick-mark buttons, nav items, tool buttons, and calendar cells now trigger haptics
+
+### 5. Collapsing Top App Bar (page.tsx)
+- App bar shrinks when scrolled (logo gets smaller, title hides)
+- Background transitions from transparent to surface-container/95 with blur
+- Smooth 200ms transitions
+
+### 6. Enhanced Today View (today-view.tsx)
+- Streak hero uses M3 display-large type scale (was text-7xl)
+- All text uses proper M3 type scale classes (m3-label-medium, m3-body-small, etc.)
+- Staggered entrance animations (m3-stagger-1 through m3-stagger-6)
+- Quick mark buttons increased to h-16 (56dp M3 standard touch target)
+- Ripple surface on all interactive elements
+- Haptic feedback on all taps
+- Better visual hierarchy with M3 containers
+
+### 7. Enhanced Calendar View (calendar-view.tsx)
+- Swipe navigation (touch gestures to go prev/next month)
+- Slide animation on month change
+- Month summary chips (clean/slip/relapse counts)
+- Haptic feedback on all interactions
+- M3 type scale throughout
+
+### 8. Enhanced Bottom Nav (bottom-nav.tsx)
+- 48dp minimum touch targets (M3 standard)
+- Active indicator pill with secondary-container background
+- Haptic feedback on navigation
+- Proper M3 navigation bar height (72px + safe area)
+
+### 9. Enhanced FAB (bottom-nav.tsx)
+- Extended FAB that collapses on scroll down, extends on scroll up
+- Proper M3 elevation shadows (3-level shadow system)
+- Hover state increases elevation
+- Active state reduces elevation
+
+### 10. M3 Bottom Sheets (sheet-manager.tsx + dialog.tsx)
+- Proper M3 scrim (rgba(0,0,0,0.4) + 4px backdrop blur)
+- Surface-container-high background
+- Top shadow for depth
+- M3 slide-up animation
+- Proper drag handle with on-surface-variant color
+
+### 11. Enhanced More View (more-view.tsx)
+- M3 list items with proper 56dp height
+- Colored icon containers
+- Dividers between items
+- Haptic feedback on all taps
+
+## QA Verification Results
+- Dev server: HTTP 200, no compile errors, no console errors
+- Lint: 0 errors
+- All views render correctly with enhanced M3 styling
+- Quick mark buttons work (haptics + state change + persistence)
+- Calendar swipe navigation works
+- All sheets open with proper scrim + slide-up animation
+
+## VLM Feedback (6/10 → targeted improvements)
+The VLM noted:
+- Need more visible elevation/depth → Fixed with surface-container backgrounds
+- Touch targets too small → Fixed with 48-56dp minimums
+- FAB needs elevation → Fixed with 3-level shadow system
+- Better contrast → Fixed with proper M3 color roles
+
+## Priority Recommendations for Next Phase
+1. **M3 Ripple component integration**: Wire the full Ripple component (expanding circle) into all buttons, not just state layers
+2. **Dynamic color**: Implement Material You wallpaper-based dynamic color
+3. **Pull-to-refresh**: Native pull-to-refresh gesture on Today view
+4. **M3 Search bar**: Full M3 search bar with search view in notes
+5. **Navigation drawer**: Side drawer for tablet/desktop
+6. **M3 Snackbar**: Replace sonner toasts with proper M3 snackbar

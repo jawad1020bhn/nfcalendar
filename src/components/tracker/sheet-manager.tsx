@@ -25,15 +25,16 @@ export function SheetManager() {
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && closeSheet()}>
       <DialogContent
-        className="m3-sheet max-h-[92vh] w-full overflow-y-auto rounded-b-none border-0 p-0 sm:max-w-md sm:rounded-b-[28px]"
+        className="max-h-[92vh] w-full overflow-y-auto rounded-b-none border-0 p-0 sm:max-w-md sm:rounded-b-[28px] animate-m3-slide-up"
         showCloseButton={false}
         aria-describedby={undefined}
+        style={{ background: 'var(--surface-container-high)', boxShadow: '0 -4px 16px rgba(0,0,0,0.3)' }}
       >
         <DialogTitle className="sr-only">Sheet</DialogTitle>
         <DialogDescription className="sr-only">Sheet content</DialogDescription>
-        {/* Drag handle */}
+        {/* M3 Drag handle */}
         <div className="flex justify-center pt-3 pb-1">
-          <div className="h-1 w-9 rounded-full bg-on-surface-variant/30" />
+          <div className="h-1 w-9 rounded-full" style={{ background: 'var(--on-surface-variant)', opacity: 0.4 }} />
         </div>
         <SheetContent view={sheet} />
       </DialogContent>
