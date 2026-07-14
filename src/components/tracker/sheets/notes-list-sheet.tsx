@@ -89,7 +89,7 @@ export function NotesListSheet() {
             return (
               <button key={dateStr} type="button" onClick={() => openNote(dateStr)}
                 className="m3-card m3-card-interactive block w-full p-3 text-left"
-                style={color ? { borderLeft: `3px solid ${color}` } : undefined}>
+                style={color ? { background: `color-mix(in srgb, ${color} 12%, var(--surface-container-low))` } : undefined}>
                 <div className="mb-1 flex items-baseline justify-between">
                   <span className="font-display text-sm text-on-surface">{MONTHS[d.getMonth()]} {d.getDate()}</span>
                   <span className="text-[0.6rem] uppercase tracking-wider text-on-surface-variant">{DAYS_OF_WEEK[(d.getDay() + 6) % 7]}</span>

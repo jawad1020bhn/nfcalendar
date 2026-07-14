@@ -260,7 +260,7 @@ export function CalendarView() {
                     </span>
                   )}
                   {isMilestone && (
-                    <span className="absolute left-1 top-0.5 text-[0.5rem] font-bold text-white/90 z-10">
+                    <span className="absolute left-1 top-0.5 text-[0.5rem] font-bold text-on-surface/90 z-10">
                       {MILESTONES[streakDay]}
                     </span>
                   )}
@@ -313,7 +313,7 @@ export function CalendarView() {
                     className="rounded-full px-3 py-1 m3-label-small font-semibold"
                     style={{
                       background: selectedEntry === 1 ? 'var(--success)' : selectedEntry === 2 ? 'var(--slip)' : 'var(--fail)',
-                      color: '#fff',
+                      color: 'var(--on-surface)',
                     }}
                   >
                     {['', 'Clean', 'Slip', 'Relapse'][selectedEntry]}

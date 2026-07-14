@@ -112,7 +112,7 @@ export function NoteSheet({ date }: { date: string }) {
               className="mt-1 inline-block rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase"
               style={{
                 background: state === 1 ? 'var(--success)' : state === 2 ? 'var(--slip)' : 'var(--fail)',
-                color: '#fff',
+                color: 'var(--on-surface)',
               }}
             >
               {['', 'Clean', 'Slip', 'Relapse'][state]}

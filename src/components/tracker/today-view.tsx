@@ -72,9 +72,9 @@ export function TodayView() {
             <span
               className={cn(
                 'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 m3-label-medium',
-                todayState === 1 && 'text-white',
-                todayState === 2 && 'text-white',
-                todayState === 3 && 'text-white',
+                todayState === 1 && 'text-on-surface',
+                todayState === 2 && 'text-on-surface',
+                todayState === 3 && 'text-on-surface',
                 todayState === 0 && 'border border-outline-variant text-on-surface-variant',
               )}
               style={{
@@ -217,7 +217,7 @@ function QuickMarkBtn({ label, active, activeBg, onClick, icon }: { label: strin
       onClick={onClick}
       className={cn(
         'm3-ripple-surface flex h-16 flex-col items-center justify-center gap-2 rounded-2xl border-2 m3-label-large transition-all',
-        active ? 'border-transparent text-white' : 'border-outline-variant text-on-surface-variant',
+        active ? 'border-transparent text-on-surface' : 'border-outline-variant text-on-surface-variant',
       )}
       style={active ? { background: activeBg } : undefined}
     >

@@ -260,8 +260,8 @@ export function NotesSidebar() {
                   <button
                     type="button"
                     onClick={() => openNote(dateStr)}
-                    className="note-card group block w-full rounded-lg border border-hairline bg-card p-3 text-left transition-all hover:border-rule hover:translate-x-[-2px]"
-                    style={stateColor ? { borderLeft: `3px solid ${stateColor}` } : undefined}
+                    className="note-card group block w-full rounded-lg border border-hairline bg-card p-3 text-left transition-all hover:border-rule"
+                    style={stateColor ? { background: `color-mix(in srgb, ${stateColor} 12%, var(--card))` } : undefined}
                   >
                     <div className="mb-1 flex items-baseline justify-between">
                       <span className="font-display text-sm italic text-ink">

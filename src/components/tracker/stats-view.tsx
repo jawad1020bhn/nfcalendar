@@ -154,7 +154,7 @@ export function StatsView() {
           className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-2xl font-bold"
           style={{
             background: stats.riskScore.level === 'high' ? 'var(--fail)' : stats.riskScore.level === 'mid' ? 'var(--slip)' : 'var(--success)',
-            color: '#fff',
+            color: 'var(--on-surface)',
           }}
         >
           {stats.riskScore.score}
