@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { generatePalette, applyPalette, resetPalette, SEED_PRESETS } from '@/lib/tracker/dynamic-color'
 
 export function SettingsSheet() {
-  const { closeSheet, openOnboarding } = useAppUI()
+  const { openOnboarding } = useAppUI()
   const settings = useTrackerStore((s) => s.settings)
   const setSettings = useTrackerStore((s) => s.setSettings)
   const importData = useTrackerStore((s) => s.importData)
@@ -50,7 +50,6 @@ export function SettingsSheet() {
     <div className="px-5 pb-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-display text-xl text-on-surface">Settings</h2>
-        <button onClick={closeSheet} className="text-sm text-on-surface-variant">Close</button>
       </div>
 
       {/* Display */}

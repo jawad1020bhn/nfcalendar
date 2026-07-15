@@ -1035,6 +1035,15 @@
   animation: m3-slide-up var(--spring-default-duration) var(--spring-default-easing) both;
 }
 
+/* Sheet exit — slide down like native */
+@keyframes m3-slide-down {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(100%); opacity: 0; }
+}
+.animate-m3-slide-down {
+  animation: m3-slide-down 0.2s var(--ease-standard-accelerate) both;
+}
+
 @keyframes m3-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }

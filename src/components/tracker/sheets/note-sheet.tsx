@@ -7,7 +7,7 @@ import { TAG_SUGGESTIONS, TAG_KEYWORD_MAP, type RatingKey } from '@/lib/tracker/
 import { extractNoteTags } from '@/lib/tracker/stats'
 import { prettyDate } from '@/lib/tracker/dates'
 import { cn } from '@/lib/utils'
-import { Check, Trash2, Plus, X } from 'lucide-react'
+import { Check, Trash2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 
 const RATING_LABELS: Record<RatingKey, { name: string; hints: string[]; color: string }> = {
@@ -119,9 +119,6 @@ export function NoteSheet({ date }: { date: string }) {
             </span>
           )}
         </div>
-        <button onClick={closeSheet} className="state-layer flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant">
-          <X className="h-5 w-5" />
-        </button>
       </div>
 
       {/* Ratings */}

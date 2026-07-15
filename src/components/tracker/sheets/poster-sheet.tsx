@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import { useTrackerStore } from '@/lib/store'
-import { useAppUI } from '../app-ui-context'
 import { cn } from '@/lib/utils'
 import { Download } from 'lucide-react'
 import { toast } from 'sonner'
@@ -15,7 +14,6 @@ type Config = {
 }
 
 export function PosterSheet() {
-  const { closeSheet } = useAppUI()
   const year = useTrackerStore((s) => s.currentYear)
   const entries = useTrackerStore((s) => s.entries)
   const notes = useTrackerStore((s) => s.notes)
@@ -90,7 +88,6 @@ export function PosterSheet() {
     <div className="px-5 pb-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-display text-xl text-on-surface">Export Poster</h2>
-        <button onClick={closeSheet} className="text-sm text-on-surface-variant">Close</button>
       </div>
 
       {/* Preview */}

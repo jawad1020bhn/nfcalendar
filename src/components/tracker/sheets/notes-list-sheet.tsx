@@ -11,7 +11,7 @@ import { useAppUI } from '../app-ui-context'
 import { cn } from '@/lib/utils'
 
 export function NotesListSheet() {
-  const { closeSheet, openNote } = useAppUI()
+  const { openNote } = useAppUI()
   const notes = useTrackerStore((s) => s.notes)
   const rawEntries = useTrackerStore((s) => s.entries)
   const entries = React.useMemo(() => escalateSlips(rawEntries), [rawEntries])
@@ -46,7 +46,6 @@ export function NotesListSheet() {
     <div className="px-5 pb-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-display text-xl text-on-surface">Notes</h2>
-        <button onClick={closeSheet} className="text-sm text-on-surface-variant">Close</button>
       </div>
 
       {/* Search */}

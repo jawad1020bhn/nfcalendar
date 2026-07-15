@@ -11,7 +11,6 @@ import { Lock } from 'lucide-react'
 const TIER_ORDER: AchievementTier[] = ['bronze', 'silver', 'gold', 'platinum', 'diamond']
 
 export function AchievementsSheet() {
-  const { closeSheet } = useAppUI()
   const unlocked = useTrackerStore((s) => s.unlockedAchievements)
   const rawEntries = useTrackerStore((s) => s.entries)
   const notes = useTrackerStore((s) => s.notes)

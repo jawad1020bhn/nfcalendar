@@ -1,11 +1,9 @@
 'use client'
 
 import * as React from 'react'
-import { useAppUI } from '../app-ui-context'
 import { getDailyAffirmation } from '@/lib/store'
 
 export function UrgeSheet() {
-  const { closeSheet } = useAppUI()
   const [seconds, setSeconds] = React.useState(0)
   const [running, setRunning] = React.useState(false)
   const [done, setDone] = React.useState(false)
@@ -32,9 +30,6 @@ export function UrgeSheet() {
 
   return (
     <div className="flex flex-col items-center px-5 pb-8 pt-2">
-      <div className="mb-2 self-stretch text-right">
-        <button onClick={closeSheet} className="text-on-surface-variant text-sm">Close</button>
-      </div>
       <h2 className="font-display text-xl text-on-surface mb-1">Urge Surfing</h2>
       <p className="text-xs text-on-surface-variant mb-8 text-center">Urges are waves — they rise, peak, and fall. Ride it out for 10 minutes.</p>
 

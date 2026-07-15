@@ -1,7 +1,6 @@
 'use client'
 
 import * as React from 'react'
-import { useAppUI } from '../app-ui-context'
 
 const PHASES = [
   { key: 'inhale', label: 'Breathe In', duration: 4 },
@@ -11,7 +10,6 @@ const PHASES = [
 ] as const
 
 export function BreathingSheet() {
-  const { closeSheet } = useAppUI()
   const [running, setRunning] = React.useState(false)
   const [phaseIdx, setPhaseIdx] = React.useState(0)
   const [secondsLeft, setSecondsLeft] = React.useState(PHASES[0].duration)
@@ -42,9 +40,6 @@ export function BreathingSheet() {
 
   return (
     <div className="flex flex-col items-center px-5 pb-8 pt-2">
-      <div className="mb-2 self-stretch text-right">
-        <button onClick={closeSheet} className="text-on-surface-variant text-sm">Close</button>
-      </div>
       <h2 className="font-display text-xl text-on-surface mb-1">Box Breathing</h2>
       <p className="text-xs text-on-surface-variant mb-8 text-center">4-4-6-2 cycle · Calm your nervous system</p>
 

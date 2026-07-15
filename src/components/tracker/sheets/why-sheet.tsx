@@ -18,7 +18,6 @@ export function WhySheet() {
     <div className="px-5 pb-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-display text-xl text-on-surface">Why I Started</h2>
-        <button onClick={closeSheet} className="text-sm text-on-surface-variant">Close</button>
       </div>
       <p className="mb-4 text-xs text-on-surface-variant">Write the reason you began this journey. Return to it when motivation wavers.</p>
       <textarea

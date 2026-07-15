@@ -43,7 +43,6 @@ export function ReflectionSheet() {
     <div className="px-5 pb-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-display text-xl text-on-surface">Weekly Reflection</h2>
-        <button onClick={closeSheet} className="text-sm text-on-surface-variant">Close</button>
       </div>
       <p className="mb-4 text-xs text-on-surface-variant">Week of {monday}{existing && ' · already reflected'}</p>
 
