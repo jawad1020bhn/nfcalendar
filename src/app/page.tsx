@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils'
 import { Download, X } from 'lucide-react'
 
 function AppInner() {
-  const { view, openNote, setView } = useAppUI()
+  const { view, openNote, setView, sheet } = useAppUI()
   const onboardingComplete = useTrackerStore((s) => s.settings.onboardingComplete)
   const defaultView = useTrackerStore((s) => s.settings.defaultView)
   const seedColor = useTrackerStore((s) => s.settings.seedColor)
@@ -104,14 +104,14 @@ function AppInner() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-background overscroll-elastic">
+    <div className={cn('min-h-screen bg-background overscroll-elastic', sheet.kind !== 'none' && 'sheet-open')}>
       {/* Celebration burst overlay */}
       <CelebrationBurst trigger={celebration.trigger} x={celebration.x} y={celebration.y} />
 
       {/* Top app bar — M3 small when scrolled, large when at top */}
       <header
         className={cn(
-          'sticky top-0 z-30 transition-all duration-200',
+          'sheet-backdrop-scale sticky top-0 z-30 transition-all duration-200',
           scrolled ? 'bg-surface-container/95 backdrop-blur-md' : 'bg-background',
         )}
       >
@@ -141,7 +141,7 @@ function AppInner() {
       <main
         key={view}
         className={cn(
-          'predictive-back animate-m3-fade-in pb-32 pt-2',
+          'sheet-backdrop-scale predictive-back animate-m3-fade-in pb-32 pt-2',
           backDrag > 0 && 'dragging',
         )}
         style={backDrag > 0 ? {

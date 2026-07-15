@@ -90,6 +90,14 @@ export function StatsView() {
     toast.success('Last change retracted')
   }
 
+  // Skeleton loading state (brief shimmer on first compute)
+  const [loading, setLoading] = React.useState(true)
+  React.useEffect(() => {
+    setLoading(true)
+    const t = setTimeout(() => setLoading(false), 300)
+    return () => clearTimeout(t)
+  }, [timeWindow])
+
   return (
     <div className="space-y-4 px-4 pb-4 pt-2">
       {/* Header with time window */}
@@ -118,6 +126,19 @@ export function StatsView() {
         </div>
       )}
 
+      {/* Skeleton loading */}
+      {loading ? (
+        <div className="space-y-3">
+          <div className="skeleton h-24 w-full" />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="skeleton h-20" /><div className="skeleton h-20" />
+            <div className="skeleton h-20" /><div className="skeleton h-20" />
+          </div>
+          <div className="skeleton h-16 w-full" />
+          <div className="skeleton h-16 w-full" />
+        </div>
+      ) : (
+      <>
       {/* Days since relapse — hero */}
       <div className="m3-card flex flex-col items-center p-6 text-center">
         <p className="text-xs uppercase tracking-wider text-on-surface-variant">Days since last relapse</p>
@@ -258,6 +279,8 @@ export function StatsView() {
         <p className="mb-3 text-xs uppercase tracking-wider text-on-surface-variant">Next achievements</p>
         <Next3Achievements stats={stats} unlocked={unlockedAchievements} />
       </div>
+      </>
+      )}
 
       {/* Actions */}
       <div className="flex flex-wrap gap-2 pt-2">

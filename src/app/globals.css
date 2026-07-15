@@ -323,6 +323,10 @@
 
   .font-display {
     font-family: var(--font-display), Georgia, serif;
+    transition: font-variation-settings 0.2s var(--ease-standard);
+  }
+  .font-display:hover {
+    font-variation-settings: 'wght' 500;
   }
 
   /* ==========================================================================
@@ -1221,6 +1225,54 @@
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* ==========================================================================
+   M3 EXPRESSIVE — selected motion additions (performance-safe, CSS-only)
+   ========================================================================== */
+
+/* Skeleton shimmer — for loading placeholders (not spinners) */
+@keyframes shimmer-sweep {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-container) 0%,
+    var(--surface-container-high) 50%,
+    var(--surface-container) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-sweep 1.5s var(--ease-standard) infinite;
+  border-radius: var(--shape-sm);
+}
+
+/* Expressive spring for FAB — hero moment gets subtle bounce */
+.m3-fab {
+  animation: fab-expressive-enter 0.5s var(--spring-default-easing) both;
+}
+@keyframes fab-expressive-enter {
+  from { transform: scale(0) translateY(40px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* Container Transform (simplified) — detail panel scales from origin */
+@keyframes container-expand {
+  from { transform: scale(0.85); opacity: 0; transform-origin: var(--origin-x, 50%) var(--origin-y, 50%); }
+  to { transform: scale(1); opacity: 1; transform-origin: var(--origin-x, 50%) var(--origin-y, 50%); }
+}
+.animate-container-expand {
+  animation: container-expand 0.35s var(--ease-emphasized-decelerate) both;
+}
+
+/* Shared Axis Z-scale — background dims/scales when sheet opens */
+.sheet-backdrop-scale {
+  transition: transform 0.3s var(--ease-emphasized), opacity 0.3s var(--ease-standard);
+}
+.sheet-backdrop-scale.sheet-open {
+  transform: scale(0.96);
+  opacity: 0.6;
 }
 
 /* Reduced motion */

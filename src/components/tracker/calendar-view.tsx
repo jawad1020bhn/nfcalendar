@@ -263,7 +263,7 @@ export function CalendarView() {
 
       {/* Selected day detail */}
       {selectedDate && (
-        <div className="mt-4 px-4 animate-m3-fade-scale">
+        <div className="mt-4 px-4 animate-container-expand">
           <div className="m3-card p-5" style={{ background: 'var(--surface-container-high)' }}>
             <div className="mb-4 flex items-center justify-between">
               <div>
