@@ -1,8 +1,9 @@
 'use client'
 
 import * as React from 'react'
-import { Search, X, Plus } from 'lucide-react'
+import { Search, Plus } from 'lucide-react'
 import { useTrackerStore, escalateSlips } from '@/lib/store'
+import { EmptyNotes } from '../expressive'
 import { extractNoteTags } from '@/lib/tracker/stats'
 import { renderNoteMarkdown } from '@/lib/tracker/markdown'
 import { parseDateStr } from '@/lib/tracker/dates'
@@ -71,10 +72,10 @@ export function NotesListSheet() {
 
       {/* List */}
       {sorted.length === 0 ? (
-        <div className="py-12 text-center">
-          <p className="font-display text-3xl italic text-on-surface-variant">✦</p>
-          <p className="mt-2 text-sm text-on-surface">No entries yet</p>
-          <p className="text-xs text-on-surface-variant">Double-tap a day to leave a note</p>
+        <div className="flex flex-col items-center gap-3 py-12 text-center">
+          <EmptyNotes />
+          <p className="m3-body-medium text-on-surface">No entries yet</p>
+          <p className="m3-body-small text-on-surface-variant">Double-tap a day to leave a note</p>
         </div>
       ) : filtered.length === 0 ? (
         <p className="py-8 text-center text-sm text-on-surface-variant">No notes match this filter</p>

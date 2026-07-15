@@ -14,6 +14,7 @@ import { useHomeScreenBadge } from '@/components/tracker/use-home-screen-badge'
 import { useHydrated, useTrackerStore } from '@/lib/store'
 import { getTodayStr } from '@/lib/tracker/dates'
 import { generatePalette, applyPalette, resetPalette } from '@/lib/tracker/dynamic-color'
+import { CelebrationBurst } from '@/components/tracker/expressive'
 import { cn } from '@/lib/utils'
 import { Download, X } from 'lucide-react'
 
@@ -30,6 +31,47 @@ function AppInner() {
   useHomeScreenBadge()
 
   const { showPrompt: showInstallPrompt, promptInstall, dismiss: dismissInstall } = useInstallPrompt()
+
+  // #21 Celebration burst — fires on milestone crossing
+  const [celebration, setCelebration] = React.useState<{ trigger: boolean; x: number; y: number }>({ trigger: false, x: 0, y: 0 })
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail
+      setCelebration({ trigger: true, x: window.innerWidth / 2, y: window.innerHeight / 2 })
+      setTimeout(() => setCelebration({ trigger: false, x: 0, y: 0 }), 1000)
+    }
+    window.addEventListener('tracker:milestone-celebrate', handler)
+    return () => window.removeEventListener('tracker:milestone-celebrate', handler)
+  }, [])
+
+  // #2 Predictive back — drag from left edge to go back to Today
+  const [backDrag, setBackDrag] = React.useState(0)
+  const backStartX = React.useRef<number | null>(null)
+  React.useEffect(() => {
+    const onStart = (e: TouchEvent) => {
+      if (e.touches[0].clientX < 24 && view !== 'today') {
+        backStartX.current = e.touches[0].clientX
+      }
+    }
+    const onMove = (e: TouchEvent) => {
+      if (backStartX.current === null) return
+      const delta = e.touches[0].clientX - backStartX.current
+      if (delta > 0) setBackDrag(Math.min(delta, 120))
+    }
+    const onEnd = () => {
+      if (backDrag > 60) setView('today')
+      setBackDrag(0)
+      backStartX.current = null
+    }
+    window.addEventListener('touchstart', onStart, { passive: true })
+    window.addEventListener('touchmove', onMove, { passive: true })
+    window.addEventListener('touchend', onEnd, { passive: true })
+    return () => {
+      window.removeEventListener('touchstart', onStart)
+      window.removeEventListener('touchmove', onMove)
+      window.removeEventListener('touchend', onEnd)
+    }
+  }, [view, backDrag, setView])
 
   // Apply dynamic color palette on load and when seed changes
   React.useEffect(() => {
@@ -62,7 +104,10 @@ function AppInner() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overscroll-elastic">
+      {/* Celebration burst overlay */}
+      <CelebrationBurst trigger={celebration.trigger} x={celebration.x} y={celebration.y} />
+
       {/* Top app bar — M3 small when scrolled, large when at top */}
       <header
         className={cn(
@@ -92,8 +137,20 @@ function AppInner() {
         </div>
       </header>
 
-      {/* View content with key for transition */}
-      <main key={view} className="animate-m3-fade-in pb-32 pt-2">
+      {/* View content with key for transition + predictive back */}
+      <main
+        key={view}
+        className={cn(
+          'predictive-back animate-m3-fade-in pb-32 pt-2',
+          backDrag > 0 && 'dragging',
+        )}
+        style={backDrag > 0 ? {
+          transform: `translateX(${backDrag}px) scale(${1 - backDrag / 600})`,
+          opacity: 1 - backDrag / 400,
+          borderRadius: backDrag > 20 ? '16px' : '0',
+          overflow: 'hidden',
+        } : undefined}
+      >
         {view === 'today' && <TodayView />}
         {view === 'calendar' && <CalendarView />}
         {view === 'stats' && <StatsView />}

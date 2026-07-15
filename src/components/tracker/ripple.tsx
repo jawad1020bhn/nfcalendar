@@ -3,9 +3,6 @@
 import * as React from 'react'
 
 // M3 Ripple effect — expanding circle from touch point
-// Usage: <Ripple> <button>...</button> </Ripple>
-// Or add the useRipple hook to any element
-
 type RippleItem = { id: number; x: number; y: number; size: number }
 
 export function Ripple({
@@ -62,7 +59,6 @@ export function Ripple({
   )
 }
 
-// Hook for adding ripple to any element via ref
 export function useRipple() {
   const [ripples, setRipples] = React.useState<RippleItem[]>([])
   const idRef = React.useRef(0)
@@ -81,15 +77,36 @@ export function useRipple() {
   return { ripples, onPointerDown }
 }
 
-// Haptic feedback — navigator.vibrate
+// #22 Haptic progression — different patterns per action type
 export function haptic(pattern: number | number[] = 10) {
   if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
     navigator.vibrate(pattern)
   }
 }
 
-export function hapticLight() { haptic(10) }
-export function hapticMedium() { haptic(20) }
-export function hapticStrong() { haptic([30, 40, 30]) }
+// Navigation — light tap
+export function hapticNav() { haptic(8) }
+
+// Marking a day — medium tap
+export function hapticMark() { haptic(15) }
+
+// Slipping — double tap (warning feel)
+export function hapticSlip() { haptic([10, 30, 10]) }
+
+// Relapse — heavy buzz
+export function hapticRelapse() { haptic([20, 50, 20, 50, 20]) }
+
+// Achievement unlocked — success pattern
+export function hapticAchievement() { haptic([10, 40, 10, 40, 20]) }
+
+// Milestone crossed — escalating celebration
+export function hapticMilestone() { haptic([10, 20, 10, 20, 10, 20, 40]) }
+
+// Light tap (default)
+export function hapticLight() { haptic(8) }
+
+// Success confirmation
 export function hapticSuccess() { haptic([10, 30, 10]) }
+
+// Error
 export function hapticError() { haptic([50, 30, 50]) }

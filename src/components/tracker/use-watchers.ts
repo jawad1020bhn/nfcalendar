@@ -5,6 +5,7 @@ import { useTrackerStore, escalateSlips } from '@/lib/store'
 import { checkAchievements, getCurrentStreak } from '@/lib/tracker/stats'
 import { MILESTONES, MILESTONE_LIST, ACHIEVEMENTS } from '@/lib/tracker/types'
 import { toast } from 'sonner'
+import { hapticAchievement, hapticMilestone } from './ripple'
 import { useAppUI } from './app-ui-context'
 
 export function useMilestoneWatcher() {
@@ -41,7 +42,10 @@ export function useMilestoneWatcher() {
       if (showAchievementToast) {
         newOnes.forEach((id) => {
           const ach = ACHIEVEMENTS.find((a) => a.id === id)
-          if (ach) toast.success(`Achievement — ${ach.name}`, { description: ach.desc, duration: 5000 })
+          if (ach) {
+            hapticAchievement()
+            toast.success(`Achievement — ${ach.name}`, { description: ach.desc, duration: 5000 })
+          }
         })
       }
     }
@@ -51,6 +55,7 @@ export function useMilestoneWatcher() {
         if (streak >= m && prev < m && !seenMilestones.includes(m)) {
           markMilestoneSeen(m)
           if (showMilestoneToast) {
+            hapticMilestone()
             toast.success(`Milestone — ${MILESTONES[m]} · ${m} days`, { description: 'Your streak crossed a Roman milestone.', duration: 5000 })
           }
           if (typeof window !== 'undefined') {

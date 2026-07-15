@@ -743,7 +743,7 @@
     font-size: 0.875rem;
     font-weight: 500;
     letter-spacing: 0.01em;
-    transition: all 0.15s var(--ease-standard);
+    transition: all 0.15s var(--ease-standard), border-radius 0.2s var(--ease-emphasized);
     position: relative;
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
@@ -760,7 +760,7 @@
     pointer-events: none;
   }
   .m3-pill-btn:hover::after { opacity: 0.08; }
-  .m3-pill-btn:active { transform: scale(0.96); }
+  .m3-pill-btn:active { transform: scale(0.96); border-radius: var(--shape-md); }
   .m3-pill-btn:active::after { opacity: 0.12; }
 
   .m3-pill-btn-filled {
@@ -1118,6 +1118,109 @@
 }
 .animate-m3-number-pop {
   animation: m3-number-pop 0.4s var(--ease-emphasized);
+}
+
+/* ==========================================================================
+   M3 EXPRESSIVE — advanced motion, shape morph, celebration
+   ========================================================================== */
+
+/* #3 Counter animation — old slides up/out, new slides in from bottom */
+@keyframes counter-out {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-100%); opacity: 0; }
+}
+@keyframes counter-in {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.counter-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+}
+.counter-out { animation: counter-out 0.3s var(--ease-standard-accelerate) both; position: absolute; inset: 0; }
+.counter-in { animation: counter-in 0.35s var(--ease-emphasized-decelerate) both; }
+
+/* #6 Shape morphing — pill → squircle on active press */
+.m3-shape-morph {
+  border-radius: var(--shape-full);
+  transition: border-radius 0.2s var(--ease-emphasized);
+}
+.m3-shape-morph:active {
+  border-radius: var(--shape-md);
+}
+
+/* #5 Overscroll elastic stretch */
+.overscroll-elastic {
+  overscroll-behavior-y: contain;
+}
+.overscroll-elastic::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  pointer-events: none;
+}
+
+/* #4 Hold-to-confirm fill */
+@keyframes hold-fill {
+  from { height: 0%; }
+  to { height: 100%; }
+}
+.hold-confirm-btn {
+  position: relative;
+  overflow: hidden;
+}
+.hold-confirm-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: currentColor;
+  opacity: 0.25;
+}
+.hold-confirm-fill.active {
+  animation: hold-fill 0.5s linear forwards;
+}
+
+/* #21 Celebration particle burst */
+@keyframes particle-burst {
+  0% { transform: translate(0, 0) scale(0); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; }
+}
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: particle-burst 0.8s var(--ease-emphasized) forwards;
+}
+
+/* #2 Predictive back — view shrinks on drag */
+.predictive-back {
+  transition: transform 0.25s var(--ease-emphasized), opacity 0.25s var(--ease-standard);
+}
+.predictive-back.dragging {
+  transition: none;
+}
+
+/* #23 Empty state illustration */
+.empty-illustration {
+  width: 80px;
+  height: 80px;
+  opacity: 0.3;
+}
+.empty-illustration circle,
+.empty-illustration rect,
+.empty-illustration path {
+  stroke: var(--on-surface-variant);
+  stroke-width: 1.5;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* Reduced motion */

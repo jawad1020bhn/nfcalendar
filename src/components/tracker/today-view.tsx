@@ -5,7 +5,7 @@ import { useTrackerStore, getDailyAffirmation, escalateSlips } from '@/lib/store
 import { getCurrentStreak, calculateStats } from '@/lib/tracker/stats'
 import { getTodayStr } from '@/lib/tracker/dates'
 import { useAppUI } from './app-ui-context'
-import { hapticLight, hapticSuccess } from './ripple'
+import { hapticLight, hapticMark, hapticSlip, hapticRelapse } from './ripple'
 import { cn } from '@/lib/utils'
 import { Wind, Waves, Compass, BookOpen, Sparkles, Check, Minus, X, TrendingUp } from 'lucide-react'
 
@@ -39,7 +39,9 @@ export function TodayView() {
   }, [reflections])
 
   const handleMark = (state: 1 | 2 | 3) => {
-    hapticSuccess()
+    if (state === 1) hapticMark()
+    else if (state === 2) hapticSlip()
+    else hapticRelapse()
     setDay(todayStr, state)
   }
 
@@ -70,12 +72,9 @@ export function TodayView() {
         <div className="relative z-10">
           <p className="m3-label-medium text-on-surface-variant uppercase">Current streak</p>
           <div className="mt-2 flex items-baseline gap-3">
-            <span
-              className="m3-display-large animate-m3-number-pop"
-              style={{ color: streak > 0 ? 'var(--on-surface)' : 'var(--on-surface-variant)' }}
-            >
-              {streak}
-            </span>
+            <div className="counter-wrapper m3-display-large" style={{ color: streak > 0 ? 'var(--on-surface)' : 'var(--on-surface-variant)' }}>
+              <span key={streak} className="counter-in">{streak}</span>
+            </div>
             <span className="m3-title-medium text-on-surface-variant">days</span>
           </div>
 
@@ -151,7 +150,7 @@ export function TodayView() {
         <div className="grid grid-cols-3 gap-2">
           <QuickMarkBtn label="Clean" active={todayState === 1} activeBg="var(--success)" onClick={() => handleMark(1)} icon={<Check className="h-4 w-4" />} />
           <QuickMarkBtn label={canSlip ? 'Slip' : 'Locked'} active={todayState === 2} activeBg="var(--slip)" onClick={() => canSlip && handleMark(2)} icon={<Minus className="h-4 w-4" />} disabled={!canSlip} />
-          <QuickMarkBtn label="Relapse" active={todayState === 3} activeBg="var(--fail)" onClick={() => handleMark(3)} icon={<X className="h-4 w-4" />} />
+          <HoldConfirmBtn label="Relapse" active={todayState === 3} activeBg="var(--fail)" onConfirm={() => handleMark(3)} icon={<X className="h-4 w-4" />} />
         </div>
         {todayState !== 0 && (
           <button type="button" onClick={() => { hapticLight(); clearDay(todayStr) }} className="m3-btn-text mx-auto mt-2 flex text-xs">
@@ -229,7 +228,7 @@ function QuickMarkBtn({ label, active, activeBg, onClick, icon, disabled }: { la
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'flex h-16 flex-col items-center justify-center gap-2 rounded-2xl border-2 m3-label-large transition-all',
+        'm3-shape-morph flex h-16 flex-col items-center justify-center gap-2 border-2 m3-label-large',
         active ? 'border-transparent text-on-surface' : 'border-outline-variant text-on-surface-variant',
         disabled && 'opacity-40 cursor-not-allowed',
       )}
@@ -237,6 +236,50 @@ function QuickMarkBtn({ label, active, activeBg, onClick, icon, disabled }: { la
     >
       {icon}
       {label}
+    </button>
+  )
+}
+
+// #4 Hold-to-confirm — requires 500ms hold before committing destructive action
+function HoldConfirmBtn({ label, active, activeBg, onConfirm, icon }: { label: string; active: boolean; activeBg: string; onConfirm: () => void; icon: React.ReactNode }) {
+  const [holding, setHolding] = React.useState(false)
+  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const startHold = () => {
+    setHolding(true)
+    timerRef.current = setTimeout(() => {
+      setHolding(false)
+      onConfirm()
+    }, 500)
+  }
+
+  const cancelHold = () => {
+    setHolding(false)
+    if (timerRef.current) clearTimeout(timerRef.current)
+  }
+
+  return (
+    <button
+      type="button"
+      onPointerDown={startHold}
+      onPointerUp={cancelHold}
+      onPointerLeave={cancelHold}
+      onPointerCancel={cancelHold}
+      className={cn(
+        'hold-confirm-btn m3-shape-morph flex h-16 flex-col items-center justify-center gap-2 border-2 m3-label-large select-none',
+        active ? 'border-transparent text-on-surface' : 'border-outline-variant text-on-surface-variant',
+      )}
+      style={{ background: active ? activeBg : 'var(--surface-container-low)' }}
+      aria-label={`Hold to ${label}`}
+    >
+      {icon}
+      {label}
+      {holding && (
+        <div
+          className="hold-confirm-fill active"
+          style={{ color: activeBg }}
+        />
+      )}
     </button>
   )
 }

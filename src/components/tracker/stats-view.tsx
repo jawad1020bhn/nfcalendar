@@ -6,6 +6,7 @@ import { calculateStats, getAllStreakLengths, extractNoteTags, type Stats } from
 import { renderNoteMarkdown } from '@/lib/tracker/markdown'
 import { ACHIEVEMENTS } from '@/lib/tracker/types'
 import { useAppUI } from './app-ui-context'
+import { EmptyStats } from './expressive'
 import { cn } from '@/lib/utils'
 import { Download, Upload, Trash2, Undo2, Image as ImageIcon } from 'lucide-react'
 import { toast } from 'sonner'
@@ -107,6 +108,15 @@ export function StatsView() {
           ))}
         </div>
       </div>
+
+      {/* Empty state when no data */}
+      {stats.totalMarks === 0 && (
+        <div className="flex flex-col items-center gap-3 py-12">
+          <EmptyStats />
+          <p className="m3-body-medium text-on-surface">No data yet</p>
+          <p className="m3-body-small text-on-surface-variant">Mark days on the calendar to see your stats here</p>
+        </div>
+      )}
 
       {/* Days since relapse — hero */}
       <div className="m3-card flex flex-col items-center p-6 text-center">
