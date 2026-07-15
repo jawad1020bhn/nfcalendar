@@ -29,14 +29,19 @@ export function SheetManager() {
   const [isDragging, setIsDragging] = React.useState(false)
 
   const onPointerDown = (e: React.PointerEvent) => {
-    // Only start drag from the drag handle area (top 60px) or if scrolled to top
+    // Don't start drag if clicking on an interactive element
+    const eventTarget = e.target as HTMLElement
+    if (eventTarget.closest('button, a, input, textarea, select, [role="switch"], [role="button"]')) {
+      return
+    }
+
+    // Only start drag from the drag handle area (top 50px)
     const target = e.currentTarget as HTMLElement
     const rect = target.getBoundingClientRect()
     const offsetY = e.clientY - rect.top
-    const scrollTop = target.scrollTop
 
-    // Allow drag from handle area OR when scrolled to top
-    if (offsetY < 50 || scrollTop === 0) {
+    // Only allow drag from the handle area, not from content
+    if (offsetY < 50) {
       dragState.current = { startY: e.clientY, currentY: e.clientY, dragging: true }
       setIsDragging(true)
       target.setPointerCapture(e.pointerId)
