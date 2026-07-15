@@ -7,7 +7,7 @@ import { getDaysInMonth, getFirstDayOfMonth, getTodayStr, parseDateStr, dateKey 
 import { useAppUI } from './app-ui-context'
 import { hapticLight, hapticSuccess } from './ripple'
 import { cn } from '@/lib/utils'
-import { ChevronLeft, ChevronRight, Check, Minus, X, Pencil, StickyNote } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, Minus, X, Pencil } from 'lucide-react'
 
 export function CalendarView() {
   const year = useTrackerStore((s) => s.currentYear)
@@ -192,11 +192,9 @@ export function CalendarView() {
                   <span className="day-badge-milestone">{MILESTONES[streakDay]}</span>
                 )}
 
-                {/* Note badge — sticky note icon (bottom-right) */}
+                {/* Note badge — dot (bottom-right) */}
                 {hasNote && !isFuture && (
-                  <span className="day-badge-note">
-                    <StickyNote />
-                  </span>
+                  <span className="day-badge-note" />
                 )}
 
                 {/* Streak day number badge (bottom-left) */}
@@ -209,30 +207,34 @@ export function CalendarView() {
         </div>
       </div>
 
-      {/* Legend — explains all badge types */}
+      {/* Legend */}
       <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 px-4">
         <div className="flex items-center gap-1.5">
-          <span className="h-6 w-6 rounded-full" style={{ background: 'var(--surface-container-low)' }} />
+          <span className="h-5 w-5 rounded-full" style={{ background: 'var(--surface-container-low)' }} />
           <span className="m3-label-small text-on-surface-variant">Unmarked</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="h-6 w-6 rounded-full" style={{ background: 'var(--success)' }} />
+          <span className="h-5 w-5 rounded-full" style={{ background: 'var(--success)' }} />
           <span className="m3-label-small text-on-surface-variant">Clean</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="h-6 w-6 rounded-full" style={{ background: 'var(--slip)' }} />
+          <span className="h-5 w-5 rounded-full" style={{ background: 'var(--slip)' }} />
           <span className="m3-label-small text-on-surface-variant">Slip</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="h-6 w-6 rounded-full" style={{ background: 'var(--fail)' }} />
+          <span className="h-5 w-5 rounded-full" style={{ background: 'var(--fail)' }} />
           <span className="m3-label-small text-on-surface-variant">Relapse</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="day-badge-milestone" style={{ position: 'static' }}>VII</span>
+          <span className="relative h-5 w-5 rounded-full" style={{ background: 'var(--surface-container-low)' }}>
+            <span className="day-badge-milestone" style={{ position: 'absolute', top: '-1px', right: '-1px' }}>7</span>
+          </span>
           <span className="m3-label-small text-on-surface-variant">Milestone</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="day-badge-note" style={{ position: 'static' }}><StickyNote /></span>
+          <span className="relative h-5 w-5 rounded-full" style={{ background: 'var(--surface-container-low)' }}>
+            <span className="day-badge-note" style={{ position: 'absolute', bottom: '-1px', right: '-1px' }} />
+          </span>
           <span className="m3-label-small text-on-surface-variant">Noted</span>
         </div>
       </div>
@@ -317,7 +319,7 @@ export function CalendarView() {
 
             {selectedNote && selectedNote.trim() && (
               <div className="mb-4 flex items-start gap-2 rounded-2xl bg-surface-container p-3">
-                <StickyNote className="mt-0.5 h-3.5 w-3.5 shrink-0 text-on-surface-variant" />
+                <span className="mt-1 h-2 w-2 shrink-0 rounded-full" style={{ background: 'var(--primary-container)' }} />
                 <p className="m3-body-medium text-on-surface line-clamp-3">{selectedNote}</p>
               </div>
             )}

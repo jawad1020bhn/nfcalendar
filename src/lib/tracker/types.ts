@@ -45,25 +45,18 @@ export const DAYS_OF_WEEK_FULL = [
   "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
 ];
 
-// Roman milestones
+// Roman milestones — only at meaningful streak checkpoints
 export const MILESTONES: Record<number, string> = {
-  1: "I",
-  3: "III",
   7: "VII",
-  14: "XIV",
-  21: "XXI",
+  10: "X",
+  15: "XV",
   30: "XXX",
-  45: "XLV",
+  50: "L",
   60: "LX",
   90: "XC",
-  120: "CXX",
-  150: "CL",
+  100: "C",
   180: "CLXXX",
-  270: "CCLXX",
   365: "CCCLXV",
-  500: "D",
-  730: "DCCXXX",
-  1000: "M",
 };
 
 export const MILESTONE_LIST = Object.keys(MILESTONES)

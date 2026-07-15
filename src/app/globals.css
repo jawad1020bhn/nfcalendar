@@ -664,62 +664,69 @@
     background: transparent;
   }
 
-  /* Milestone glow */
+  /* Milestone — subtle ring using tertiary */
   .day-cell-m3.is-milestone {
-    box-shadow: 0 0 0 2px var(--surface), 0 0 10px 1px rgba(245, 194, 71, 0.35);
+    box-shadow: 0 0 0 2px var(--tertiary-container);
   }
 
-  /* Badge — milestone Roman numeral (top-right) */
+  /* Badge — milestone Roman numeral (top-right corner, tiny) */
   .day-badge-milestone {
     position: absolute;
-    top: -2px;
-    right: -2px;
-    background: var(--gold);
-    color: var(--on-surface);
-    font-size: 0.5rem;
-    font-weight: 700;
-    line-height: 1;
-    padding: 2px 4px;
-    border-radius: var(--shape-sm);
-    z-index: 5;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-  }
-
-  /* Badge — note indicator (bottom-right) */
-  .day-badge-note {
-    position: absolute;
-    bottom: -2px;
-    right: -2px;
+    top: 1px;
+    right: 1px;
     width: 14px;
     height: 14px;
     border-radius: var(--shape-full);
-    background: var(--tertiary);
-    border: 2px solid var(--surface);
+    background: var(--tertiary-container);
+    color: var(--on-tertiary-container);
+    font-size: 0.5rem;
+    font-weight: 700;
+    line-height: 14px;
+    text-align: center;
+    z-index: 5;
+    border: 1.5px solid var(--surface);
+  }
+
+  /* Badge — note indicator (bottom-right corner, tiny) */
+  .day-badge-note {
+    position: absolute;
+    bottom: 1px;
+    right: 1px;
+    width: 12px;
+    height: 12px;
+    border-radius: var(--shape-full);
+    background: var(--primary-container);
+    border: 1.5px solid var(--surface);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 5;
   }
-  .day-badge-note svg {
-    width: 7px;
-    height: 7px;
-    color: var(--on-tertiary);
+  .day-badge-note::after {
+    content: "";
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--on-primary-container);
   }
 
-  /* Badge — streak day number (bottom-left) */
+  /* Badge — streak day number (bottom-left corner, tiny) */
   .day-badge-streak {
     position: absolute;
-    bottom: -2px;
-    left: -2px;
+    bottom: 1px;
+    left: 1px;
+    min-width: 14px;
+    height: 14px;
+    border-radius: var(--shape-full);
     background: var(--surface-container-highest);
     color: var(--on-surface-variant);
     font-size: 0.5rem;
     font-weight: 600;
-    line-height: 1;
-    padding: 2px 4px;
-    border-radius: var(--shape-sm);
+    line-height: 14px;
+    text-align: center;
+    padding: 0 3px;
     z-index: 5;
-    border: 1px solid var(--outline-variant);
+    border: 1.5px solid var(--surface);
   }
 
   /* ==========================================================================
