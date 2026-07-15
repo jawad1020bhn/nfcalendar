@@ -2,9 +2,8 @@
 
 import * as React from 'react'
 import { useTrackerStore, escalateSlips } from '@/lib/store'
-import { MONTHS, MONTHS_SHORT, DAYS_OF_WEEK, MILESTONES, type DayState } from '@/lib/tracker/types'
-import { getDaysInMonth, getFirstDayOfMonth, getTodayStr, parseDateStr, dateKey, addDaysToDateStr } from '@/lib/tracker/dates'
-import { getCurrentStreak } from '@/lib/tracker/stats'
+import { MONTHS, DAYS_OF_WEEK, MILESTONES, type DayState } from '@/lib/tracker/types'
+import { getDaysInMonth, getFirstDayOfMonth, getTodayStr, parseDateStr, dateKey } from '@/lib/tracker/dates'
 import { useAppUI } from './app-ui-context'
 import { hapticLight, hapticSuccess } from './ripple'
 import { cn } from '@/lib/utils'
@@ -23,15 +22,13 @@ export function CalendarView() {
 
   const entries = React.useMemo(() => escalateSlips(rawEntries), [rawEntries])
   const todayStr = getTodayStr()
-  const todayDate = new Date()
-  const thisYear = todayDate.getFullYear()
-  const thisMonth = todayDate.getMonth()
+  const thisYear = new Date().getFullYear()
+  const thisMonth = new Date().getMonth()
 
   const [month, setMonth] = React.useState(thisMonth)
   const [selectedDate, setSelectedDate] = React.useState<string | null>(null)
   const [animDir, setAnimDir] = React.useState<'left' | 'right' | 'none'>('none')
 
-  // Touch swipe
   const touchStartX = React.useRef<number | null>(null)
   const touchStartY = React.useRef<number | null>(null)
 
@@ -72,7 +69,6 @@ export function CalendarView() {
     touchStartY.current = null
   }
 
-  // Tap handling — single tap = cycle, double tap = note, long press = select
   const tapTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastTapRef = React.useRef<{ date: string; time: number } | null>(null)
   const longPressRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -82,7 +78,6 @@ export function CalendarView() {
     const now = Date.now()
     const last = lastTapRef.current
 
-    // Double tap → open note
     if (last && last.date === dateStr && now - last.time < 300) {
       if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current)
       if (longPressRef.current) clearTimeout(longPressRef.current)
@@ -94,13 +89,11 @@ export function CalendarView() {
 
     lastTapRef.current = { date: dateStr, time: now }
 
-    // Long press → select for detail panel
     longPressRef.current = setTimeout(() => {
       hapticLight()
       setSelectedDate(selectedDate === dateStr ? null : dateStr)
     }, 500)
 
-    // Single tap → cycle (after delay to detect double tap)
     if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current)
     tapTimeoutRef.current = setTimeout(() => {
       tapTimeoutRef.current = null
@@ -135,7 +128,6 @@ export function CalendarView() {
   for (let d = 1; d <= daysInMonth; d++) cells.push(d)
   while (cells.length % 7 !== 0) cells.push(null)
 
-  // Month stats
   let monthClean = 0, monthSlip = 0, monthRelapse = 0
   for (let d = 1; d <= daysInMonth; d++) {
     const s = entries[dateKey(year, month, d)]
@@ -146,31 +138,24 @@ export function CalendarView() {
   const monthTotal = monthClean + monthSlip + monthRelapse
   const monthCleanPct = monthTotal > 0 ? Math.round((monthClean / monthTotal) * 100) : 0
 
-  // Selected day details
   const selectedEntry = selectedDate ? entries[selectedDate] ?? 0 : 0
   const selectedNote = selectedDate ? notes[selectedDate] : null
   const selectedRatings = selectedDate ? ratings[selectedDate] : null
   const selectedStreakDay = selectedDate ? getStreakDay(selectedDate) : 0
-  const selectedNextMilestone = selectedStreakDay > 0 ? MILESTONES[selectedStreakDay] : null
 
   const isCurrentMonth = year === thisYear && month === thisMonth
 
   return (
-    <div className="flex flex-col px-4 pb-4">
-      {/* Hero month header — large display */}
-      <div className="mb-4 animate-m3-stagger">
+    <div className="flex flex-col">
+      {/* Hero header — no card, breathing space */}
+      <div className="animate-m3-stagger px-5 pt-2 pb-6">
         <div className="flex items-end justify-between">
           <div>
-            <p className="m3-label-small text-on-surface-variant mb-1">{year}</p>
+            <p className="m3-label-small text-on-surface-variant mb-0.5">{year}</p>
             <h1 className="font-display m3-display-small text-on-surface leading-none">{MONTHS[month]}</h1>
           </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={goPrev}
-              className="m3-icon-btn"
-              aria-label="Previous month"
-            >
+          <div className="flex gap-1">
+            <button type="button" onClick={goPrev} className="m3-icon-btn" aria-label="Previous month">
               <ChevronLeft className="h-5 w-5" />
             </button>
             <button
@@ -185,42 +170,39 @@ export function CalendarView() {
           </div>
         </div>
 
-        {/* Month progress bar */}
-        <div className="mt-3 flex items-center gap-3">
+        {/* Progress bar */}
+        <div className="mt-4 flex items-center gap-3">
           <div className="m3-progress-track h-1.5 flex-1">
             <div
               className="m3-progress-fill h-full"
-              style={{
-                width: `${monthCleanPct}%`,
-                background: 'linear-gradient(90deg, var(--success), var(--primary))',
-              }}
+              style={{ width: `${monthCleanPct}%`, background: 'linear-gradient(90deg, var(--success), var(--primary))' }}
             />
           </div>
           <span className="m3-label-small text-on-surface-variant tabular-nums">{monthCleanPct}% clean</span>
         </div>
       </div>
 
-      {/* Calendar card */}
-      <div className="m3-card p-4 animate-m3-stagger m3-stagger-1">
+      {/* Calendar grid — full width, generous spacing */}
+      <div
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        className={cn(
+          'px-5 transition-all duration-150',
+          animDir === 'left' && '-translate-x-3 opacity-30',
+          animDir === 'right' && 'translate-x-3 opacity-30',
+        )}
+      >
         {/* Day headers */}
-        <div className="mb-2 grid grid-cols-7 gap-0.5">
+        <div className="mb-3 grid grid-cols-7 gap-2">
           {DAYS_OF_WEEK.map((d, i) => (
-            <div key={i} className="py-1 text-center m3-label-small text-on-surface-variant">
+            <div key={i} className="text-center m3-label-small text-on-surface-variant">
               {d}
             </div>
           ))}
         </div>
 
-        {/* Day grid */}
-        <div
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-          className={cn(
-            'grid grid-cols-7 gap-0.5 transition-all duration-150',
-            animDir === 'left' && '-translate-x-3 opacity-30',
-            animDir === 'right' && 'translate-x-3 opacity-30',
-          )}
-        >
+        {/* Day cells — proper M3 spacing */}
+        <div className="grid grid-cols-7 gap-2">
           {cells.map((day, i) => {
             if (day === null) return <div key={i} className="aspect-square" />
             const dStr = dateKey(year, month, day)
@@ -255,7 +237,7 @@ export function CalendarView() {
                 >
                   <span className="relative z-10">{day}</span>
                   {showNum && (
-                    <span className="absolute bottom-1 left-1.5 text-[0.5rem] font-semibold opacity-70">
+                    <span className="absolute bottom-1 left-1 text-[0.5rem] font-semibold opacity-70">
                       {streakDay}
                     </span>
                   )}
@@ -271,8 +253,8 @@ export function CalendarView() {
         </div>
       </div>
 
-      {/* Month summary — unified pill chips */}
-      <div className="mt-3 flex flex-wrap items-center justify-center gap-2 animate-m3-stagger m3-stagger-2">
+      {/* Month summary */}
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-2 px-5 animate-m3-stagger m3-stagger-2">
         <span className="m3-pill-btn m3-pill-btn-text" style={{ minHeight: '36px', padding: '0 0.75rem' }}>
           <span className="h-2.5 w-2.5 rounded-full" style={{ background: 'var(--success)' }} />
           {monthClean} clean
@@ -293,19 +275,17 @@ export function CalendarView() {
 
       {/* Selected day detail panel */}
       {selectedDate && (
-        <div className="mt-4 animate-m3-fade-scale">
-          <div className="m3-card p-4" style={{ background: 'var(--surface-container-high)' }}>
+        <div className="mt-4 px-5 animate-m3-fade-scale">
+          <div className="m3-card p-5" style={{ background: 'var(--surface-container-high)' }}>
             {/* Header */}
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-4 flex items-center justify-between">
               <div>
-                <p className="m3-label-small text-on-surface-variant">{(() => {
-                  const d = parseDateStr(selectedDate)!
-                  return d.toLocaleDateString('en-US', { weekday: 'long' })
-                })()}</p>
-                <p className="font-display m3-title-large text-on-surface">{(() => {
-                  const d = parseDateStr(selectedDate)!
-                  return `${MONTHS[d.getMonth()]} ${d.getDate()}`
-                })()}</p>
+                <p className="m3-label-small text-on-surface-variant">
+                  {(() => { const d = parseDateStr(selectedDate)!; return d.toLocaleDateString('en-US', { weekday: 'long' }) })()}
+                </p>
+                <p className="font-display m3-title-large text-on-surface">
+                  {(() => { const d = parseDateStr(selectedDate)!; return `${MONTHS[d.getMonth()]} ${d.getDate()}` })()}
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 {selectedEntry !== 0 && (
@@ -322,7 +302,7 @@ export function CalendarView() {
                 <button
                   type="button"
                   onClick={() => setSelectedDate(null)}
-                  className="m3-icon-btn h-10 w-10"
+                  className="m3-icon-btn"
                   style={{ minHeight: '40px', minWidth: '40px' }}
                   aria-label="Close detail"
                 >
@@ -331,17 +311,17 @@ export function CalendarView() {
               </div>
             </div>
 
-            {/* Streak day + milestone */}
+            {/* Streak day */}
             {selectedStreakDay > 0 && (
-              <div className="mb-3 flex items-center gap-4 rounded-2xl bg-surface-container p-3">
+              <div className="mb-4 flex items-center gap-6 rounded-2xl bg-surface-container p-3">
                 <div>
                   <p className="m3-label-small text-on-surface-variant">Streak day</p>
                   <p className="font-display m3-headline-small text-on-surface">{selectedStreakDay}</p>
                 </div>
-                {selectedNextMilestone && (
-                  <div className="border-l border-outline-variant pl-4">
+                {MILESTONES[selectedStreakDay] && (
+                  <div className="border-l border-outline-variant pl-6">
                     <p className="m3-label-small text-on-surface-variant">Milestone</p>
-                    <p className="font-display m3-title-medium" style={{ color: 'var(--gold)' }}>{selectedNextMilestone}</p>
+                    <p className="font-display m3-title-medium" style={{ color: 'var(--gold)' }}>{MILESTONES[selectedStreakDay]}</p>
                   </div>
                 )}
               </div>
@@ -349,7 +329,7 @@ export function CalendarView() {
 
             {/* Ratings */}
             {selectedRatings && (selectedRatings.mood || selectedRatings.energy || selectedRatings.sleep) && (
-              <div className="mb-3 flex items-center gap-4">
+              <div className="mb-4 flex items-center gap-6">
                 {(['mood', 'energy', 'sleep'] as const).map((k) => {
                   const v = selectedRatings[k]
                   if (!v) return null
@@ -368,35 +348,35 @@ export function CalendarView() {
 
             {/* Note preview */}
             {selectedNote && selectedNote.trim() && (
-              <div className="mb-3 flex items-start gap-2 rounded-2xl bg-surface-container p-3">
+              <div className="mb-4 flex items-start gap-2 rounded-2xl bg-surface-container p-3">
                 <StickyNote className="mt-0.5 h-3.5 w-3.5 shrink-0 text-on-surface-variant" />
                 <p className="m3-body-medium text-on-surface line-clamp-3">{selectedNote}</p>
               </div>
             )}
 
-            {/* Quick actions — unified pill buttons */}
+            {/* Quick actions */}
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
-                onClick={() => { hapticSuccess(); setDay(selectedDate, 1); }}
+                onClick={() => { hapticSuccess(); setDay(selectedDate, 1) }}
                 className={cn('m3-pill-btn', selectedEntry === 1 ? 'm3-pill-btn-success' : 'm3-pill-btn-outlined')}
-                style={{ minHeight: '44px' }}
+                style={{ minHeight: '48px' }}
               >
                 <Check className="h-4 w-4" /> Clean
               </button>
               <button
                 type="button"
-                onClick={() => { hapticSuccess(); setDay(selectedDate, 2); }}
+                onClick={() => { hapticSuccess(); setDay(selectedDate, 2) }}
                 className={cn('m3-pill-btn', selectedEntry === 2 ? 'm3-pill-btn-slip' : 'm3-pill-btn-outlined')}
-                style={{ minHeight: '44px' }}
+                style={{ minHeight: '48px' }}
               >
                 <Minus className="h-4 w-4" /> Slip
               </button>
               <button
                 type="button"
-                onClick={() => { hapticSuccess(); setDay(selectedDate, 3); }}
+                onClick={() => { hapticSuccess(); setDay(selectedDate, 3) }}
                 className={cn('m3-pill-btn', selectedEntry === 3 ? 'm3-pill-btn-danger' : 'm3-pill-btn-outlined')}
-                style={{ minHeight: '44px' }}
+                style={{ minHeight: '48px' }}
               >
                 <X className="h-4 w-4" /> Relapse
               </button>
@@ -405,7 +385,7 @@ export function CalendarView() {
               type="button"
               onClick={() => { hapticLight(); openNote(selectedDate); setSelectedDate(null) }}
               className="m3-pill-btn m3-pill-btn-text w-full mt-2"
-              style={{ minHeight: '44px' }}
+              style={{ minHeight: '48px' }}
             >
               <Pencil className="h-4 w-4" /> Edit note
             </button>
@@ -413,21 +393,21 @@ export function CalendarView() {
         </div>
       )}
 
-      {/* Today button */}
-      {!isCurrentMonth && (
-        <button
-          type="button"
-          onClick={() => { hapticLight(); setYear(thisYear); setMonth(thisMonth) }}
-          className="m3-pill-btn m3-pill-btn-tonal mx-auto mt-4"
-        >
-          Jump to today
-        </button>
-      )}
-
-      {/* Tip */}
-      <p className="mt-4 text-center m3-body-small text-on-surface-variant">
-        Tap to cycle · Double-tap for note · Long-press for details · Swipe to navigate
-      </p>
+      {/* Today button + tip */}
+      <div className="mt-6 px-5 pb-4">
+        {!isCurrentMonth && (
+          <button
+            type="button"
+            onClick={() => { hapticLight(); setYear(thisYear); setMonth(thisMonth) }}
+            className="m3-pill-btn m3-pill-btn-tonal mx-auto mb-4"
+          >
+            Jump to today
+          </button>
+        )}
+        <p className="text-center m3-body-small text-on-surface-variant">
+          Tap to cycle, double-tap for note, long-press for details, swipe to navigate
+        </p>
+      </div>
     </div>
   )
 }
