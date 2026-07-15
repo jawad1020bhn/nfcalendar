@@ -574,7 +574,7 @@
   }
 
   /* ==========================================================================
-     M3 DATE CONTAINER — the calendar day cell (rebuilt)
+     M3 DATE CONTAINER — large, breathable day cells
      ========================================================================== */
   .day-cell-m3 {
     aspect-ratio: 1 / 1;
@@ -587,14 +587,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-weight: 500;
     color: var(--on-surface);
     user-select: none;
     position: relative;
     -webkit-tap-highlight-color: transparent;
-    overflow: hidden;
+    overflow: visible;
     width: 100%;
+    background: var(--surface-container-low);
   }
   .day-cell-m3::before {
     content: "";
@@ -612,15 +613,17 @@
   }
   .day-cell-m3:active::before { opacity: 0.12; }
 
-  /* Today — M3 primary container highlight */
+  /* Today — outlined with primary */
   .day-cell-m3.is-today {
-    background: var(--primary);
-    color: var(--on-primary);
+    border: 2px solid var(--primary);
+    color: var(--primary);
     font-weight: 700;
+    background: transparent;
   }
   .day-cell-m3.is-today.is-clean,
   .day-cell-m3.is-today.is-slip,
   .day-cell-m3.is-today.is-relapse {
+    border: 2px solid var(--primary);
     box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
   }
 
@@ -628,6 +631,7 @@
   .day-cell-m3.is-clean {
     background: var(--success);
     color: var(--on-surface);
+    border: none;
   }
   .day-cell-m3.is-clean:hover {
     background: color-mix(in srgb, var(--success) 85%, white);
@@ -637,6 +641,7 @@
   .day-cell-m3.is-slip {
     background: var(--slip);
     color: var(--on-surface);
+    border: none;
   }
   .day-cell-m3.is-slip:hover {
     background: color-mix(in srgb, var(--slip) 85%, white);
@@ -646,6 +651,7 @@
   .day-cell-m3.is-relapse {
     background: var(--fail);
     color: var(--on-surface);
+    border: none;
   }
   .day-cell-m3.is-relapse:hover {
     background: color-mix(in srgb, var(--fail) 85%, white);
@@ -655,30 +661,65 @@
   .day-cell-m3.is-future {
     opacity: 0.3;
     pointer-events: none;
+    background: transparent;
   }
 
-  /* Has note — dot indicator */
-  .day-cell-m3.has-note::after {
-    content: "";
-    position: absolute;
-    bottom: 6px;
-    right: 6px;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--tertiary);
-    box-shadow: 0 0 4px var(--tertiary);
-  }
-  .day-cell-m3.is-clean.has-note::after,
-  .day-cell-m3.is-slip.has-note::after,
-  .day-cell-m3.is-relapse.has-note::after {
-    background: rgba(255,255,255,0.9);
-    box-shadow: none;
-  }
-
-  /* Milestone glow on clean days */
+  /* Milestone glow */
   .day-cell-m3.is-milestone {
-    box-shadow: 0 0 0 2px var(--surface), 0 0 12px 2px rgba(245, 194, 71, 0.4);
+    box-shadow: 0 0 0 2px var(--surface), 0 0 10px 1px rgba(245, 194, 71, 0.35);
+  }
+
+  /* Badge — milestone Roman numeral (top-right) */
+  .day-badge-milestone {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: var(--gold);
+    color: var(--on-surface);
+    font-size: 0.5rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: var(--shape-sm);
+    z-index: 5;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  /* Badge — note indicator (bottom-right) */
+  .day-badge-note {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 14px;
+    height: 14px;
+    border-radius: var(--shape-full);
+    background: var(--tertiary);
+    border: 2px solid var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+  }
+  .day-badge-note svg {
+    width: 7px;
+    height: 7px;
+    color: var(--on-tertiary);
+  }
+
+  /* Badge — streak day number (bottom-left) */
+  .day-badge-streak {
+    position: absolute;
+    bottom: -2px;
+    left: -2px;
+    background: var(--surface-container-highest);
+    color: var(--on-surface-variant);
+    font-size: 0.5rem;
+    font-weight: 600;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: var(--shape-sm);
+    z-index: 5;
+    border: 1px solid var(--outline-variant);
   }
 
   /* ==========================================================================

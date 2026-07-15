@@ -33,40 +33,29 @@ export function CalendarView() {
   const touchStartY = React.useRef<number | null>(null)
 
   const goPrev = React.useCallback(() => {
-    setAnimDir('right')
-    hapticLight()
+    setAnimDir('right'); hapticLight()
     setTimeout(() => {
-      if (month === 0) { setYear(year - 1); setMonth(11) }
-      else setMonth(month - 1)
+      if (month === 0) { setYear(year - 1); setMonth(11) } else setMonth(month - 1)
       setAnimDir('none')
     }, 150)
   }, [month, year, setYear])
 
   const goNext = React.useCallback(() => {
     if (year >= thisYear && month >= thisMonth) return
-    setAnimDir('left')
-    hapticLight()
+    setAnimDir('left'); hapticLight()
     setTimeout(() => {
-      if (month === 11) { setYear(year + 1); setMonth(0) }
-      else setMonth(month + 1)
+      if (month === 11) { setYear(year + 1); setMonth(0) } else setMonth(month + 1)
       setAnimDir('none')
     }, 150)
   }, [month, year, thisYear, thisMonth, setYear])
 
-  const onTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX
-    touchStartY.current = e.touches[0].clientY
-  }
+  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; touchStartY.current = e.touches[0].clientY }
   const onTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX.current === null || touchStartY.current === null) return
     const dx = touchStartX.current - e.changedTouches[0].clientX
     const dy = touchStartY.current - e.changedTouches[0].clientY
-    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
-      if (dx > 0) goNext()
-      else goPrev()
-    }
-    touchStartX.current = null
-    touchStartY.current = null
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) { dx > 0 ? goNext() : goPrev() }
+    touchStartX.current = null; touchStartY.current = null
   }
 
   const tapTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -77,46 +66,27 @@ export function CalendarView() {
     if (dateStr > todayStr) return
     const now = Date.now()
     const last = lastTapRef.current
-
     if (last && last.date === dateStr && now - last.time < 300) {
       if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current)
       if (longPressRef.current) clearTimeout(longPressRef.current)
-      lastTapRef.current = null
-      hapticLight()
-      openNote(dateStr)
-      return
+      lastTapRef.current = null; hapticLight(); openNote(dateStr); return
     }
-
     lastTapRef.current = { date: dateStr, time: now }
-
-    longPressRef.current = setTimeout(() => {
-      hapticLight()
-      setSelectedDate(selectedDate === dateStr ? null : dateStr)
-    }, 500)
-
+    longPressRef.current = setTimeout(() => { hapticLight(); setSelectedDate(selectedDate === dateStr ? null : dateStr) }, 500)
     if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current)
-    tapTimeoutRef.current = setTimeout(() => {
-      tapTimeoutRef.current = null
-      hapticSuccess()
-      cycleDay(dateStr)
-    }, 300)
+    tapTimeoutRef.current = setTimeout(() => { tapTimeoutRef.current = null; hapticSuccess(); cycleDay(dateStr) }, 300)
   }
-
-  const handleCellTouchEnd = () => {
-    if (longPressRef.current) clearTimeout(longPressRef.current)
-  }
+  const handleCellTouchEnd = () => { if (longPressRef.current) clearTimeout(longPressRef.current) }
 
   const getStreakDay = (dStr: string): number => {
     const state = entries[dStr]
     if (state !== 1 && state !== 2) return 0
-    let count = 0
-    const cursor = parseDateStr(dStr)
+    let count = 0; const cursor = parseDateStr(dStr)
     if (!cursor) return 0
     while (cursor) {
       const cs = dateKey(cursor.getFullYear(), cursor.getMonth(), cursor.getDate())
       const st = entries[cs]
-      if (st === 1 || st === 2) { count++; cursor.setDate(cursor.getDate() - 1) }
-      else break
+      if (st === 1 || st === 2) { count++; cursor.setDate(cursor.getDate() - 1) } else break
     }
     return count
   }
@@ -131,9 +101,7 @@ export function CalendarView() {
   let monthClean = 0, monthSlip = 0, monthRelapse = 0
   for (let d = 1; d <= daysInMonth; d++) {
     const s = entries[dateKey(year, month, d)]
-    if (s === 1) monthClean++
-    else if (s === 2) monthSlip++
-    else if (s === 3) monthRelapse++
+    if (s === 1) monthClean++; else if (s === 2) monthSlip++; else if (s === 3) monthRelapse++
   }
   const monthTotal = monthClean + monthSlip + monthRelapse
   const monthCleanPct = monthTotal > 0 ? Math.round((monthClean / monthTotal) * 100) : 0
@@ -142,13 +110,12 @@ export function CalendarView() {
   const selectedNote = selectedDate ? notes[selectedDate] : null
   const selectedRatings = selectedDate ? ratings[selectedDate] : null
   const selectedStreakDay = selectedDate ? getStreakDay(selectedDate) : 0
-
   const isCurrentMonth = year === thisYear && month === thisMonth
 
   return (
     <div className="flex flex-col">
-      {/* Hero header — no card, breathing space */}
-      <div className="animate-m3-stagger px-5 pt-2 pb-6">
+      {/* Header */}
+      <div className="animate-m3-stagger px-3 pt-2 pb-4">
         <div className="flex items-end justify-between">
           <div>
             <p className="m3-label-small text-on-surface-variant mb-0.5">{year}</p>
@@ -158,51 +125,34 @@ export function CalendarView() {
             <button type="button" onClick={goPrev} className="m3-icon-btn" aria-label="Previous month">
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <button
-              type="button"
-              onClick={goNext}
-              disabled={year >= thisYear && month >= thisMonth}
-              className="m3-icon-btn disabled:opacity-30"
-              aria-label="Next month"
-            >
+            <button type="button" onClick={goNext} disabled={year >= thisYear && month >= thisMonth} className="m3-icon-btn disabled:opacity-30" aria-label="Next month">
               <ChevronRight className="h-5 w-5" />
             </button>
           </div>
         </div>
-
-        {/* Progress bar */}
-        <div className="mt-4 flex items-center gap-3">
+        <div className="mt-3 flex items-center gap-3">
           <div className="m3-progress-track h-1.5 flex-1">
-            <div
-              className="m3-progress-fill h-full"
-              style={{ width: `${monthCleanPct}%`, background: 'linear-gradient(90deg, var(--success), var(--primary))' }}
-            />
+            <div className="m3-progress-fill h-full" style={{ width: `${monthCleanPct}%`, background: 'linear-gradient(90deg, var(--success), var(--primary))' }} />
           </div>
-          <span className="m3-label-small text-on-surface-variant tabular-nums">{monthCleanPct}% clean</span>
+          <span className="m3-label-small text-on-surface-variant tabular-nums">{monthCleanPct}%</span>
         </div>
       </div>
 
-      {/* Calendar grid — full width, generous spacing */}
+      {/* Calendar grid — minimal padding for max circle size */}
       <div
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
-        className={cn(
-          'px-5 transition-all duration-150',
-          animDir === 'left' && '-translate-x-3 opacity-30',
-          animDir === 'right' && 'translate-x-3 opacity-30',
-        )}
+        className={cn('px-2 transition-all duration-150', animDir === 'left' && '-translate-x-3 opacity-30', animDir === 'right' && 'translate-x-3 opacity-30')}
       >
         {/* Day headers */}
-        <div className="mb-3 grid grid-cols-7 gap-2">
+        <div className="mb-2 grid grid-cols-7 gap-1">
           {DAYS_OF_WEEK.map((d, i) => (
-            <div key={i} className="text-center m3-label-small text-on-surface-variant">
-              {d}
-            </div>
+            <div key={i} className="text-center m3-label-small text-on-surface-variant">{d}</div>
           ))}
         </div>
 
-        {/* Day cells — proper M3 spacing */}
-        <div className="grid grid-cols-7 gap-2">
+        {/* Day cells — large circles with badges */}
+        <div className="grid grid-cols-7 gap-1">
           {cells.map((day, i) => {
             if (day === null) return <div key={i} className="aspect-square" />
             const dStr = dateKey(year, month, day)
@@ -212,17 +162,17 @@ export function CalendarView() {
             const hasNote = !!(notes[dStr] && notes[dStr].trim())
             const streakDay = getStreakDay(dStr)
             const isMilestone = state === 1 && MILESTONES[streakDay] !== undefined
-            const showNum = showStreakNumbers && streakDay > 0 && streakDay <= 99 && (state === 1 || state === 2) && !isMilestone
+            const showStreakNum = showStreakNumbers && streakDay > 0 && streakDay <= 99 && (state === 1 || state === 2)
             const isSelected = selectedDate === dStr
 
             return (
-              <div key={i} className="relative">
+              <div key={i} className="relative flex items-center justify-center">
                 <button
                   type="button"
                   onClick={() => handleCellTap(dStr)}
                   onTouchEnd={handleCellTouchEnd}
                   onContextMenu={(e) => { e.preventDefault(); hapticLight(); setSelectedDate(isSelected ? null : dStr) }}
-                  aria-label={`${MONTHS[month]} ${day}${state ? `, ${['', 'clean', 'slip', 'relapse'][state]}` : ''}`}
+                  aria-label={`${MONTHS[month]} ${day}${state ? `, ${['', 'clean', 'slip', 'relapse'][state]}` : ''}${hasNote ? ', has note' : ''}`}
                   className={cn(
                     'day-cell-m3',
                     state === 1 && 'is-clean',
@@ -230,31 +180,65 @@ export function CalendarView() {
                     state === 3 && 'is-relapse',
                     isToday && 'is-today',
                     isFuture && 'is-future',
-                    hasNote && 'has-note',
                     isMilestone && 'is-milestone',
                     isSelected && !isToday && 'ring-2 ring-primary',
                   )}
                 >
                   <span className="relative z-10">{day}</span>
-                  {showNum && (
-                    <span className="absolute bottom-1 left-1 text-[0.5rem] font-semibold opacity-70">
-                      {streakDay}
-                    </span>
-                  )}
-                  {isMilestone && (
-                    <span className="absolute left-1 top-0.5 text-[0.5rem] font-bold text-on-surface/90 z-10">
-                      {MILESTONES[streakDay]}
-                    </span>
-                  )}
                 </button>
+
+                {/* Milestone badge — Roman numeral (top-right) */}
+                {isMilestone && (
+                  <span className="day-badge-milestone">{MILESTONES[streakDay]}</span>
+                )}
+
+                {/* Note badge — sticky note icon (bottom-right) */}
+                {hasNote && !isFuture && (
+                  <span className="day-badge-note">
+                    <StickyNote />
+                  </span>
+                )}
+
+                {/* Streak day number badge (bottom-left) */}
+                {showStreakNum && !isMilestone && (
+                  <span className="day-badge-streak">{streakDay}</span>
+                )}
               </div>
             )
           })}
         </div>
       </div>
 
-      {/* Month summary */}
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-2 px-5 animate-m3-stagger m3-stagger-2">
+      {/* Legend — explains all badge types */}
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 px-4">
+        <div className="flex items-center gap-1.5">
+          <span className="h-6 w-6 rounded-full" style={{ background: 'var(--surface-container-low)' }} />
+          <span className="m3-label-small text-on-surface-variant">Unmarked</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="h-6 w-6 rounded-full" style={{ background: 'var(--success)' }} />
+          <span className="m3-label-small text-on-surface-variant">Clean</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="h-6 w-6 rounded-full" style={{ background: 'var(--slip)' }} />
+          <span className="m3-label-small text-on-surface-variant">Slip</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="h-6 w-6 rounded-full" style={{ background: 'var(--fail)' }} />
+          <span className="m3-label-small text-on-surface-variant">Relapse</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="day-badge-milestone" style={{ position: 'static' }}>VII</span>
+          <span className="m3-label-small text-on-surface-variant">Milestone</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="day-badge-note" style={{ position: 'static' }}><StickyNote /></span>
+          <span className="m3-label-small text-on-surface-variant">Noted</span>
+        </div>
+      </div>
+
+      {/* Month summary chips */}
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-2 px-4">
         <span className="m3-pill-btn m3-pill-btn-text" style={{ minHeight: '36px', padding: '0 0.75rem' }}>
           <span className="h-2.5 w-2.5 rounded-full" style={{ background: 'var(--success)' }} />
           {monthClean} clean
@@ -273,11 +257,10 @@ export function CalendarView() {
         )}
       </div>
 
-      {/* Selected day detail panel */}
+      {/* Selected day detail */}
       {selectedDate && (
-        <div className="mt-4 px-5 animate-m3-fade-scale">
+        <div className="mt-4 px-4 animate-m3-fade-scale">
           <div className="m3-card p-5" style={{ background: 'var(--surface-container-high)' }}>
-            {/* Header */}
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <p className="m3-label-small text-on-surface-variant">
@@ -289,29 +272,17 @@ export function CalendarView() {
               </div>
               <div className="flex items-center gap-2">
                 {selectedEntry !== 0 && (
-                  <span
-                    className="rounded-full px-3 py-1 m3-label-small font-semibold"
-                    style={{
-                      background: selectedEntry === 1 ? 'var(--success)' : selectedEntry === 2 ? 'var(--slip)' : 'var(--fail)',
-                      color: 'var(--on-surface)',
-                    }}
-                  >
+                  <span className="rounded-full px-3 py-1 m3-label-small font-semibold"
+                    style={{ background: selectedEntry === 1 ? 'var(--success)' : selectedEntry === 2 ? 'var(--slip)' : 'var(--fail)', color: 'var(--on-surface)' }}>
                     {['', 'Clean', 'Slip', 'Relapse'][selectedEntry]}
                   </span>
                 )}
-                <button
-                  type="button"
-                  onClick={() => setSelectedDate(null)}
-                  className="m3-icon-btn"
-                  style={{ minHeight: '40px', minWidth: '40px' }}
-                  aria-label="Close detail"
-                >
+                <button type="button" onClick={() => setSelectedDate(null)} className="m3-icon-btn" style={{ minHeight: '40px', minWidth: '40px' }} aria-label="Close detail">
                   <X className="h-4 w-4" />
                 </button>
               </div>
             </div>
 
-            {/* Streak day */}
             {selectedStreakDay > 0 && (
               <div className="mb-4 flex items-center gap-6 rounded-2xl bg-surface-container p-3">
                 <div>
@@ -327,12 +298,10 @@ export function CalendarView() {
               </div>
             )}
 
-            {/* Ratings */}
             {selectedRatings && (selectedRatings.mood || selectedRatings.energy || selectedRatings.sleep) && (
               <div className="mb-4 flex items-center gap-6">
                 {(['mood', 'energy', 'sleep'] as const).map((k) => {
-                  const v = selectedRatings[k]
-                  if (!v) return null
+                  const v = selectedRatings[k]; if (!v) return null
                   const colors = { mood: 'var(--mood)', energy: 'var(--energy)', sleep: 'var(--sleep)' }
                   const labels = { mood: 'Mood', energy: 'Energy', sleep: 'Sleep' }
                   return (
@@ -346,7 +315,6 @@ export function CalendarView() {
               </div>
             )}
 
-            {/* Note preview */}
             {selectedNote && selectedNote.trim() && (
               <div className="mb-4 flex items-start gap-2 rounded-2xl bg-surface-container p-3">
                 <StickyNote className="mt-0.5 h-3.5 w-3.5 shrink-0 text-on-surface-variant" />
@@ -354,53 +322,32 @@ export function CalendarView() {
               </div>
             )}
 
-            {/* Quick actions */}
             <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => { hapticSuccess(); setDay(selectedDate, 1) }}
-                className={cn('m3-pill-btn', selectedEntry === 1 ? 'm3-pill-btn-success' : 'm3-pill-btn-outlined')}
-                style={{ minHeight: '48px' }}
-              >
+              <button type="button" onClick={() => { hapticSuccess(); setDay(selectedDate, 1) }}
+                className={cn('m3-pill-btn', selectedEntry === 1 ? 'm3-pill-btn-success' : 'm3-pill-btn-outlined')} style={{ minHeight: '48px' }}>
                 <Check className="h-4 w-4" /> Clean
               </button>
-              <button
-                type="button"
-                onClick={() => { hapticSuccess(); setDay(selectedDate, 2) }}
-                className={cn('m3-pill-btn', selectedEntry === 2 ? 'm3-pill-btn-slip' : 'm3-pill-btn-outlined')}
-                style={{ minHeight: '48px' }}
-              >
+              <button type="button" onClick={() => { hapticSuccess(); setDay(selectedDate, 2) }}
+                className={cn('m3-pill-btn', selectedEntry === 2 ? 'm3-pill-btn-slip' : 'm3-pill-btn-outlined')} style={{ minHeight: '48px' }}>
                 <Minus className="h-4 w-4" /> Slip
               </button>
-              <button
-                type="button"
-                onClick={() => { hapticSuccess(); setDay(selectedDate, 3) }}
-                className={cn('m3-pill-btn', selectedEntry === 3 ? 'm3-pill-btn-danger' : 'm3-pill-btn-outlined')}
-                style={{ minHeight: '48px' }}
-              >
+              <button type="button" onClick={() => { hapticSuccess(); setDay(selectedDate, 3) }}
+                className={cn('m3-pill-btn', selectedEntry === 3 ? 'm3-pill-btn-danger' : 'm3-pill-btn-outlined')} style={{ minHeight: '48px' }}>
                 <X className="h-4 w-4" /> Relapse
               </button>
             </div>
-            <button
-              type="button"
-              onClick={() => { hapticLight(); openNote(selectedDate); setSelectedDate(null) }}
-              className="m3-pill-btn m3-pill-btn-text w-full mt-2"
-              style={{ minHeight: '48px' }}
-            >
+            <button type="button" onClick={() => { hapticLight(); openNote(selectedDate); setSelectedDate(null) }}
+              className="m3-pill-btn m3-pill-btn-text w-full mt-2" style={{ minHeight: '48px' }}>
               <Pencil className="h-4 w-4" /> Edit note
             </button>
           </div>
         </div>
       )}
 
-      {/* Today button + tip */}
-      <div className="mt-6 px-5 pb-4">
+      {/* Bottom */}
+      <div className="mt-6 px-4 pb-4">
         {!isCurrentMonth && (
-          <button
-            type="button"
-            onClick={() => { hapticLight(); setYear(thisYear); setMonth(thisMonth) }}
-            className="m3-pill-btn m3-pill-btn-tonal mx-auto mb-4"
-          >
+          <button type="button" onClick={() => { hapticLight(); setYear(thisYear); setMonth(thisMonth) }} className="m3-pill-btn m3-pill-btn-tonal mx-auto mb-4">
             Jump to today
           </button>
         )}
