@@ -3,11 +3,12 @@
 import * as React from 'react'
 import { useTrackerStore, suggestTagsFromText } from '@/lib/store'
 import { useAppUI } from '../app-ui-context'
-import { TAG_SUGGESTIONS, TAG_KEYWORD_MAP, type RatingKey } from '@/lib/tracker/types'
+import { TAG_KEYWORD_MAP, type RatingKey } from '@/lib/tracker/types'
+import { TAG_TREE, getAllTags, getRelatedTags, getCategoryChips } from '@/lib/tracker/tag-taxonomy'
 import { extractNoteTags } from '@/lib/tracker/stats'
 import { prettyDate } from '@/lib/tracker/dates'
 import { cn } from '@/lib/utils'
-import { Check, Trash2, Plus } from 'lucide-react'
+import { Check, Trash2, Plus, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 
 const RATING_LABELS: Record<RatingKey, { name: string; hints: string[]; color: string }> = {
@@ -38,12 +39,54 @@ export function NoteSheet({ date }: { date: string }) {
   const state = entries[date] ?? 0
 
   const allTagNames = React.useMemo(() => {
-    const all = new Set<string>(TAG_SUGGESTIONS)
+    const all = new Set<string>(getAllTags())
     for (const t of Object.values(notes)) {
       if (t) extractNoteTags(t).forEach((tag) => all.add(tag.replace(/^#/, '')))
     }
     return [...all].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
   }, [notes])
+
+  // Progressive tag disclosure state
+  const [activeCategory, setActiveCategory] = React.useState<string | null>(null)
+  const [suggestedTags, setSuggestedTags] = React.useState<string[]>([])
+  const categoryChips = React.useMemo(() => getCategoryChips(state), [state])
+
+  const insertTagText = (tag: string) => {
+    const newVal = text + (text && !text.endsWith(' ') ? ' ' : '') + `#${tag} `
+    setText(newVal)
+    setTimeout(() => textareaRef.current?.focus(), 0)
+  }
+
+  const handleCategorySelect = (cat: string) => {
+    if (activeCategory === cat) {
+      setActiveCategory(null)
+      setSuggestedTags([])
+      return
+    }
+    setActiveCategory(cat)
+    // Find the category's children and show them as suggestions
+    const node = TAG_TREE.find(n => n.tag === cat)
+    if (node && node.children) {
+      const existing = new Set(extractNoteTags(text).map(t => t.toLowerCase()))
+      setSuggestedTags(node.children.filter(c => !existing.has('#' + c.tag.toLowerCase())).map(c => c.tag))
+    } else {
+      setSuggestedTags([])
+    }
+  }
+
+  const handleTagSelect = (tag: string) => {
+    insertTagText(tag)
+    // After selecting a tag, show related tags from the same niche
+    const related = getRelatedTags(tag)
+    const existing = new Set(extractNoteTags(text).map(t => t.toLowerCase()))
+    const newRelated = related.filter(t => !existing.has('#' + t.toLowerCase()))
+    if (newRelated.length > 0) {
+      setSuggestedTags(newRelated)
+    } else {
+      setSuggestedTags([])
+      setActiveCategory(null)
+    }
+  }
 
   const getWordBeforeCursor = () => {
     const ta = textareaRef.current
@@ -87,7 +130,7 @@ export function NoteSheet({ date }: { date: string }) {
     } else if (e.key === 'Escape') setAcActive(false)
   }
 
-  const suggestedTags = React.useMemo(() => {
+  const autoSuggestedTags = React.useMemo(() => {
     const existing = new Set(extractNoteTags(text).map((t) => t.toLowerCase()))
     return suggestTagsFromText(text).filter((t) => !existing.has(t.toLowerCase())).slice(0, 6)
   }, [text])
@@ -129,22 +172,55 @@ export function NoteSheet({ date }: { date: string }) {
         ))}
       </div>
 
-      {/* Quick tags */}
-      <div className="mb-3 flex flex-wrap gap-1.5">
-        {TAG_SUGGESTIONS.slice(0, 10).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => {
-              const newVal = text + (text && !text.endsWith(' ') ? ' ' : '') + `#${t} `
-              setText(newVal)
-              setTimeout(() => textareaRef.current?.focus(), 0)
-            }}
-            className="m3-chip"
-          >
-            #{t}
-          </button>
-        ))}
+      {/* Smart tags — progressive disclosure */}
+      <div className="mb-3">
+        {/* Category chips — one per niche */}
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {categoryChips.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => handleCategorySelect(cat)}
+              className={cn(
+                'rounded-full px-3 py-1.5 m3-label-small font-medium transition-all active:scale-95',
+                activeCategory === cat
+                  ? 'bg-primary text-on-primary'
+                  : 'bg-surface-container text-on-surface-variant'
+              )}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Sub-niche suggestions — appear when a category is selected or after a tag is chosen */}
+        {suggestedTags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 animate-m3-fade-in">
+            {suggestedTags.map((tag) => {
+              const node = TAG_TREE.find(n => n.children?.some(c => c.tag === tag))
+              const label = node?.children?.find(c => c.tag === tag)?.label || tag
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => handleTagSelect(tag)}
+                  className="rounded-full border border-outline-variant bg-surface-container-low px-2.5 py-1 m3-label-small text-on-surface transition-all active:scale-95 hover:border-primary"
+                >
+                  <Plus className="mr-1 inline h-2.5 w-2.5" />
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Auto-suggested from note content */}
+        {suggestedTags.length > 0 && (
+          <p className="mt-1.5 m3-label-small text-on-surface-variant">
+            <ChevronRight className="inline h-3 w-3" />
+            {activeCategory ? `More from ${activeCategory}` : 'Related tags'}
+          </p>
+        )}
       </div>
 
       {/* Textarea */}
@@ -185,13 +261,13 @@ export function NoteSheet({ date }: { date: string }) {
         <code className="rounded bg-surface-variant px-1 py-0.5">#tag</code>
       </div>
 
-      {/* Suggested tags */}
-      {suggestedTags.length > 0 && (
+      {/* Auto-suggested tags from note content */}
+      {autoSuggestedTags.length > 0 && (
         <div className="mt-3">
           <p className="mb-1.5 text-xs text-on-surface-variant">Suggested from your words</p>
           <div className="flex flex-wrap gap-1.5">
-            {suggestedTags.map((t) => (
-              <button key={t} type="button" onClick={() => setText((p) => p + (p && !p.endsWith(' ') ? ' ' : '') + `${t} `)} className="m3-chip">
+            {autoSuggestedTags.map((t) => (
+              <button key={t} type="button" onClick={() => insertTagText(t.replace(/^#/, ''))} className="m3-chip">
                 <Plus className="h-3 w-3" />{t}
               </button>
             ))}
