@@ -1378,3 +1378,79 @@ Task: Deep scan using impeccable skill RAR, apply audit findings, harden, polish
   - No glassmorphism as default (old components not used) ✓
   - No bounce/elastic easing ✓
   - No hard-coded #000/#fff ✓
+
+---
+Task ID: 25 (Home screen badge + 7 new stat sections + expanded tags)
+Agent: webDevReview
+Task: Home screen widget, streak survival funnel, avg streak trend, mood vs streak, energy trend, most used tags, tag correlation, next 3 achievements
+
+## What Was Added
+
+### Feature: Home Screen Widget (#4)
+- **App Badging API**: `useHomeScreenBadge` hook uses `navigator.setAppBadge(streak)` to show the streak count as a number on the app icon (Android/Windows). Clears badge when streak is 0.
+- **Dynamic title**: Document title updates to "X day streak — Steady" when streak > 0, so users see it in tab switcher and recent apps.
+- Wired into `page.tsx` alongside other hooks.
+
+### Expanded Tags (for better correlation analytics)
+- **Tag categories expanded** from 14 to 30 tags:
+  - Clean tags (15): Workout, Good Sleep, Meditated, Social Win, Read, Cold Shower, Sunlight, Journaling, Nature Walk, Deep Work, Gratitude, Healthy Meal, Early Bedtime, No Sugar, Prayer
+  - Relapse tags (15): Stress, Boredom, Social Media, Insomnia, Hangover, Loneliness, Tired, Anxiety, Procrastination, Late Night, Porn, Peer Pressure, Anger, Sadness, Caffeine
+- **Keyword map expanded** with 60+ keyword entries mapping natural language to tags (e.g., "doom scrolling" → #SocialMedia, "racing thoughts" → #Anxiety, "flow state" → #DeepWork)
+
+### 7 New Stat Sections
+
+#### 1. Streak Survival Funnel (#3)
+- Shows what % of all streaks reach 7, 14, 30, 90 days
+- Horizontal bars with color-coded thresholds (green → primary → tertiary → gold)
+- Shows count and percentage for each threshold
+- Empty state: "No streaks yet"
+
+#### 2. Average Streak Trend (#2)
+- Compares first-half vs second-half average streak lengths
+- Shows direction (up/down/flat) with arrow and difference
+- SVG sparkline of all streak lengths
+- Verdict text: "Your streaks are getting longer" / "Streaks are shortening" / "Stable"
+
+#### 3. Mood vs Streak Length (#12)
+- Canvas scatter plot with mood (Y: 1-5) vs streak day number (X)
+- Each dot represents a day with both a mood rating and streak position
+- Grid lines for reference, mood-colored dots
+- Helps answer: "Does mood improve as streak gets longer?"
+
+#### 4. Energy Trend (30d) (#14)
+- Canvas line chart of energy ratings over last 30 days
+- Energy-colored line with dots at each data point
+- Dashed trend line (linear regression) showing direction
+- Helps answer: "Is energy trending up over time?"
+
+#### 5. Most Used Tags (#18)
+- Top 10 tags with horizontal frequency bars
+- Primary-container colored bars with count labels
+- Truncated tag names for narrow screens
+- Only shows when notes exist
+
+#### 6. Tag Correlation with State (#19)
+- Two groups: "On clean days" (success-container chips) and "On relapse days" (error-container chips)
+- Top 5 tags per group with count
+- Helps identify which tags correlate with clean vs relapse days
+- Only shows when notes exist
+
+#### 7. Next 3 Achievements (#28)
+- Shows 3 achievements closest to unlocking (sorted by progress %)
+- Combines streak-based and clean-day-based achievements
+- Each shows: label, current/threshold, progress bar (primary→gold gradient), remaining count
+- "Ready to unlock" when threshold met
+
+## QA Verification
+- Dev server: HTTP 200, no errors
+- Lint: 0 errors
+- All 7 new sections confirmed rendering in Stats view:
+  - Streak survival funnel ✓
+  - Avg streak trend ✓
+  - Mood vs streak length ✓
+  - Energy trend ✓
+  - Most used tags ✓ (conditional on notes existing)
+  - Tag correlation ✓ (conditional on notes existing)
+  - Next 3 achievements ✓
+- Home screen badge hook wired in
+- Tags expanded from 14 to 30

@@ -10,6 +10,7 @@ import { MoreView } from '@/components/tracker/more-view'
 import { SheetManager } from '@/components/tracker/sheet-manager'
 import { useMilestoneWatcher, useKeyboardShortcuts, useBackupReminder } from '@/components/tracker/use-watchers'
 import { useInstallPrompt } from '@/components/tracker/use-install-prompt'
+import { useHomeScreenBadge } from '@/components/tracker/use-home-screen-badge'
 import { useHydrated, useTrackerStore } from '@/lib/store'
 import { getTodayStr } from '@/lib/tracker/dates'
 import { generatePalette, applyPalette, resetPalette } from '@/lib/tracker/dynamic-color'
@@ -26,6 +27,7 @@ function AppInner() {
   useMilestoneWatcher()
   useKeyboardShortcuts()
   useBackupReminder()
+  useHomeScreenBadge()
 
   const { showPrompt: showInstallPrompt, promptInstall, dismiss: dismissInstall } = useInstallPrompt()
 

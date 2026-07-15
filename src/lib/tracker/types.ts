@@ -167,8 +167,8 @@ export const ACHIEVEMENTS: Achievement[] = [
 
 // Tag suggestions
 export const TAG_CATEGORIES = {
-  clean: ["Workout", "Good Sleep", "Meditated", "Social Win", "Read", "Cold Shower", "Sunlight"],
-  relapse: ["Stress", "Boredom", "Social Media", "Insomnia", "Hangover", "Loneliness", "Tired"],
+  clean: ["Workout", "Good Sleep", "Meditated", "Social Win", "Read", "Cold Shower", "Sunlight", "Journaling", "Nature Walk", "Deep Work", "Gratitude", "Healthy Meal", "Early Bedtime", "No Sugar", "Prayer"],
+  relapse: ["Stress", "Boredom", "Social Media", "Insomnia", "Hangover", "Loneliness", "Tired", "Anxiety", "Procrastination", "Late Night", "Porn", "Peer Pressure", "Anger", "Sadness", "Caffeine"],
 } as const;
 
 export const TAG_SUGGESTIONS = [
@@ -176,26 +176,98 @@ export const TAG_SUGGESTIONS = [
   ...TAG_CATEGORIES.relapse,
 ];
 
-// Auto-tag keyword map
+// Auto-tag keyword map — expanded for better correlation analytics
 export const TAG_KEYWORD_MAP: Record<string, string> = {
+  // Insomnia / Sleep
   tired: "#Insomnia", exhausted: "#Insomnia", sleepy: "#Insomnia", awake: "#Insomnia",
-  insomnia: "#Insomnia", "could not sleep": "#Insomnia",
+  insomnia: "#Insomnia", "could not sleep": "#Insomnia", "cant sleep": "#Insomnia",
+  "bad sleep": "#Insomnia", restless: "#Insomnia", "woke up early": "#Insomnia",
+  // Stress
   stressed: "#Stress", anxious: "#Stress", overwhelmed: "#Stress", worried: "#Stress",
-  pressure: "#Stress", panic: "#Stress",
+  pressure: "#Stress", panic: "#Stress", tense: "#Stress", "work stress": "#Stress",
+  deadline: "#Stress", "burned out": "#Stress", burntout: "#Stress",
+  // Anxiety
+  anxiety: "#Anxiety", "panic attack": "#Anxiety", nervous: "#Anxiety", fearful: "#Anxiety",
+  "racing thoughts": "#Anxiety", dread: "#Anxiety",
+  // Boredom
   bored: "#Boredom", boring: "#Boredom", "nothing to do": "#Boredom", idle: "#Boredom",
+  restless2: "#Boredom", "killing time": "#Boredom",
+  // Social Media
   instagram: "#SocialMedia", tiktok: "#SocialMedia", youtube: "#SocialMedia",
   twitter: "#SocialMedia", facebook: "#SocialMedia", reddit: "#SocialMedia", scrolling: "#SocialMedia",
+  "doom scrolling": "#SocialMedia", "feed": "#SocialMedia", reels: "#SocialMedia",
+  // Porn / explicit
+  porn: "#Porn", "adult content": "#Porn", "relapse trigger": "#Porn", hentai: "#Porn",
+  "onlyfans": "#Porn", browsing: "#Porn",
+  // Hangover
   drunk: "#Hangover", hungover: "#Hangover", alcohol: "#Hangover", beer: "#Hangover",
-  wine: "#Hangover", hangover: "#Hangover",
+  wine: "#Hangover", hangover: "#Hangover", "drinking": "#Hangover", liquor: "#Hangover",
+  // Loneliness
   lonely: "#Loneliness", alone: "#Loneliness", isolation: "#Loneliness",
+  "no friends": "#Loneliness", "felt alone": "#Loneliness", disconnected: "#Loneliness",
+  // Anger
+  angry: "#Anger", furious: "#Anger", irritated: "#Anger", frustrated: "#Anger",
+  rage: "#Anger", mad: "#Anger", pissed: "#Anger",
+  // Sadness
+  sad: "#Sadness", depressed: "#Sadness", down: "#Sadness", hopeless: "#Sadness",
+  crying: "#Sadness", "felt down": "#Sadness", empty: "#Sadness",
+  // Procrastination
+  procrastinated: "#Procrastination", procrastination: "#Procrastination", "put off": "#Procrastination",
+  avoided: "#Procrastination", delayed: "#Procrastination", distracted: "#Procrastination",
+  // Late Night
+  "late night": "#LateNight", "stayed up": "#LateNight", midnight: "#LateNight",
+  "3am": "#LateNight", "all night": "#LateNight", "couldnt sleep": "#LateNight",
+  // Peer Pressure
+  "peer pressure": "#PeerPressure", "friends convinced": "#PeerPressure", pressured: "#PeerPressure",
+  "dared me": "#PeerPressure", "everyone was doing it": "#PeerPressure",
+  // Caffeine
+  coffee: "#Caffeine", espresso: "#Caffeine", "energy drink": "#Caffeine",
+  "too much coffee": "#Caffeine", jittery: "#Caffeine",
+  // Workout
   gym: "#Workout", workout: "#Workout", exercise: "#Workout", ran: "#Workout",
-  lifted: "#Workout", run: "#Workout", jogging: "#Workout",
+  lifted: "#Workout", run: "#Workout", jogging: "#Workout", "push ups": "#Workout",
+  swimming: "#Workout", cycling: "#Workout", yoga: "#Workout", "weight training": "#Workout",
+  // Meditated
   meditated: "#Meditated", meditation: "#Meditated", mindful: "#Meditated", mindfulness: "#Meditated",
+  "deep breath": "#Meditated", "calm mind": "#Meditated", zen: "#Meditated",
+  // Good Sleep
   "slept well": "#GoodSleep", rested: "#GoodSleep", "good sleep": "#GoodSleep", "slept great": "#GoodSleep",
-  friends: "#SocialWin", party: "#SocialWin", family: "#SocialWin", socialized: "#SocialWin", "hung out": "#SocialWin",
-  read: "#Read", book: "#Read", reading: "#Read",
-  "cold shower": "#ColdShower", shower: "#ColdShower",
-  sunlight: "#Sunlight", sun: "#Sunlight", outside: "#Sunlight",
+  "deep sleep": "#GoodSleep", "8 hours": "#GoodSleep", "full night": "#GoodSleep",
+  // Social Win
+  friends: "#SocialWin", party: "#SocialWin", family: "#SocialWin", socialized: "#SocialWin",
+  "hung out": "#SocialWin", "good conversation": "#SocialWin", "date night": "#SocialWin",
+  // Read
+  read: "#Read", book: "#Read", reading: "#Read", "finished a book": "#Read",
+  "learned something": "#Read", studied: "#Read",
+  // Cold Shower
+  "cold shower": "#ColdShower", shower: "#ColdShower", "ice bath": "#ColdShower",
+  // Sunlight
+  sunlight: "#Sunlight", sun: "#Sunlight", outside: "#Sunlight", "fresh air": "#Sunlight",
+  "went outside": "#Sunlight", "morning walk": "#Sunlight", vitamin: "#Sunlight",
+  // Journaling
+  journaled: "#Journaling", journaling: "#Journaling", "wrote in my journal": "#Journaling",
+  "reflected": "#Journaling", "wrote down": "#Journaling",
+  // Nature Walk
+  "nature walk": "#NatureWalk", hike: "#NatureWalk", hiking: "#NatureWalk",
+  "went for a walk": "#NatureWalk", "forest": "#NatureWalk", park: "#NatureWalk",
+  // Deep Work
+  "deep work": "#DeepWork", focused: "#DeepWork", "flow state": "#DeepWork",
+  productive: "#DeepWork", concentrated: "#DeepWork", "got things done": "#DeepWork",
+  // Gratitude
+  grateful: "#Gratitude", gratitude: "#Gratitude", thankful: "#Gratitude",
+  "blessed": "#Gratitude", "appreciate": "#Gratitude",
+  // Healthy Meal
+  "healthy meal": "#HealthyMeal", "ate clean": "#HealthyMeal", salad: "#HealthyMeal",
+  "cooked at home": "#HealthyMeal", "no junk food": "#HealthyMeal",
+  // Early Bedtime
+  "early bedtime": "#EarlyBedtime", "slept early": "#EarlyBedtime", "in bed by 10": "#EarlyBedtime",
+  "good routine": "#EarlyBedtime", "lights out": "#EarlyBedtime",
+  // No Sugar
+  "no sugar": "#NoSugar", "sugar free": "#NoSugar", "avoided sweets": "#NoSugar",
+  "no dessert": "#NoSugar", "cut sugar": "#NoSugar",
+  // Prayer
+  prayed: "#Prayer", prayer: "#Prayer", "spiritual": "#Prayer",
+  "connected with god": "#Prayer", "faith": "#Prayer", "worship": "#Prayer",
 };
 
 // Affirmations & motivation quotes (mini feature)
