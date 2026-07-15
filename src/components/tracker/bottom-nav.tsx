@@ -84,7 +84,7 @@ export function QuickAddFAB({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={() => { hapticLight(); onClick() }}
-      aria-label="Quick mark today"
+      aria-label="Note today"
       className={cn(
         'm3-fab fixed right-4 z-40 h-14 overflow-hidden transition-all duration-300',
         extended ? 'w-auto px-4' : 'w-14',
@@ -94,7 +94,7 @@ export function QuickAddFAB({ onClick }: { onClick: () => void }) {
       <div className="flex items-center gap-2">
         <Plus className={cn('h-6 w-6 shrink-0 transition-transform', extended ? 'rotate-0' : 'rotate-0')} />
         <span className={cn('m3-label-large whitespace-nowrap transition-all', extended ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0')}>
-          Mark today
+          Note today
         </span>
       </div>
     </button>

@@ -221,35 +221,23 @@ export function CalendarView() {
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 px-4">
+      {/* Legend — states only */}
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 px-4">
         <div className="flex items-center gap-1.5">
-          <span className="h-5 w-5 rounded-full" style={{ background: 'var(--surface-container-low)' }} />
+          <span className="h-4 w-4 rounded-full" style={{ background: 'var(--surface-container-low)' }} />
           <span className="m3-label-small text-on-surface-variant">Unmarked</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="h-5 w-5 rounded-full" style={{ background: 'var(--success)' }} />
+          <span className="h-4 w-4 rounded-full" style={{ background: 'var(--success)' }} />
           <span className="m3-label-small text-on-surface-variant">Clean</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="h-5 w-5 rounded-full" style={{ background: 'var(--slip)' }} />
+          <span className="h-4 w-4 rounded-full" style={{ background: 'var(--slip)' }} />
           <span className="m3-label-small text-on-surface-variant">Slip</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="h-5 w-5 rounded-full" style={{ background: 'var(--fail)' }} />
+          <span className="h-4 w-4 rounded-full" style={{ background: 'var(--fail)' }} />
           <span className="m3-label-small text-on-surface-variant">Relapse</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="relative h-5 w-5 rounded-full" style={{ background: 'var(--surface-container-low)' }}>
-            <span className="day-badge-milestone" style={{ position: 'absolute', top: '-1px', right: '-1px' }}>7</span>
-          </span>
-          <span className="m3-label-small text-on-surface-variant">Milestone</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="relative h-5 w-5 rounded-full" style={{ background: 'var(--surface-container-low)' }}>
-            <span className="day-badge-note" style={{ position: 'absolute', bottom: '-1px', right: '-1px' }} />
-          </span>
-          <span className="m3-label-small text-on-surface-variant">Noted</span>
         </div>
       </div>
 
