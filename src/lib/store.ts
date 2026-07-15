@@ -118,17 +118,55 @@ export const useTrackerStore = create<TrackerState>()(
       },
       reflections: [],
 
-      setDay: (dateStr, state) =>
-        set((s) => ({
-          entries: { ...s.entries, [dateStr]: state },
+      setDay: (dateStr, state) => {
+        const s = get()
+        // If user tries to set a slip (2), check if there's a slip or relapse
+        // within the last 7 days. If so, force it to relapse (3) instead.
+        let actualState = state
+        if (state === 2) {
+          const targetDate = parseDateStr(dateStr)
+          if (targetDate) {
+            for (let i = 1; i <= 7; i++) {
+              const checkDate = new Date(targetDate)
+              checkDate.setDate(checkDate.getDate() - i)
+              const checkStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${String(checkDate.getDate()).padStart(2, '0')}`
+              const checkState = s.entries[checkStr]
+              if (checkState === 2 || checkState === 3) {
+                actualState = 3 // Force relapse
+                break
+              }
+            }
+          }
+        }
+        set({
+          entries: { ...s.entries, [dateStr]: actualState },
           undoSnapshot: { entries: s.entries, notes: s.notes, ratings: s.ratings },
-        })),
+        })
+      },
 
       cycleDay: (dateStr) => {
         const s = get()
         const current = s.entries[dateStr] ?? 0
-        const next: DayState =
+        let next: DayState =
           current === 0 ? 1 : current === 1 ? 2 : current === 2 ? 3 : 0
+
+        // If cycling to slip (2), check 7-day rule
+        if (next === 2) {
+          const targetDate = parseDateStr(dateStr)
+          if (targetDate) {
+            for (let i = 1; i <= 7; i++) {
+              const checkDate = new Date(targetDate)
+              checkDate.setDate(checkDate.getDate() - i)
+              const checkStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${String(checkDate.getDate()).padStart(2, '0')}`
+              const checkState = s.entries[checkStr]
+              if (checkState === 2 || checkState === 3) {
+                next = 3 // Force relapse instead of slip
+                break
+              }
+            }
+          }
+        }
+
         set({
           entries: next === 0 ? omit(s.entries, dateStr) : { ...s.entries, [dateStr]: next },
           undoSnapshot: { entries: s.entries, notes: s.notes, ratings: s.ratings },

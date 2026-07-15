@@ -43,6 +43,18 @@ export function TodayView() {
     setDay(todayStr, state)
   }
 
+  // Check if slip is disallowed (slip or relapse within last 7 days)
+  const canSlip = React.useMemo(() => {
+    const today = new Date(todayStr)
+    for (let i = 1; i <= 7; i++) {
+      const d = new Date(today)
+      d.setDate(d.getDate() - i)
+      const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      if (entries[dStr] === 2 || entries[dStr] === 3) return false
+    }
+    return true
+  }, [entries, todayStr])
+
   return (
     <div className="space-y-3 px-4 pb-4">
       {/* Streak hero — M3 large display */}
@@ -138,7 +150,7 @@ export function TodayView() {
         <p className="m3-label-medium mb-3 uppercase text-on-surface-variant">Mark today</p>
         <div className="grid grid-cols-3 gap-2">
           <QuickMarkBtn label="Clean" active={todayState === 1} activeBg="var(--success)" onClick={() => handleMark(1)} icon={<Check className="h-4 w-4" />} />
-          <QuickMarkBtn label="Slip" active={todayState === 2} activeBg="var(--slip)" onClick={() => handleMark(2)} icon={<Minus className="h-4 w-4" />} />
+          <QuickMarkBtn label={canSlip ? 'Slip' : 'Locked'} active={todayState === 2} activeBg="var(--slip)" onClick={() => canSlip && handleMark(2)} icon={<Minus className="h-4 w-4" />} disabled={!canSlip} />
           <QuickMarkBtn label="Relapse" active={todayState === 3} activeBg="var(--fail)" onClick={() => handleMark(3)} icon={<X className="h-4 w-4" />} />
         </div>
         {todayState !== 0 && (
@@ -210,14 +222,16 @@ export function TodayView() {
   )
 }
 
-function QuickMarkBtn({ label, active, activeBg, onClick, icon }: { label: string; active: boolean; activeBg: string; onClick: () => void; icon: React.ReactNode }) {
+function QuickMarkBtn({ label, active, activeBg, onClick, icon, disabled }: { label: string; active: boolean; activeBg: string; onClick: () => void; icon: React.ReactNode; disabled?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       className={cn(
-        'm3-ripple-surface flex h-16 flex-col items-center justify-center gap-2 rounded-2xl border-2 m3-label-large transition-all',
+        'flex h-16 flex-col items-center justify-center gap-2 rounded-2xl border-2 m3-label-large transition-all',
         active ? 'border-transparent text-on-surface' : 'border-outline-variant text-on-surface-variant',
+        disabled && 'opacity-40 cursor-not-allowed',
       )}
       style={active ? { background: activeBg } : undefined}
     >

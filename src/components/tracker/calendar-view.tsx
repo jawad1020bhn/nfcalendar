@@ -112,6 +112,20 @@ export function CalendarView() {
   const selectedStreakDay = selectedDate ? getStreakDay(selectedDate) : 0
   const isCurrentMonth = year === thisYear && month === thisMonth
 
+  // Check if slip is allowed for the selected date (no slip/relapse in previous 7 days)
+  const canSlipSelected = React.useMemo(() => {
+    if (!selectedDate) return true
+    const target = parseDateStr(selectedDate)
+    if (!target) return true
+    for (let i = 1; i <= 7; i++) {
+      const d = new Date(target)
+      d.setDate(d.getDate() - i)
+      const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      if (entries[dStr] === 2 || entries[dStr] === 3) return false
+    }
+    return true
+  }, [selectedDate, entries])
+
   return (
     <div className="flex flex-col">
       {/* Header */}
@@ -329,9 +343,11 @@ export function CalendarView() {
                 className={cn('m3-pill-btn', selectedEntry === 1 ? 'm3-pill-btn-success' : 'm3-pill-btn-outlined')} style={{ minHeight: '48px' }}>
                 <Check className="h-4 w-4" /> Clean
               </button>
-              <button type="button" onClick={() => { hapticSuccess(); setDay(selectedDate, 2) }}
-                className={cn('m3-pill-btn', selectedEntry === 2 ? 'm3-pill-btn-slip' : 'm3-pill-btn-outlined')} style={{ minHeight: '48px' }}>
-                <Minus className="h-4 w-4" /> Slip
+              <button type="button"
+                onClick={() => { if (canSlipSelected) { hapticSuccess(); setDay(selectedDate, 2) } }}
+                disabled={!canSlipSelected}
+                className={cn('m3-pill-btn', selectedEntry === 2 ? 'm3-pill-btn-slip' : 'm3-pill-btn-outlined', !canSlipSelected && 'opacity-40 cursor-not-allowed')} style={{ minHeight: '48px' }}>
+                <Minus className="h-4 w-4" /> {canSlipSelected ? 'Slip' : 'Locked'}
               </button>
               <button type="button" onClick={() => { hapticSuccess(); setDay(selectedDate, 3) }}
                 className={cn('m3-pill-btn', selectedEntry === 3 ? 'm3-pill-btn-danger' : 'm3-pill-btn-outlined')} style={{ minHeight: '48px' }}>

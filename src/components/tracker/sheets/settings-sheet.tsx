@@ -133,15 +133,36 @@ export function SettingsSheet() {
 
 function ToggleRow({ label, desc, checked, onChange }: { label: string; desc: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <label className="flex cursor-pointer items-start justify-between gap-3 py-2">
+    <div
+      className="flex cursor-pointer items-center justify-between gap-3 py-2.5"
+      onClick={() => onChange(!checked)}
+    >
       <div className="flex-1">
         <p className="text-sm text-on-surface">{label}</p>
         <p className="text-xs text-on-surface-variant">{desc}</p>
       </div>
-      <button type="button" role="switch" aria-checked={checked} onClick={() => onChange(!checked)}
-        className={cn('relative h-6 w-11 shrink-0 rounded-full transition-colors', checked ? 'bg-primary' : 'bg-surface-variant')}>
-        <span className={cn('absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform', checked ? 'translate-x-5' : 'translate-x-0.5')} />
-      </button>
-    </label>
+      <div
+        role="switch"
+        aria-checked={checked}
+        className={cn(
+          'relative h-6 w-11 shrink-0 rounded-full transition-colors',
+          checked ? 'bg-primary' : 'bg-surface-container-highest'
+        )}
+        style={{
+          background: checked ? 'var(--primary)' : 'var(--outline-variant)',
+        }}
+      >
+        <span
+          className={cn(
+            'absolute top-0.5 h-5 w-5 rounded-full transition-all',
+            checked ? 'translate-x-[22px]' : 'translate-x-0.5'
+          )}
+          style={{
+            background: checked ? 'var(--on-primary)' : 'var(--on-surface-variant)',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+          }}
+        />
+      </div>
+    </div>
   )
 }
