@@ -15,7 +15,6 @@ export type SheetView =
   | { kind: 'settings' }
   | { kind: 'reflection' }
   | { kind: 'notes-list' }
-  | { kind: 'onboarding' }
 
 type Ctx = {
   view: AppView
@@ -31,8 +30,15 @@ type Ctx = {
   openSettings: () => void
   openReflection: () => void
   openNotesList: () => void
-  openOnboarding: () => void
   closeSheet: () => void
+  // Sidebar/list state and scroll helpers that were previously in a second
+  // (unmounted!) TrackerUIContext. Centralizing them here prevents a runtime
+  // crash when today-panel/calendar-grid call these helpers.
+  notesListOpen: boolean
+  setNotesListOpen: (v: boolean) => void
+  toggleNotesList: () => void
+  jumpToToday: () => void
+  registerJumpToToday: (fn: () => void) => void
 }
 
 const AppCtx = React.createContext<Ctx | null>(null)
@@ -40,6 +46,8 @@ const AppCtx = React.createContext<Ctx | null>(null)
 export function AppUIProvider({ children }: { children: React.ReactNode }) {
   const [view, setView] = React.useState<AppView>('today')
   const [sheet, setSheet] = React.useState<SheetView>({ kind: 'none' })
+  const [notesListOpen, setNotesListOpen] = React.useState(false)
+  const jumpFnRef = React.useRef<(() => void) | null>(null)
 
   const value = React.useMemo<Ctx>(
     () => ({
@@ -56,10 +64,16 @@ export function AppUIProvider({ children }: { children: React.ReactNode }) {
       openSettings: () => setSheet({ kind: 'settings' }),
       openReflection: () => setSheet({ kind: 'reflection' }),
       openNotesList: () => setSheet({ kind: 'notes-list' }),
-      openOnboarding: () => setSheet({ kind: 'onboarding' }),
       closeSheet: () => setSheet({ kind: 'none' }),
+      notesListOpen,
+      setNotesListOpen,
+      toggleNotesList: () => setNotesListOpen((v) => !v),
+      jumpToToday: () => jumpFnRef.current?.(),
+      registerJumpToToday: (fn) => {
+        jumpFnRef.current = fn
+      },
     }),
-    [view, sheet],
+    [view, sheet, notesListOpen],
   )
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>
@@ -70,3 +84,9 @@ export function useAppUI() {
   if (!ctx) throw new Error('useAppUI must be used within AppUIProvider')
   return ctx
 }
+
+/**
+ * Alias kept for backwards compatibility with components (today-panel, calendar-grid)
+ * that imported `useTrackerUI` before the contexts were merged.
+ */
+export const useTrackerUI = useAppUI

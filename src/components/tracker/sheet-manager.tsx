@@ -87,12 +87,13 @@ export function SheetManager() {
     <Dialog open={isOpen} onOpenChange={(o) => !o && closeSheet()}>
       <DialogContent
         ref={contentRef}
-        className="max-h-[92vh] w-full overflow-y-auto rounded-b-none border-0 p-0 sm:max-w-md sm:rounded-b-[28px]"
+        sheet
+        className="max-h-[92vh] overflow-y-auto p-0"
         showCloseButton={false}
         aria-describedby={undefined}
         style={{
           background: 'var(--surface-container-high)',
-          boxShadow: '0 -4px 16px rgba(0,0,0,0.3)',
+          boxShadow: '0 -4px 24px rgba(0,0,0,0.4)',
           transform: isDragging ? `translateY(${dragOffset}px)` : undefined,
           transition: isDragging ? 'none' : 'transform 0.25s var(--ease-emphasized)',
           opacity: isDragging ? Math.max(0.5, 1 - dragOffset / 800) : undefined,

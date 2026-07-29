@@ -20,10 +20,7 @@ import { Download, X } from 'lucide-react'
 
 function AppInner() {
   const { view, openNote, setView, sheet } = useAppUI()
-  const onboardingComplete = useTrackerStore((s) => s.settings.onboardingComplete)
-  const defaultView = useTrackerStore((s) => s.settings.defaultView)
   const seedColor = useTrackerStore((s) => s.settings.seedColor)
-  const [loaded, setLoaded] = React.useState(false)
 
   useMilestoneWatcher()
   useKeyboardShortcuts()
@@ -71,7 +68,7 @@ function AppInner() {
       window.removeEventListener('touchmove', onMove)
       window.removeEventListener('touchend', onEnd)
     }
-  }, [view, backDrag, setView])
+  }, [view, setView])
 
   // Apply dynamic color palette on load and when seed changes
   React.useEffect(() => {
@@ -82,18 +79,23 @@ function AppInner() {
     }
   }, [seedColor])
 
+  // Mark onboarding complete on first mount (we don't have an onboarding flow
+  // right now; this keeps existing users from seeing any first-run UI).
   React.useEffect(() => {
-    if (!loaded) {
-      setView(defaultView)
-      setLoaded(true)
-    }
-  }, [defaultView, loaded, setView])
+    const s = useTrackerStore.getState()
+    if (!s.settings.onboardingComplete) s.completeOnboarding()
+  }, [])
 
+  // Apply saved default view once after mount.
+  const didInit = React.useRef(false)
   React.useEffect(() => {
-    if (!onboardingComplete) {
-      useTrackerStore.getState().completeOnboarding()
+    if (didInit.current) return
+    didInit.current = true
+    const s = useTrackerStore.getState()
+    if (s.settings.defaultView && s.settings.defaultView !== view) {
+      setView(s.settings.defaultView)
     }
-  }, [onboardingComplete])
+  }, [setView, view])
 
   // Collapsing app bar — title grows when scrolled to top
   const [scrolled, setScrolled] = React.useState(false)

@@ -3,8 +3,9 @@
 import * as React from 'react'
 import { useTrackerStore, escalateSlips } from '@/lib/store'
 import { calculateStats, getAllStreakLengths, extractNoteTags, type Stats } from '@/lib/tracker/stats'
-import { renderNoteMarkdown } from '@/lib/tracker/markdown'
-import { ACHIEVEMENTS } from '@/lib/tracker/types'
+import { type DayState } from '@/lib/tracker/types'
+
+type Entries = Record<string, DayState>
 import { useAppUI } from './app-ui-context'
 import { EmptyStats } from './expressive'
 import { cn } from '@/lib/utils'
@@ -14,7 +15,6 @@ import { toast } from 'sonner'
 type TimeWindow = 'all' | '90d' | '30d'
 
 export function StatsView() {
-  const year = useTrackerStore((s) => s.currentYear)
   const rawEntries = useTrackerStore((s) => s.entries)
   const notes = useTrackerStore((s) => s.notes)
   const ratings = useTrackerStore((s) => s.ratings)
@@ -38,7 +38,7 @@ export function StatsView() {
     cutoff.setHours(0, 0, 0, 0)
     cutoff.setDate(cutoff.getDate() - days)
     const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, '0')}-${String(cutoff.getDate()).padStart(2, '0')}`
-    const filtered: Record<string, number> = {}
+    const filtered: Entries = {}
     for (const [d, st] of Object.entries(entries)) {
       if (d >= cutoffStr) filtered[d] = st
     }
@@ -90,13 +90,14 @@ export function StatsView() {
     toast.success('Last change retracted')
   }
 
-  // Skeleton loading state (brief shimmer on first compute)
-  const [loading, setLoading] = React.useState(true)
+  // Show a brief skeleton shimmer while stats for the new window are computed.
+  // We avoid setState-in-effect by keying state off timeWindow directly.
+  const [windowReady, setWindowReady] = React.useState<TimeWindow>(timeWindow)
   React.useEffect(() => {
-    setLoading(true)
-    const t = setTimeout(() => setLoading(false), 300)
+    const t = setTimeout(() => setWindowReady(timeWindow), 250)
     return () => clearTimeout(t)
   }, [timeWindow])
+  const loading = windowReady !== timeWindow
 
   return (
     <div className="space-y-4 px-4 pb-4 pt-2">
@@ -358,7 +359,7 @@ function WellbeingAverages({ ratings }: { ratings: Record<string, { mood?: numbe
   )
 }
 
-function BestDayOfWeek({ entries }: { entries: Record<string, number> }) {
+function BestDayOfWeek({ entries }: { entries: Entries }) {
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   const counts = [0, 0, 0, 0, 0, 0, 0]
   let total = 0
@@ -436,7 +437,7 @@ function ReflectionInsights({ reflections }: { reflections: { wentWell: string; 
 // ============================================================
 
 // Streak Survival Funnel — what % of streaks reach 7, 14, 30, 90 days
-function StreakSurvivalFunnel({ entries }: { entries: Record<string, number> }) {
+function StreakSurvivalFunnel({ entries }: { entries: Entries }) {
   const lengths = getAllStreakLengths(entries)
   if (lengths.length === 0) {
     return <p className="m3-body-small text-on-surface-variant">No streaks yet.</p>
@@ -475,7 +476,7 @@ function StreakSurvivalFunnel({ entries }: { entries: Record<string, number> }) 
 }
 
 // Average Streak Trend — are streaks getting longer?
-function AvgStreakTrend({ entries }: { entries: Record<string, number> }) {
+function AvgStreakTrend({ entries }: { entries: Entries }) {
   const lengths = getAllStreakLengths(entries)
   if (lengths.length < 2) {
     return <p className="m3-body-small text-on-surface-variant">Need at least 2 streaks to show a trend.</p>
@@ -525,7 +526,7 @@ function AvgStreakTrend({ entries }: { entries: Record<string, number> }) {
 }
 
 // Mood vs Streak Length — scatter plot
-function MoodVsStreak({ entries, ratings }: { entries: Record<string, number>; ratings: Record<string, { mood?: number; energy?: number; sleep?: number }> }) {
+function MoodVsStreak({ entries, ratings }: { entries: Entries; ratings: Record<string, { mood?: number; energy?: number; sleep?: number }> }) {
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null)
 
   React.useEffect(() => {
@@ -735,7 +736,7 @@ function MostUsedTags({ notes }: { notes: Record<string, string> }) {
 }
 
 // Tag Correlation — which tags appear on clean vs relapse days
-function TagCorrelation({ entries, notes }: { entries: Record<string, number>; notes: Record<string, string> }) {
+function TagCorrelation({ entries, notes }: { entries: Entries; notes: Record<string, string> }) {
   const cleanTags = new Map<string, number>()
   const relapseTags = new Map<string, number>()
 

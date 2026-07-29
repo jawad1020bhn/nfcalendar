@@ -11,8 +11,8 @@ const PHASES = [
 
 export function BreathingSheet() {
   const [running, setRunning] = React.useState(false)
-  const [phaseIdx, setPhaseIdx] = React.useState(0)
-  const [secondsLeft, setSecondsLeft] = React.useState(PHASES[0].duration)
+  const [phaseIdx, setPhaseIdx] = React.useState<number>(0)
+  const [secondsLeft, setSecondsLeft] = React.useState<number>(PHASES[0].duration)
   const [cycles, setCycles] = React.useState(0)
 
   React.useEffect(() => {
@@ -23,13 +23,14 @@ export function BreathingSheet() {
         setPhaseIdx((p) => {
           const next = (p + 1) % PHASES.length
           if (next === 0) setCycles((c) => c + 1)
+          setSecondsLeft(PHASES[next].duration)
           return next
         })
-        return PHASES[(phaseIdx + 1) % PHASES.length].duration
+        return PHASES[0].duration // will be overridden by setSecondsLeft above
       })
     }, 1000)
     return () => clearInterval(interval)
-  }, [running, phaseIdx])
+  }, [running])
 
   React.useEffect(() => {
     setRunning(false); setPhaseIdx(0); setSecondsLeft(PHASES[0].duration); setCycles(0)

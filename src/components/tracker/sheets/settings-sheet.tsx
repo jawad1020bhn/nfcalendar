@@ -9,7 +9,6 @@ import { toast } from 'sonner'
 import { generatePalette, applyPalette, resetPalette, SEED_PRESETS } from '@/lib/tracker/dynamic-color'
 
 export function SettingsSheet() {
-  const { openOnboarding } = useAppUI()
   const settings = useTrackerStore((s) => s.settings)
   const setSettings = useTrackerStore((s) => s.setSettings)
   const importData = useTrackerStore((s) => s.importData)
@@ -125,7 +124,6 @@ export function SettingsSheet() {
         </div>
         <p className="text-sm text-on-surface">Steady — a calm streak tracker.</p>
         <p className="mt-1 text-xs text-on-surface-variant">All marks stay on your device. Tap a day to cycle states.</p>
-        <button onClick={() => { setSettings({ onboardingComplete: false }); openOnboarding() }} className="m3-btn-text mt-2"><RotateCcw className="h-4 w-4" /> Replay onboarding</button>
       </div>
     </div>
   )

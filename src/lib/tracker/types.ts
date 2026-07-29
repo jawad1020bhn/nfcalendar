@@ -291,3 +291,13 @@ export const AFFIRMATIONS = [
 
 export const POSTER_THEMES = ["archival", "gallery", "solstice"] as const;
 export type PosterTheme = (typeof POSTER_THEMES)[number];
+
+// Weekly reflection answers
+export interface Reflection {
+  /** YYYY-MM-DD key of the Monday of the reflection week (local time). */
+  weekStartDate: string;
+  wentWell: string;
+  wasHard: string;
+  improve: string;
+  createdAt: string;
+}
