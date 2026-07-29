@@ -19,7 +19,7 @@ import {
   prettyDate,
   addDaysToDateStr,
 } from '@/lib/tracker/dates'
-import { useTrackerUI } from './ui-context'
+import { useTrackerUI } from './app-ui-context'
 import { renderNoteMarkdown } from '@/lib/tracker/markdown'
 import { cn } from '@/lib/utils'
 import { StickyNote, Pencil } from 'lucide-react'
@@ -426,7 +426,7 @@ function MonthNav({ year }: { year: number }) {
     const handler = () => {
       const months = MONTHS.map((_, m) => document.getElementById(`month-${year}-${m}`)).filter(Boolean)
       const scrollY = window.scrollY + 120
-      let current = null
+      let current: number | null = null
       for (let i = 0; i < months.length; i++) {
         const el = months[i]!
         if (el.offsetTop <= scrollY) current = i

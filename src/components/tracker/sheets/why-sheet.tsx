@@ -10,9 +10,10 @@ export function WhySheet() {
   const { closeSheet } = useAppUI()
   const whyStarted = useTrackerStore((s) => s.whyStarted)
   const setWhyStarted = useTrackerStore((s) => s.setWhyStarted)
+  // Local text state seeded from the store; reset it when the sheet is remounted
+  // (key changes when sheet kind switches). We don't sync on every whyStarted
+  // change — the store is the source of truth only after save.
   const [text, setText] = React.useState(whyStarted)
-
-  React.useEffect(() => setText(whyStarted), [whyStarted])
 
   return (
     <div className="px-5 pb-6">

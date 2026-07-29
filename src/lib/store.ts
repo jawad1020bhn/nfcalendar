@@ -3,20 +3,14 @@
 import * as React from 'react'
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import { DayState, TAG_KEYWORD_MAP, AFFIRMATIONS } from './tracker/types'
+import { DayState, TAG_KEYWORD_MAP, AFFIRMATIONS, type Reflection } from './tracker/types'
 import { parseDateStr } from './tracker/dates'
+
+export type { Reflection }
 
 type Entries = Record<string, DayState>
 type Notes = Record<string, string>
 type Ratings = Record<string, { mood?: number; energy?: number; sleep?: number }>
-
-type PosterConfig = {
-  includeStats: boolean
-  includeNotes: boolean
-  includeLegend: boolean
-  month: number // -1 = full year, 0-11
-  theme: 'archival' | 'gallery' | 'solstice'
-}
 
 type Settings = {
   showStreakNumbers: boolean
@@ -27,14 +21,6 @@ type Settings = {
   onboardingComplete: boolean
   lastExportDate: string | null
   seedColor: string | null // hex color for dynamic color theming
-}
-
-type Reflection = {
-  weekStartDate: string // YYYY-MM-DD of the Monday of the reflection week
-  wentWell: string
-  wasHard: string
-  improve: string
-  createdAt: string
 }
 
 type TrackerState = {
@@ -320,12 +306,20 @@ export const useTrackerStore = create<TrackerState>()(
         reflections: s.reflections,
       }),
       version: 2,
-      migrate: (persisted: any, version: number) => {
-        // Migration path for future schema changes
-        if (!persisted) return persisted
+      migrate: (persisted: unknown, version: number) => {
+        // Migration path for future schema changes.
+        // Shape of legacy persisted state is intentionally loose — we read it
+        // defensively below.
+        type LegacyState = {
+          settings?: Record<string, unknown>
+          reflections?: unknown[]
+          [k: string]: unknown
+        }
+        const p = persisted as LegacyState | null | undefined
+        if (!p) return p
         // v0 → v1: ensure settings object exists
         if (version < 1) {
-          persisted.settings = persisted.settings || {
+          p.settings = p.settings || {
             showStreakNumbers: true,
             showMilestoneToast: true,
             showAchievementToast: true,
@@ -336,35 +330,43 @@ export const useTrackerStore = create<TrackerState>()(
         }
         // v1 → v2: ensure reflections array exists + lastExportDate + showReflectionReminder + seedColor
         if (version < 2) {
-          persisted.reflections = persisted.reflections || []
-          if (persisted.settings) {
-            if (persisted.settings.lastExportDate === undefined) {
-              persisted.settings.lastExportDate = null
-            }
-            if (persisted.settings.showReflectionReminder === undefined) {
-              persisted.settings.showReflectionReminder = true
-            }
-            if (persisted.settings.seedColor === undefined) {
-              persisted.settings.seedColor = null
-            }
+          p.reflections = Array.isArray(p.reflections) ? p.reflections : []
+          const s = p.settings
+          if (s && typeof s === 'object') {
+            const rec = s as Record<string, unknown>
+            if (rec.lastExportDate === undefined) rec.lastExportDate = null
+            if (rec.showReflectionReminder === undefined) rec.showReflectionReminder = true
+            if (rec.seedColor === undefined) rec.seedColor = null
           }
         }
-        return persisted
+        return p
       },
     },
   ),
 )
 
-// Hook to know when the store has hydrated (safe for SSR)
+// Hook to know when the store has hydrated (safe for SSR).
+// Initialize from the persist layer synchronously on the client so we don't
+// need a setState-in-effect to seed the value.
 export const useHydrated = () => {
-  const [hydrated, setHydrated] = React.useState(false)
+  const [hydrated, setHydrated] = React.useState(() => {
+    if (typeof window === 'undefined') return false
+    try {
+      return useTrackerStore.persist.hasHydrated()
+    } catch {
+      return false
+    }
+  })
   React.useEffect(() => {
-    // persist API: hasHydrated() becomes true after rehydration finishes
+    if (hydrated) return
     const unsub = useTrackerStore.persist.onFinishHydration(() => setHydrated(true))
-    // Already hydrated?
-    if (useTrackerStore.persist.hasHydrated()) setHydrated(true)
+    // Race-condition guard: if hydration finished between render and effect,
+    // set it via a microtask (avoids synchronous setState-in-effect).
+    if (useTrackerStore.persist.hasHydrated()) {
+      queueMicrotask(() => setHydrated(true))
+    }
     return () => unsub()
-  }, [])
+  }, [hydrated])
   return hydrated
 }
 

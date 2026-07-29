@@ -3,8 +3,8 @@
 import * as React from 'react'
 import { useTrackerStore, getDailyAffirmation, escalateSlips } from '@/lib/store'
 import { calculateStats, getCurrentStreak } from '@/lib/tracker/stats'
-import { getTodayStr, getTodayDate, formatDateStr } from '@/lib/tracker/dates'
-import { useTrackerUI } from './ui-context'
+import { getTodayStr, formatDateStr } from '@/lib/tracker/dates'
+import { useTrackerUI } from './app-ui-context'
 import { Wind, Waves, Compass, Plus, Sparkles, BookOpen, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 

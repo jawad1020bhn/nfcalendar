@@ -47,38 +47,52 @@ type MonthStats = {
 const getSortedDates = (entries: Entries): string[] =>
   Object.keys(entries).filter((k) => entries[k] !== undefined).sort();
 
+// Maximum number of consecutive UNMARKED days we'll "bridge" when computing a
+// streak. Users occasionally forget to log a clean day; we don't want a single
+// missed tap to reset a 60-day streak. Set to 0 to disable bridging.
+const MAX_UNMARKED_GAP = 1;
+
 export const getAllStreakLengths = (entries: Entries): number[] => {
   const dates = getSortedDates(entries);
-  const lengths: number[] = [];
-  let temp = 0;
-  let prev: Date | null = null;
+  if (dates.length === 0) return [];
 
-  for (const d of dates) {
-    const state = entries[d];
+  // Walk the marked calendar day-by-day from first to last marked date so we
+  // correctly count bridging days. A relapse (3) always terminates a streak;
+  // gaps of unmarked days up to MAX_UNMARKED_GAP continue the streak without
+  // incrementing it.
+  const lengths: number[] = [];
+  let streak = 0;
+  let unmarkedGap = 0;
+
+  const firstDate = parseDateStr(dates[0])!;
+  const lastDate = parseDateStr(dates[dates.length - 1])!;
+  const cursor = new Date(firstDate);
+
+  while (cursor.getTime() <= lastDate.getTime()) {
+    const dStr = formatDateStr(cursor);
+    const state = entries[dStr];
+
     if (state === 1 || state === 2) {
-      const dt = parseDateStr(d)!;
-      if (prev) {
-        const diff = Math.round((dt.getTime() - prev.getTime()) / 86400000);
-        if (diff === 1) temp++;
-        else {
-          if (temp > 0) lengths.push(temp);
-          temp = 1;
-        }
-      } else {
-        temp = 1;
-      }
-      prev = dt;
+      // Clean or slip day: count it
+      streak += 1;
+      unmarkedGap = 0;
     } else if (state === 3) {
-      if (temp > 0) lengths.push(temp);
-      temp = 0;
-      prev = null;
+      // Relapse: break streak
+      if (streak > 0) lengths.push(streak);
+      streak = 0;
+      unmarkedGap = 0;
     } else {
-      if (temp > 0) lengths.push(temp);
-      temp = 0;
-      prev = null;
+      // Unmarked day: bridge if gap is small, otherwise break
+      unmarkedGap += 1;
+      if (unmarkedGap > MAX_UNMARKED_GAP) {
+        if (streak > 0) lengths.push(streak);
+        streak = 0;
+      }
     }
+
+    cursor.setDate(cursor.getDate() + 1);
   }
-  if (temp > 0) lengths.push(temp);
+  if (streak > 0) lengths.push(streak);
   return lengths;
 };
 
@@ -90,29 +104,36 @@ export const getBestStreak = (entries: Entries): number => {
 export const getCurrentStreak = (entries: Entries): number => {
   const today = getTodayDate();
   const todayStr = formatDateStr(today);
-  // If today is relapse, streak is 0
   if (entries[todayStr] === 3) return 0;
 
-  // Walk backwards from today counting clean/slip days
+  // Walk back from today. Allow up to MAX_UNMARKED_GAP unmarked days between
+  // clean/slip days, which handles "I forgot to mark yesterday" gracefully.
   let streak = 0;
-  let cursor = new Date(today);
-  // If today is unmarked, allow streak to continue from yesterday
-  const todayMarked = entries[todayStr] === 1 || entries[todayStr] === 2;
+  let unmarkedGap = 0;
+  const cursor = new Date(today);
 
-  if (!todayMarked) {
-    // Walk back to find most recent marked day
-    cursor.setDate(cursor.getDate() - 1);
-  }
-
-  for (let i = 0; i < 366 * 3; i++) {
+  for (let i = 0; i < 366 * 5; i++) {
     const dStr = formatDateStr(cursor);
     const state = entries[dStr];
+
     if (state === 1 || state === 2) {
-      streak++;
-      cursor.setDate(cursor.getDate() - 1);
-    } else {
+      streak += 1;
+      unmarkedGap = 0;
+    } else if (state === 3) {
       break;
+    } else {
+      // Unmarked: only bridge if we've already started the streak (avoid
+      // counting the user's entire pre-tracking history as a streak when there
+      // are zero entries yet) AND we haven't exceeded the gap tolerance.
+      if (streak === 0) {
+        // Haven't found any clean/slip day yet — keep walking silently.
+      } else {
+        unmarkedGap += 1;
+        if (unmarkedGap > MAX_UNMARKED_GAP) break;
+      }
     }
+
+    cursor.setDate(cursor.getDate() - 1);
   }
   return streak;
 };
@@ -192,19 +213,52 @@ const getLongestGap = (entries: Entries): number | null => {
 };
 
 const getBounceBack = (entries: Entries): number | null => {
-  const dates = getSortedDates(entries);
+  // Average number of *calendar days* between a relapse and the next string of
+  // 7 consecutive clean/slip days, or today if the user is currently recovered.
+  // This is a more meaningful "bounce back" metric than just counting marked
+  // entries.
+  const dates = getSortedDates(entries).filter((d) => entries[d] === 3);
+  if (dates.length === 0) return null;
+  const today = getTodayDate();
   const bounceBacks: number[] = [];
-  for (let i = 0; i < dates.length; i++) {
-    if (entries[dates[i]] === 3) {
-      let recoveryDays = 0;
-      for (let j = i + 1; j < dates.length; j++) {
-        const st = entries[dates[j]];
-        if (st === 1 || st === 2) recoveryDays++;
-        else break;
+
+  for (const relapseStr of dates) {
+    const relapseDate = parseDateStr(relapseStr)!;
+    // Look for the first run of 7 consecutive clean days after this relapse
+    // (allowing up to MAX_UNMARKED_GAP holes).
+    const cursor = new Date(relapseDate);
+    cursor.setDate(cursor.getDate() + 1);
+    let run = 0;
+    let days = 0;
+    const maxLookahead = 365;
+    let found = false;
+    for (let i = 0; i < maxLookahead; i++) {
+      days += 1;
+      const key = formatDateStr(cursor);
+      const st = entries[key];
+      if (st === 1) {
+        run += 1;
+        if (run >= 7) {
+          bounceBacks.push(days - 6);
+          found = true;
+          break;
+        }
+      } else if (st === 3) {
+        break; // next relapse — this recovery never hit 7 days
+      } else {
+        // unmarked: don't break run but don't extend it either
+        run = 0;
       }
-      bounceBacks.push(recoveryDays);
+      if (cursor.getTime() >= today.getTime()) break;
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    if (!found && run > 0) {
+      // Currently in recovery but <7 days in — record current progress so it
+      // counts toward the average rather than being dropped.
+      bounceBacks.push(days);
     }
   }
+
   if (bounceBacks.length === 0) return null;
   return Math.round(bounceBacks.reduce((a, b) => a + b, 0) / bounceBacks.length);
 };
@@ -293,7 +347,7 @@ const getDangerDays = (entries: Entries) => {
   }));
 };
 
-const getRiskScore = (entries: Entries) => {
+const getRiskScore = (entries: Entries): { score: number; level: "high" | "mid" | "low" } => {
   const today = getTodayDate();
   let slips = 0;
   for (let i = 0; i < 7; i++) {
@@ -303,7 +357,7 @@ const getRiskScore = (entries: Entries) => {
     if (entries[dStr] === 2) slips++;
   }
   const score = slips;
-  const level = score >= 3 ? "high" : score >= 1 ? "mid" : "low";
+  const level: "high" | "mid" | "low" = score >= 3 ? "high" : score >= 1 ? "mid" : "low";
   return { score, level };
 };
 
