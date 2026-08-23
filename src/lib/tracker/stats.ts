@@ -1,5 +1,5 @@
 // Stats calculations for the tracker
-import { DayState, LEVELS } from "./types";
+import { DayState, LEVELS, MILESTONES, MILESTONE_LIST } from "./types";
 import { formatDateStr, getTodayDate, parseDateStr, getDaysInMonth } from "./dates";
 
 type Entries = Record<string, DayState>;
@@ -99,6 +99,136 @@ export const getAllStreakLengths = (entries: Entries): number[] => {
 export const getBestStreak = (entries: Entries): number => {
   const lengths = getAllStreakLengths(entries);
   return lengths.length > 0 ? Math.max(...lengths) : 0;
+};
+
+// "Check-in" / logging streak: consecutive MARKED days ending today (or
+// yesterday, with a 1-day grace so a not-yet-logged "today" doesn't read as a
+// lapse). This rewards showing up to track at all — independent of whether each
+// day was clean — so a reset never zeroes it. Returns 0 once more than one day
+// has passed without any entry (the streak has genuinely lapsed).
+export const getLoggingStreak = (entries: Entries): number => {
+  const today = getTodayDate();
+  const todayStr = formatDateStr(today);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = formatDateStr(yesterday);
+
+  // An active check-in streak must reach today or yesterday.
+  if (entries[todayStr] === undefined && entries[yesterdayStr] === undefined) {
+    return 0;
+  }
+
+  // Start counting from the most recent marked day (today, else yesterday).
+  const cursor = new Date(entries[todayStr] !== undefined ? today : yesterday);
+  let streak = 0;
+  for (let i = 0; i < 366 * 5; i++) {
+    const dStr = formatDateStr(cursor);
+    if (entries[dStr] !== undefined) {
+      streak += 1;
+    } else {
+      break;
+    }
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+};
+
+// 28-day "momentum" — Loop-style habit strength that weakens gradually on a
+// hard day but never resets to zero. Returns clean-day share over the last 28
+// calendar days, but only counts days from the user's first entry onward (so a
+// brand-new user isn't penalised for days before they started). `days` is the
+// number of days actually considered (≤28).
+export const getMomentum = (entries: Entries): { score: number; clean: number; days: number } => {
+  const dates = getSortedDates(entries);
+  if (dates.length === 0) return { score: 0, clean: 0, days: 0 };
+  const first = parseDateStr(dates[0])!;
+  const today = getTodayDate();
+  const windowStart = new Date(today);
+  windowStart.setDate(today.getDate() - 27);
+  const effectiveStart = windowStart.getTime() < first.getTime() ? first : windowStart;
+
+  let clean = 0;
+  let days = 0;
+  const cursor = new Date(today);
+  while (cursor.getTime() >= effectiveStart.getTime()) {
+    if (entries[formatDateStr(cursor)] === 1) clean += 1;
+    days += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return { score: days > 0 ? Math.round((clean / days) * 100) : 0, clean, days };
+};
+
+// Slip-recovery rate: of the slips that have a following marked day, the share
+// whose NEXT logged day was clean — i.e. you caught it and turned it around
+// before it escalated. Returns null with too few conclusive slips.
+export const getSlipRecoveryRate = (
+  entries: Entries,
+): { rate: number; recovered: number; total: number } | null => {
+  const dates = getSortedDates(entries);
+  let total = 0;
+  let recovered = 0;
+  for (let i = 0; i < dates.length; i++) {
+    if (entries[dates[i]] !== 2) continue;
+    const next = dates[i + 1];
+    if (next === undefined) continue; // most recent slip, outcome unknown
+    total += 1;
+    if (entries[next] === 1) recovered += 1;
+  }
+  if (total < 2) return null;
+  return { rate: Math.round((recovered / total) * 100), recovered, total };
+};
+
+// Are the gaps between resets getting longer? Compares the average gap in the
+// earlier half of resets to the more recent half. `trend: 'up'` means you're
+// going longer between resets — genuine progress even if resets still happen.
+export const getResetGapTrend = (
+  entries: Entries,
+): { earlier: number; recent: number; trend: "up" | "down" | "flat" } | null => {
+  const resetDates = getSortedDates(entries)
+    .filter((d) => entries[d] === 3)
+    .map((d) => parseDateStr(d)!);
+  if (resetDates.length < 3) return null;
+  const gaps: number[] = [];
+  for (let i = 1; i < resetDates.length; i++) {
+    gaps.push(Math.round((resetDates[i].getTime() - resetDates[i - 1].getTime()) / 86400000));
+  }
+  const mid = Math.floor(gaps.length / 2) || 1;
+  const avg = (arr: number[]) => Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+  const earlier = avg(gaps.slice(0, mid));
+  const recent = avg(gaps.slice(mid));
+  const trend: "up" | "down" | "flat" =
+    recent > earlier + 1 ? "up" : recent < earlier - 1 ? "down" : "flat";
+  return { earlier, recent, trend };
+};
+
+// The user's cleanest calendar month (highest clean-day rate), requiring a
+// minimum of tracked days so a near-empty month can't win. Returns month as a
+// 0-based index for the caller to format.
+export const getCleanestMonth = (
+  entries: Entries,
+): { month: number; year: number; rate: number; clean: number; total: number } | null => {
+  const buckets = new Map<string, { clean: number; total: number }>();
+  for (const dStr of Object.keys(entries)) {
+    const dt = parseDateStr(dStr);
+    if (!dt) continue;
+    const st = entries[dStr];
+    if (st !== 1 && st !== 2 && st !== 3) continue;
+    const key = `${dt.getFullYear()}-${dt.getMonth()}`;
+    const b = buckets.get(key) ?? { clean: 0, total: 0 };
+    b.total += 1;
+    if (st === 1) b.clean += 1;
+    buckets.set(key, b);
+  }
+  let best: { month: number; year: number; rate: number; clean: number; total: number } | null = null;
+  for (const [key, b] of buckets) {
+    if (b.total < 7) continue;
+    const rate = b.clean / b.total;
+    if (!best || rate > best.rate) {
+      const [y, m] = key.split("-").map(Number);
+      best = { month: m, year: y, rate, clean: b.clean, total: b.total };
+    }
+  }
+  return best;
 };
 
 export const getCurrentStreak = (entries: Entries): number => {
@@ -389,6 +519,31 @@ const getRepeatingTriggers = (entries: Entries, notes: Notes) => {
     .map(([tag, count]) => ({ tag, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 8);
+};
+
+// Next streak milestone ahead of `streak` (e.g. at 12 days, next is 15 / "XV").
+// Returns progress 0..1 toward it and how many days remain. When the user has
+// cleared the highest defined milestone, progress is 1 and remaining is 0.
+export const getNextMilestone = (streak: number): {
+  value: number;
+  label: string;
+  progress: number;
+  remaining: number;
+} | null => {
+  if (MILESTONE_LIST.length === 0) return null;
+  const next = MILESTONE_LIST.find((m) => m > streak);
+  const highest = MILESTONE_LIST[MILESTONE_LIST.length - 1];
+  if (!next) {
+    return { value: highest, label: MILESTONES[highest], progress: 1, remaining: 0 };
+  }
+  const prev = [...MILESTONE_LIST].reverse().find((m) => m <= streak) ?? 0;
+  const span = next - prev || 1;
+  return {
+    value: next,
+    label: MILESTONES[next],
+    progress: Math.max(0, Math.min(1, (streak - prev) / span)),
+    remaining: next - streak,
+  };
 };
 
 export const getCurrentLevel = (bestStreak: number) => {
