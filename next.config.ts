@@ -6,6 +6,11 @@ import type { NextConfig } from "next";
 // by a directory check so `npm run build` still succeeds everywhere.
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // The app is proxied through a per-sandbox preview host (*.e2b.app) in dev.
+  // Next blocks cross-origin access to dev-only resources (HMR websocket,
+  // _next/* ) by default; allow these preview origins so the live preview can
+  // connect and hydrate instead of hanging on the splash screen.
+  allowedDevOrigins: ["*.e2b.app"],
 };
 
 export default nextConfig;
