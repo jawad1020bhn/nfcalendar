@@ -21,6 +21,7 @@ import { parseDateStr } from '@/lib/tracker/dates'
 type Entries = Record<string, DayState>
 import { useAppUI } from './app-ui-context'
 import { EmptyStats } from './expressive'
+import { InfoDot, Tooltip } from './tooltip'
 import { cn } from '@/lib/utils'
 import {
   Download,
@@ -28,7 +29,6 @@ import {
   Trash2,
   Undo2,
   Image as ImageIcon,
-  Info,
   ShieldCheck,
   RotateCcw,
   TrendingUp,
@@ -258,18 +258,8 @@ export function StatsView() {
 // Shared building blocks
 // ----------------------------------------------------------------
 
-function InfoDot({ text }: { text: string }) {
-  return (
-    <span
-      className="inline-flex shrink-0 cursor-help"
-      title={text}
-      aria-label={`About this stat: ${text}`}
-      role="img"
-    >
-      <Info className="h-3.5 w-3.5 text-on-surface-variant opacity-70" />
-    </span>
-  )
-}
+// InfoDot (the ℹ explainer on each card) lives in ./tooltip — it's a custom
+// touch/hover/keyboard tooltip, since native title="" never shows on phones.
 
 function SectionCard({
   title,
@@ -781,11 +771,10 @@ function WeeklyRhythm({ entries }: { entries: Entries }) {
               ? `No ${day}days logged yet in this period.`
               : `${day} — ${clean} clean · ${slip} slip · ${reset} reset of ${tracked} tracked (${pct(r)}% clean)${i === todayIdx ? ' · today' : ''}`
           return (
-            <div
+            <Tooltip
               key={day}
-              role="img"
-              aria-label={title}
-              title={title}
+              content={title}
+              label={title}
               className={cn(
                 'flex-1 overflow-hidden rounded-[var(--shape-sm)] bg-surface-container-high transition-opacity',
                 tracked === 0 ? 'opacity-40' : tracked < MIN_SAMPLES ? 'opacity-60' : '',
@@ -806,7 +795,7 @@ function WeeklyRhythm({ entries }: { entries: Entries }) {
                   style={{ height: `${tracked > 0 ? (clean / tracked) * 100 : 0}%`, background: 'var(--success)' }}
                 />
               </div>
-            </div>
+            </Tooltip>
           )
         })}
       </div>

@@ -355,6 +355,35 @@
     transform: scale(0.98);
   }
 
+  /* M3 Tooltip — works on touch (tap), hover, and keyboard (focus).
+     Native title="" tooltips never fire on touch, and this app is
+     mobile-first, so stats explainers need this instead. */
+  .m3-tooltip-trigger {
+    cursor: help;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .m3-tooltip-bubble {
+    position: fixed;
+    z-index: 210; /* above sheets (z-50) and the calendar tooltip (z-[200]) */
+    max-width: 300px;
+    padding: 10px 12px;
+    border-radius: var(--shape-sm);
+    background: var(--surface-container-highest);
+    border: 1px solid var(--outline-variant);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    color: var(--on-surface);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    font-weight: 400;
+    letter-spacing: 0.011em;
+    animation: m3-tooltip-in 0.18s var(--spring-fast-easing) both;
+  }
+  @media (max-width: 480px) {
+    .m3-tooltip-bubble {
+      max-width: calc(100vw - 24px);
+    }
+  }
+
   /* M3 Filled Button */
   .m3-btn-filled {
     background: var(--primary);
@@ -1005,6 +1034,11 @@
 }
 .animate-m3-shared-element {
   animation: m3-shared-element 0.35s var(--ease-emphasized-decelerate) both;
+}
+
+@keyframes m3-tooltip-in {
+  from { transform: translateY(4px) scale(0.97); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 @keyframes m3-slide-up {
