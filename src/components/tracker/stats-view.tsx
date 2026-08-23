@@ -16,6 +16,7 @@ import {
 } from '@/lib/tracker/stats'
 import { type DayState, MONTHS_SHORT } from '@/lib/tracker/types'
 import type { Reflection } from '@/lib/tracker/types'
+import { parseDateStr } from '@/lib/tracker/dates'
 
 type Entries = Record<string, DayState>
 import { useAppUI } from './app-ui-context'
@@ -649,78 +650,185 @@ function BreakdownItem({ label, count, color }: { label: string; count: number; 
 
 function WeeklyRhythm({ entries }: { entries: Entries }) {
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-  const clean = [0, 0, 0, 0, 0, 0, 0]
-  const resets = [0, 0, 0, 0, 0, 0, 0]
-  for (const d of Object.keys(entries)) {
-    const dt = new Date(d)
+
+  // Count each state per weekday. Rates — not raw counts — are what make days
+  // comparable: a Saturday you tracked 20 times shouldn't "beat" a Sunday you
+  // tracked twice. parseDateStr keeps the weekday in the user's local zone
+  // (new Date('YYYY-MM-DD') shifts a day in negative UTC offsets).
+  const counts = dayNames.map(() => ({ clean: 0, slip: 0, reset: 0 }))
+  for (const [d, state] of Object.entries(entries)) {
+    if (state !== 1 && state !== 2 && state !== 3) continue
+    const dt = parseDateStr(d)
+    if (!dt) continue
     let idx = dt.getDay() - 1
     if (idx < 0) idx = 6
-    if (entries[d] === 1) clean[idx]++
-    else if (entries[d] === 3) resets[idx]++
+    if (state === 1) counts[idx].clean++
+    else if (state === 2) counts[idx].slip++
+    else counts[idx].reset++
   }
-  const totalResets = resets.reduce((a, b) => a + b, 0)
-  const totalClean = clean.reduce((a, b) => a + b, 0)
 
-  if (totalClean === 0 && totalResets === 0) return null
+  const days = counts.map((c) => ({ ...c, tracked: c.clean + c.slip + c.reset }))
+  const totalTracked = days.reduce((a, d) => a + d.tracked, 0)
+  const totalClean = days.reduce((a, d) => a + d.clean, 0)
+  if (totalTracked < 7) return null // a weekday pattern needs at least a week of logs
 
-  const maxClean = Math.max(...clean, 1)
-  const maxReset = Math.max(...resets, 1)
-  const bestCleanIdx = clean.indexOf(maxClean)
-  const hardestIdx = totalResets > 0 ? resets.indexOf(maxReset) : -1
+  const overallRate = totalClean / totalTracked
+  const rateOf = (i: number) => (days[i].tracked > 0 ? days[i].clean / days[i].tracked : null)
+  const pct = (r: number) => Math.round(r * 100)
+
+  // Highlight extremes only when they're meaningful: enough samples on the day
+  // itself, a real gap versus your own average, and a clear winner (ties are
+  // left alone — a Monday/Saturday deadlock isn't a pattern).
+  const MIN_SAMPLES = 3
+  const MIN_GAP = 0.15
+  const qualifying = days
+    .map((d, i) => ({ ...d, i, rate: rateOf(i) }))
+    .filter((d) => d.tracked >= MIN_SAMPLES && d.rate !== null)
+
+  let bestIdx = -1
+  let hardestIdx = -1
+  if (qualifying.length >= 2) {
+    const byRate = [...qualifying].sort((a, b) => (b.rate as number) - (a.rate as number))
+    const top = byRate[0]
+    const second = byRate[1]
+    if (top.rate! - overallRate >= MIN_GAP && top.rate! > second.rate!) bestIdx = top.i
+    const bottom = byRate[byRate.length - 1]
+    const secondBottom = byRate[byRate.length - 2]
+    if (overallRate - bottom.rate! >= MIN_GAP && bottom.rate! < secondBottom.rate!) hardestIdx = bottom.i
+  }
+
+  const t = new Date().getDay()
+  const todayIdx = t === 0 ? 6 : t - 1
+
+  const notes: string[] = []
+  if (hardestIdx >= 0) {
+    notes.push(
+      `${dayNames[hardestIdx]}s run ${pct(overallRate - (rateOf(hardestIdx) as number))} points below your usual rate — not a weakness, just a day to plan a little extra support for.`,
+    )
+  }
+  if (bestIdx >= 0) {
+    notes.push(`${dayNames[bestIdx]}s are your strongest day — ${pct(rateOf(bestIdx) as number)}% clean.`)
+  }
+  const microcopy =
+    notes.join(' ') ||
+    'Your clean rate is fairly even across the week. No single day stands out as harder — that’s a steady rhythm.'
 
   return (
     <SectionCard
       title="Your weekly rhythm"
-      info="Which weekdays tend to go clean, and which tend to be harder. Not 'bad days' — just patterns to prepare for."
-      microcopy={
-        totalResets > 0 && hardestIdx >= 0
-          ? `${dayNames[hardestIdx]}s show up most often around resets. That’s not a weakness — it’s a heads-up to plan a little extra support then.`
-          : 'Clean days are spread across your week. No single day stands out as harder yet.'
-      }
+      info="Each column is one weekday: the green level is how often those days went clean, with slips and resets stacked above. The dashed line is your overall clean rate. Columns are dimmed until a weekday has 3 logged days — one Sunday tells you nothing yet."
+      microcopy={microcopy}
     >
-      {/* Clean days row */}
-      <p className="mb-1.5 m3-label-small text-on-surface-variant">Clean days by weekday</p>
-      <div className="mb-4 flex h-20 items-end justify-between gap-1.5">
-        {dayNames.map((day, i) => (
-          <div key={day} className="flex flex-1 flex-col items-center gap-1">
-            <div className="flex w-full flex-1 items-end">
-              <div
-                className={cn('w-full rounded-t-md transition-all duration-500', i === bestCleanIdx ? '' : 'opacity-50')}
-                style={{
-                  height: `${(clean[i] / maxClean) * 100}%`,
-                  minHeight: clean[i] > 0 ? '4px' : '0',
-                  background: 'var(--success)',
-                }}
-              />
+      {/* Legend + average marker */}
+      <div className="mb-2 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {[
+            { label: 'Clean', color: 'var(--success)' },
+            { label: 'Slip', color: 'var(--slip)' },
+            { label: 'Reset', color: 'var(--fail)' },
+          ].map((l) => (
+            <span key={l.label} className="inline-flex items-center gap-1 m3-label-small text-on-surface-variant">
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: l.color }} />
+              {l.label}
+            </span>
+          ))}
+        </div>
+        <span className="inline-flex items-center gap-1.5 m3-label-small text-on-surface-variant">
+          <svg width="16" height="2" aria-hidden="true">
+            <line x1="0" y1="1" x2="16" y2="1" stroke="var(--on-surface-variant)" strokeWidth="1.5" strokeDasharray="3 2.5" />
+          </svg>
+          avg {pct(overallRate)}%
+        </span>
+      </div>
+
+      {/* Clean-rate labels */}
+      <div className="flex gap-1.5">
+        {dayNames.map((day, i) => {
+          const r = rateOf(i)
+          const isBest = i === bestIdx
+          const isHardest = i === hardestIdx
+          return (
+            <div key={day} className="flex h-4 flex-1 items-center justify-center">
+              {r === null ? (
+                <span className="m3-label-small text-on-surface-variant opacity-50">—</span>
+              ) : (
+                <span
+                  className={cn(
+                    'm3-label-small tabular-nums',
+                    isBest ? 'text-success' : isHardest ? 'text-fail' : 'text-on-surface-variant',
+                  )}
+                >
+                  {pct(r)}%
+                </span>
+              )}
             </div>
-            <span className={cn('m3-label-small', i === bestCleanIdx ? 'text-success' : 'text-on-surface-variant')}>{day}</span>
+          )
+        })}
+      </div>
+
+      {/* Stacked columns — every weekday on the same 0–100% scale */}
+      <div className="relative flex h-28 gap-1.5">
+        {/* Overall-average guide */}
+        <div
+          className="pointer-events-none absolute inset-x-0 z-10 border-t border-dashed"
+          style={{ top: `${(1 - overallRate) * 100}%`, borderColor: 'var(--on-surface-variant)', opacity: 0.55 }}
+        />
+        {dayNames.map((day, i) => {
+          const { clean, slip, reset, tracked } = days[i]
+          const r = rateOf(i)
+          const title =
+            r === null
+              ? `No ${day}days logged yet in this period.`
+              : `${day} — ${clean} clean · ${slip} slip · ${reset} reset of ${tracked} tracked (${pct(r)}% clean)${i === todayIdx ? ' · today' : ''}`
+          return (
+            <div
+              key={day}
+              role="img"
+              aria-label={title}
+              title={title}
+              className={cn(
+                'flex-1 overflow-hidden rounded-[var(--shape-sm)] bg-surface-container-high transition-opacity',
+                tracked === 0 ? 'opacity-40' : tracked < MIN_SAMPLES ? 'opacity-60' : '',
+              )}
+              style={i === bestIdx ? { boxShadow: 'inset 0 0 0 1.5px var(--success)' } : i === hardestIdx ? { boxShadow: 'inset 0 0 0 1.5px var(--fail)' } : undefined}
+            >
+              <div className="flex h-full w-full flex-col justify-end">
+                <div
+                  className="w-full transition-all duration-500"
+                  style={{ height: `${tracked > 0 ? (reset / tracked) * 100 : 0}%`, background: 'var(--fail)' }}
+                />
+                <div
+                  className="w-full transition-all duration-500"
+                  style={{ height: `${tracked > 0 ? (slip / tracked) * 100 : 0}%`, background: 'var(--slip)' }}
+                />
+                <div
+                  className="w-full transition-all duration-500"
+                  style={{ height: `${tracked > 0 ? (clean / tracked) * 100 : 0}%`, background: 'var(--success)' }}
+                />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Weekday names + sample sizes */}
+      <div className="mt-1.5 flex gap-1.5">
+        {dayNames.map((day, i) => (
+          <div key={day} className="flex flex-1 flex-col items-center gap-0.5">
+            <span
+              className={cn(
+                'm3-label-small',
+                i === todayIdx ? 'font-semibold text-primary' : i === bestIdx ? 'text-success' : i === hardestIdx ? 'text-fail' : 'text-on-surface-variant',
+              )}
+            >
+              {day}
+            </span>
+            <span className="m3-label-small leading-none text-on-surface-variant opacity-60">
+              {days[i].tracked > 0 ? `${days[i].tracked}d` : ''}
+            </span>
           </div>
         ))}
       </div>
-
-      {/* Resets row — only if any */}
-      {totalResets > 0 && (
-        <>
-          <p className="mb-1.5 m3-label-small text-on-surface-variant">Days that ended in a reset</p>
-          <div className="flex h-16 items-end justify-between gap-1.5">
-            {dayNames.map((day, i) => (
-              <div key={day} className="flex flex-1 flex-col items-center gap-1">
-                <div className="flex w-full flex-1 items-end">
-                  <div
-                    className="w-full rounded-t-md opacity-70 transition-all duration-500"
-                    style={{
-                      height: `${(resets[i] / maxReset) * 100}%`,
-                      minHeight: resets[i] > 0 ? '4px' : '0',
-                      background: 'var(--fail)',
-                    }}
-                  />
-                </div>
-                <span className={cn('m3-label-small', i === hardestIdx ? 'text-fail' : 'text-on-surface-variant')}>{day}</span>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
     </SectionCard>
   )
 }
