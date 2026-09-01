@@ -207,7 +207,7 @@ export function StatsView() {
 
               <RecoveryCard stats={stats} />
 
-              <DayBreakdown stats={stats} timeWindow={timeWindow} />
+              <DayBreakdown entries={entries} />
 
               <WeeklyRhythm entries={windowedEntries} />
 
@@ -924,38 +924,105 @@ function RecoveryCard({ stats }: { stats: Stats }) {
 }
 
 // ----------------------------------------------------------------
-// 6. Day breakdown — honest picture, calmly framed
+// 6. Day breakdown — honest picture, calmly framed (customizable window)
 // ----------------------------------------------------------------
 
-function DayBreakdown({ stats, timeWindow }: { stats: Stats; timeWindow: TimeWindow }) {
-  const { successCount, slipCount, failCount, totalMarks } = stats
+type BalanceWindow = 'all' | '30d' | '60d' | '90d'
+
+const BALANCE_WINDOW_LABEL: Record<BalanceWindow, string> = {
+  all: 'all time',
+  '30d': 'last 30 days',
+  '60d': 'last 60 days',
+  '90d': 'last 90 days',
+}
+
+function windowedCounts(entries: Entries, window: BalanceWindow) {
+  let cutoffStr: string | null = null
+  if (window !== 'all') {
+    const days = window === '30d' ? 30 : window === '60d' ? 60 : 90
+    const cutoff = new Date()
+    cutoff.setHours(0, 0, 0, 0)
+    cutoff.setDate(cutoff.getDate() - days)
+    cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, '0')}-${String(cutoff.getDate()).padStart(2, '0')}`
+  }
+  let clean = 0
+  let slip = 0
+  let reset = 0
+  for (const [d, st] of Object.entries(entries)) {
+    if (cutoffStr && d < cutoffStr) continue
+    if (st === 1) clean++
+    else if (st === 2) slip++
+    else if (st === 3) reset++
+  }
+  return { clean, slip, reset, total: clean + slip + reset }
+}
+
+function DayBreakdown({ entries }: { entries: Entries }) {
+  const [balanceWindow, setBalanceWindow] = React.useState<BalanceWindow>('all')
+  const { clean, slip, reset, total } = React.useMemo(
+    () => windowedCounts(entries, balanceWindow),
+    [entries, balanceWindow],
+  )
+  const cleanPct = total > 0 ? Math.round((clean / total) * 100) : 0
+
   const segs = [
-    { count: successCount, color: 'var(--success)' },
-    { count: slipCount, color: 'var(--slip)' },
-    { count: failCount, color: 'var(--fail)' },
+    { count: clean, color: 'var(--success)' },
+    { count: slip, color: 'var(--slip)' },
+    { count: reset, color: 'var(--fail)' },
   ]
+
   return (
     <SectionCard
       title="Your days, in balance"
-      info={`Every day you've logged (${WINDOW_LABEL[timeWindow]}). Clean days are the goal; slips and resets are information, not failure.`}
-      microcopy="Tracking honestly is how you learn. Every entry — even the hard ones — moves you forward."
+      info={`Every day you've logged (${BALANCE_WINDOW_LABEL[balanceWindow]}). Clean days are the goal; slips and resets are information, not failure.`}
+      microcopy={
+        total === 0
+          ? `No days logged ${BALANCE_WINDOW_LABEL[balanceWindow]} yet — pick a longer window or mark a day.`
+          : 'Tracking honestly is how you learn. Every entry — even the hard ones — moves you forward.'
+      }
     >
+      {/* Window selector */}
+      <div className="m3-segmented mb-3 w-full">
+        {(['all', '30d', '60d', '90d'] as const).map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => setBalanceWindow(opt)}
+            className={cn('m3-segmented-btn flex-1 justify-center', balanceWindow === opt && 'm3-segmented-btn-selected')}
+          >
+            {opt === 'all' ? 'All' : opt.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
+      {/* Context line */}
+      <div className="mb-2 flex items-center justify-between">
+        <span className="m3-label-small text-on-surface-variant">
+          {total} {total === 1 ? 'day' : 'days'} tracked
+        </span>
+        <span className="m3-label-small tabular-nums text-on-surface-variant">
+          {total > 0 ? `${cleanPct}% clean` : '—'}
+        </span>
+      </div>
+
+      {/* Stacked bar */}
       <div className="mb-3 flex h-2.5 w-full gap-0.5 overflow-hidden rounded-full bg-surface-container">
-        {totalMarks > 0 &&
+        {total > 0 &&
           segs.map((s, i) =>
             s.count > 0 ? (
               <div
                 key={i}
                 className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${(s.count / totalMarks) * 100}%`, background: s.color }}
+                style={{ width: `${(s.count / total) * 100}%`, background: s.color }}
               />
             ) : null,
           )}
       </div>
+
       <div className="grid grid-cols-3 gap-2">
-        <BreakdownItem label="Clean" count={successCount} color="var(--success)" />
-        <BreakdownItem label="Slip" count={slipCount} color="var(--slip)" />
-        <BreakdownItem label="Reset" count={failCount} color="var(--fail)" />
+        <BreakdownItem label="Clean" count={clean} color="var(--success)" />
+        <BreakdownItem label="Slip" count={slip} color="var(--slip)" />
+        <BreakdownItem label="Reset" count={reset} color="var(--fail)" />
       </div>
     </SectionCard>
   )
