@@ -1,45 +1,67 @@
 'use client'
 
 import * as React from 'react'
-import { Home, CalendarDays, BarChart3, MoreHorizontal, Plus } from 'lucide-react'
+import {
+  BarChart3,
+  CalendarDays,
+  ChevronRight,
+  Flame,
+  Home,
+  MoreHorizontal,
+  PencilLine,
+  Settings2,
+  Sparkles,
+} from 'lucide-react'
 import { useAppUI, type AppView } from './app-ui-context'
 import { hapticLight } from './ripple'
 import { cn } from '@/lib/utils'
 import { getTodayStr } from '@/lib/tracker/dates'
+import { useTrackerStore, escalateSlips } from '@/lib/store'
+import { getCurrentStreak } from '@/lib/tracker/stats'
 
-const NAV_ITEMS: { key: AppView; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { key: 'today', label: 'Today', icon: Home },
-  { key: 'calendar', label: 'Calendar', icon: CalendarDays },
-  { key: 'stats', label: 'Stats', icon: BarChart3 },
-  { key: 'more', label: 'More', icon: MoreHorizontal },
+const NAV_ITEMS: { key: AppView; label: string; caption: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { key: 'today', label: 'Today', caption: 'Daily practice', icon: Home },
+  { key: 'calendar', label: 'Calendar', caption: 'The record', icon: CalendarDays },
+  { key: 'stats', label: 'Insights', caption: 'Patterns & progress', icon: BarChart3 },
+  { key: 'more', label: 'Library', caption: 'Tools & settings', icon: MoreHorizontal },
 ]
 
 /**
- * Desktop-only left navigation rail (lg+). On smaller screens the mobile
- * bottom nav + top app bar take over, so this is hidden below lg.
+ * A desktop-only navigation column. It is intentionally a separate visual
+ * system from the compact mobile navigation; below lg it is not rendered.
  */
 export function DesktopSidebar() {
-  const { view, setView, openNote } = useAppUI()
+  const { view, setView, openNote, openSettings } = useAppUI()
+  const rawEntries = useTrackerStore((state) => state.entries)
+  const entries = React.useMemo(() => escalateSlips(rawEntries), [rawEntries])
+  const streak = React.useMemo(() => getCurrentStreak(entries), [entries])
+  const today = getTodayStr()
 
   return (
-    <aside
-      className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r lg:flex"
-      style={{ background: 'var(--surface-container-low)', borderColor: 'var(--outline-variant)' }}
-      aria-label="Main navigation"
-    >
-      {/* Brand */}
-      <div className="flex items-center gap-2.5 px-6 pb-6 pt-7">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary">
-          <span className="font-display text-sm font-bold text-on-primary">S</span>
-        </div>
-        <span className="font-display m3-headline-small italic text-on-surface">Steady</span>
+    <aside className="desktop-sidebar fixed inset-y-0 left-0 z-40 hidden flex-col lg:flex" aria-label="Desktop workspace navigation">
+      <div className="desktop-sidebar-brand">
+        <button
+          type="button"
+          onClick={() => {
+            hapticLight()
+            setView('today')
+          }}
+          className="desktop-brand-lockup"
+          aria-label="Go to Today"
+        >
+          <span className="desktop-brand-mark">S</span>
+          <span>
+            <small>STAYING IS A PRACTICE</small>
+            <strong>Steady</strong>
+          </span>
+        </button>
       </div>
 
-      {/* Nav items */}
-      <nav className="flex flex-col gap-1 px-3">
-        {NAV_ITEMS.map((item) => {
-          const active = view === item.key
+      <nav className="desktop-sidebar-nav" aria-label="Workspace sections">
+        <p className="desktop-sidebar-label">Workspace</p>
+        {NAV_ITEMS.map((item, index) => {
           const Icon = item.icon
+          const active = view === item.key
           return (
             <button
               key={item.key}
@@ -49,39 +71,57 @@ export function DesktopSidebar() {
                 setView(item.key)
               }}
               aria-current={active ? 'page' : undefined}
-              className={cn(
-                'flex items-center gap-3 rounded-full px-4 py-3 transition-colors',
-                active
-                  ? 'text-on-secondary-container'
-                  : 'text-on-surface-variant hover:text-on-surface',
-              )}
-              style={active ? { background: 'var(--secondary-container)' } : undefined}
+              className={cn('desktop-sidebar-nav-item', active && 'is-active')}
             >
-              <Icon className="h-5 w-5" />
-              <span className={cn('m3-label-large', active && 'font-semibold')}>{item.label}</span>
+              <span className="desktop-sidebar-nav-icon"><Icon className="h-[18px] w-[18px]" /></span>
+              <span className="desktop-sidebar-nav-copy">
+                <strong>{item.label}</strong>
+                <small>{item.caption}</small>
+              </span>
+              <span className="desktop-sidebar-nav-index">0{index + 1}</span>
             </button>
           )
         })}
       </nav>
 
-      <div className="flex-1" />
+      <div className="desktop-sidebar-spacer" />
 
-      {/* Quick note + date */}
-      <div className="px-4 pb-6">
+      <section className="desktop-sidebar-streak" aria-label="Current streak">
+        <div className="desktop-sidebar-streak-icon"><Flame className="h-4 w-4" /></div>
+        <div>
+          <p>Current run</p>
+          <strong>{streak} <span>{streak === 1 ? 'day' : 'days'}</span></strong>
+        </div>
+        <Sparkles className="desktop-sidebar-streak-sparkle h-4 w-4" />
+      </section>
+
+      <div className="desktop-sidebar-actions">
         <button
           type="button"
           onClick={() => {
             hapticLight()
-            openNote(getTodayStr())
+            openNote(today)
           }}
-          className="m3-pill-btn m3-pill-btn-filled w-full"
+          className="desktop-sidebar-note-button"
         >
-          <Plus className="h-5 w-5" /> Note today
+          <PencilLine className="h-4 w-4" />
+          <span>Write today</span>
+          <ChevronRight className="h-4 w-4" />
         </button>
-        <p className="mt-4 text-center m3-label-small text-on-surface-variant">
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-        </p>
+        <button
+          type="button"
+          onClick={() => {
+            hapticLight()
+            openSettings()
+          }}
+          className="desktop-sidebar-settings"
+        >
+          <Settings2 className="h-4 w-4" />
+          <span>Preferences</span>
+        </button>
       </div>
+
+      <p className="desktop-sidebar-private"><span /> Private by design</p>
     </aside>
   )
 }

@@ -4,6 +4,7 @@ import * as React from 'react'
 import { AppUIProvider, useAppUI } from '@/components/tracker/app-ui-context'
 import { BottomNav, QuickAddFAB } from '@/components/tracker/bottom-nav'
 import { DesktopSidebar } from '@/components/tracker/desktop-sidebar'
+import { DesktopWorkspace } from '@/components/tracker/desktop-workspace'
 import { TodayView } from '@/components/tracker/today-view'
 import { CalendarView } from '@/components/tracker/calendar-view'
 import { StatsView } from '@/components/tracker/stats-view'
@@ -144,7 +145,7 @@ function AppInner() {
       <main
         key={view}
         className={cn(
-          'sheet-backdrop-scale predictive-back animate-m3-fade-in pb-32 pt-2 lg:mx-auto lg:max-w-6xl lg:pb-16 lg:pl-64 lg:pr-8 lg:pt-8',
+          'sheet-backdrop-scale predictive-back animate-m3-fade-in pb-32 pt-2 lg:hidden',
           backDrag > 0 && 'dragging',
         )}
         style={backDrag > 0 ? {
@@ -159,6 +160,10 @@ function AppInner() {
         {view === 'stats' && <StatsView />}
         {view === 'more' && <MoreView />}
       </main>
+
+      {/* A purpose-built workspace for large screens. The mobile app above is
+          intentionally isolated behind the desktop breakpoint. */}
+      <DesktopWorkspace />
 
       {/* FAB */}
       {(view === 'today' || view === 'calendar') && (
