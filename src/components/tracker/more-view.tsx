@@ -31,7 +31,7 @@ export function MoreView() {
   }
 
   const items = [
-    { icon: Award, label: 'Achievements', desc: '35 badges across 5 tiers', onClick: () => handle(ui.openAchievements), color: 'var(--gold)' },
+    { icon: Award, label: 'Achievements', desc: '41 badges across 5 tiers', onClick: () => handle(ui.openAchievements), color: 'var(--gold)' },
     { icon: StickyNote, label: 'Notes', desc: 'Journal entries & search', onClick: () => handle(ui.openNotesList), color: 'var(--tertiary)' },
     { icon: BookOpen, label: 'Reflect', desc: 'Weekly reflection', onClick: () => handle(ui.openReflection), color: 'var(--tertiary)' },
     { icon: Wind, label: 'Breathe', desc: '4-4-6-2 box breathing', onClick: () => handle(ui.openBreathing), color: 'var(--primary)' },

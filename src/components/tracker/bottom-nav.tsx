@@ -23,7 +23,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 flex items-stretch px-2 pb-[env(safe-area-inset-bottom)] pt-2"
+      className="fixed inset-x-0 bottom-0 z-40 flex items-stretch px-2 pb-[env(safe-area-inset-bottom)] pt-2 lg:hidden"
       style={{ background: 'var(--surface-container)', borderTop: '1px solid var(--outline-variant)', minHeight: '72px' }}
       aria-label="Main navigation"
     >
@@ -86,7 +86,7 @@ export function QuickAddFAB({ onClick }: { onClick: () => void }) {
       onClick={() => { hapticLight(); onClick() }}
       aria-label="Note today"
       className={cn(
-        'm3-fab fixed right-4 z-40 h-14 overflow-hidden transition-all duration-300',
+        'm3-fab fixed right-4 z-40 h-14 overflow-hidden transition-all duration-300 lg:hidden',
         extended ? 'w-auto px-4' : 'w-14',
       )}
       style={{ bottom: 'calc(88px + env(safe-area-inset-bottom))' }}

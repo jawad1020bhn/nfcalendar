@@ -1,5 +1,5 @@
 // Stats calculations for the tracker
-import { DayState, LEVELS, MILESTONES, MILESTONE_LIST } from "./types";
+import { DayState, LEVELS, MILESTONES, MILESTONE_LIST, MONTHS_SHORT, type Reflection } from "./types";
 import { formatDateStr, getTodayDate, parseDateStr, getDaysInMonth } from "./dates";
 
 type Entries = Record<string, DayState>;
@@ -156,6 +156,61 @@ export const getMomentum = (entries: Entries): { score: number; clean: number; d
     cursor.setDate(cursor.getDate() - 1);
   }
   return { score: days > 0 ? Math.round((clean / days) * 100) : 0, clean, days };
+};
+
+// Clean rate by week — buckets tracked days into Monday-based weeks, for the
+// "Am I improving?" trend chart. Weeks between the first and last tracked week
+// are kept (with `rate: null`) so the x-axis stays honest about time, and the
+// chart line can break across untracked stretches rather than bridging them.
+export type WeeklyCleanRate = {
+  /** YYYY-MM-DD of the Monday that starts the week (local time). */
+  weekStart: string;
+  /** Short label like "Sep 1". */
+  label: string;
+  clean: number;
+  total: number;
+  /** Clean rate 0..100, or null when the week has no tracked days. */
+  rate: number | null;
+};
+
+export const getWeeklyCleanRates = (entries: Entries): WeeklyCleanRate[] => {
+  const buckets = new Map<string, { clean: number; total: number }>();
+  for (const dStr of Object.keys(entries)) {
+    const st = entries[dStr];
+    if (st !== 1 && st !== 2 && st !== 3) continue;
+    const dt = parseDateStr(dStr);
+    if (!dt) continue;
+    const monday = new Date(dt);
+    const dow = monday.getDay();
+    monday.setDate(monday.getDate() - (dow === 0 ? 6 : dow - 1));
+    const key = formatDateStr(monday);
+    const b = buckets.get(key) ?? { clean: 0, total: 0 };
+    b.total += 1;
+    if (st === 1) b.clean += 1;
+    buckets.set(key, b);
+  }
+
+  const keys = [...buckets.keys()].sort();
+  if (keys.length === 0) return [];
+
+  const first = parseDateStr(keys[0])!;
+  const last = parseDateStr(keys[keys.length - 1])!;
+
+  const weeks: WeeklyCleanRate[] = [];
+  const cursor = new Date(first);
+  while (cursor.getTime() <= last.getTime()) {
+    const key = formatDateStr(cursor);
+    const b = buckets.get(key);
+    weeks.push({
+      weekStart: key,
+      label: `${MONTHS_SHORT[cursor.getMonth()]} ${cursor.getDate()}`,
+      clean: b?.clean ?? 0,
+      total: b?.total ?? 0,
+      rate: b && b.total > 0 ? Math.round((b.clean / b.total) * 100) : null,
+    });
+    cursor.setDate(cursor.getDate() + 7);
+  }
+  return weeks;
 };
 
 // Slip-recovery rate: of the slips that have a following marked day, the share
@@ -611,9 +666,11 @@ export const calculateStats = (entries: Entries, notes: Notes): Stats => {
 };
 
 // Achievement detection — returns array of newly unlocked IDs given entries/notes
+// (plus reflections for the first-check-in badge).
 export const checkAchievements = (
   entries: Entries,
   notes: Notes,
+  reflections?: Reflection[] | null,
 ): string[] => {
   const stats = calculateStats(entries, notes);
   const unlocked: string[] = [];
@@ -628,11 +685,35 @@ export const checkAchievements = (
 
   // ---- Bronze ----
   if (totalMarks >= 1) push("first_mark");
+  if (bestStreak >= 3) push("day_three");
+  if (bestStreak >= 5) push("day_five");
   if (bestStreak >= 7) push("first_week");
   if (bestStreak >= 14) push("two_weeks");
   if (totalCleanDays >= 3) push("kept_3");
   if (totalCleanDays >= 10) push("kept_10");
   if (Object.keys(notes).filter((k) => notes[k]?.trim()).length >= 1) push("first_note");
+  if (reflections && reflections.length >= 1) push("first_reflection");
+
+  // Early rhythm — 5 consecutive logged days (any state), the "habit behind
+  // the habit" that doesn't reset after a hard day.
+  if (getLoggingStreak(entries) >= 5) push("early_momentum");
+
+  // First fully-clean weekend — any Saturday+Sunday both marked clean.
+  {
+    let weekendCleared = false;
+    for (const dStr of getSortedDates(entries)) {
+      if (entries[dStr] !== 1) continue;
+      const dt = parseDateStr(dStr);
+      if (!dt || dt.getDay() !== 0) continue; // Sunday only
+      const sat = new Date(dt);
+      sat.setDate(sat.getDate() - 1);
+      if (entries[formatDateStr(sat)] === 1) {
+        weekendCleared = true;
+        break;
+      }
+    }
+    if (weekendCleared) push("first_weekend");
+  }
 
   const allTags = new Set<string>();
   for (const text of Object.values(notes)) {
@@ -641,6 +722,7 @@ export const checkAchievements = (
   if (allTags.size >= 1) push("tagged");
 
   // ---- Silver ----
+  if (bestStreak >= 21) push("three_weeks");
   if (bestStreak >= 30) push("month_one");
   if (totalCleanDays >= 25) push("kept_25");
   if (Object.keys(notes).filter((k) => notes[k]?.trim()).length >= 25) push("storyteller");

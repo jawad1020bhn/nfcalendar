@@ -58,7 +58,7 @@ export function TodayView() {
   }, [entries, todayStr])
 
   return (
-    <div className="space-y-3 px-4 pb-4">
+    <div className="space-y-3 px-4 pb-4 lg:columns-2 lg:gap-4 lg:space-y-0 lg:[&>*]:mb-4 lg:[&>*]:break-inside-avoid">
       {/* Streak hero — M3 large display */}
       <div
         key={streak}

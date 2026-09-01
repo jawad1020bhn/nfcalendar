@@ -11,6 +11,7 @@ import { useAppUI } from './app-ui-context'
 export function useMilestoneWatcher() {
   const entries = useTrackerStore((s) => s.entries)
   const notes = useTrackerStore((s) => s.notes)
+  const reflections = useTrackerStore((s) => s.reflections)
   const unlocked = useTrackerStore((s) => s.unlockedAchievements)
   const seenMilestones = useTrackerStore((s) => s.seenMilestones)
   const unlockAchievements = useTrackerStore((s) => s.unlockAchievements)
@@ -29,13 +30,13 @@ export function useMilestoneWatcher() {
     if (!initRef.current) {
       prevStreakRef.current = streak
       initRef.current = true
-      const earned = checkAchievements(entries, notes)
+      const earned = checkAchievements(entries, notes, reflections)
       const newOnes = earned.filter((id) => !unlocked.includes(id))
       if (newOnes.length > 0) unlockAchievements(newOnes)
       return
     }
 
-    const newlyEarned = checkAchievements(entries, notes)
+    const newlyEarned = checkAchievements(entries, notes, reflections)
     const newOnes = newlyEarned.filter((id) => !unlocked.includes(id))
     if (newOnes.length > 0) {
       unlockAchievements(newOnes)
@@ -65,7 +66,7 @@ export function useMilestoneWatcher() {
       }
     }
     prevStreakRef.current = streak
-  }, [entries, notes, unlocked, seenMilestones, unlockAchievements, markMilestoneSeen, showMilestoneToast, showAchievementToast])
+  }, [entries, notes, reflections, unlocked, seenMilestones, unlockAchievements, markMilestoneSeen, showMilestoneToast, showAchievementToast])
 }
 
 export function useKeyboardShortcuts() {
