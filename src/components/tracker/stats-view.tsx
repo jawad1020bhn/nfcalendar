@@ -12,11 +12,13 @@ import {
   getSlipRecoveryRate,
   getResetGapTrend,
   getCleanestMonth,
+  getWeeklyCleanRates,
+  type WeeklyCleanRate,
   type Stats,
 } from '@/lib/tracker/stats'
 import { type DayState, MONTHS_SHORT } from '@/lib/tracker/types'
 import type { Reflection } from '@/lib/tracker/types'
-import { parseDateStr } from '@/lib/tracker/dates'
+import { formatDateStr, parseDateStr } from '@/lib/tracker/dates'
 
 type Entries = Record<string, DayState>
 import { useAppUI } from './app-ui-context'
@@ -195,7 +197,7 @@ export function StatsView() {
 
             <CheckInStreak entries={entries} />
 
-            <ImprovementTrend stats={stats} />
+            <ImprovementTrend stats={stats} entries={windowedEntries} />
 
             <MonthOverMonth entries={entries} />
 
@@ -428,58 +430,390 @@ function StatCard({
 }
 
 // ----------------------------------------------------------------
-// 3. Am I improving? — clean rate + week-over-week
+// 3. Am I improving? — clean rate, weekly trend chart, week-over-week
 // ----------------------------------------------------------------
 
-function ImprovementTrend({ stats }: { stats: Stats }) {
+type WeekWindow = { clean: number; total: number; rate: number | null }
+
+// Clean rate for the 7-day window ending `daysBack` days ago (0 = this week,
+// 7 = last week). `rate` is null — not 0 — when no days were logged, so a
+// quiet week never masquerades as a 0% clean rate.
+function weekWindow(entries: Entries, daysBack: number): WeekWindow {
+  let clean = 0
+  let total = 0
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today)
+    d.setDate(d.getDate() - daysBack - i)
+    const st = entries[formatDateStr(d)]
+    if (st === 1 || st === 2 || st === 3) {
+      total += 1
+      if (st === 1) clean += 1
+    }
+  }
+  return { clean, total, rate: total > 0 ? Math.round((clean / total) * 100) : null }
+}
+
+// Least-squares trend over the weeks' clean rates (x = week index), so the
+// chart can draw the overall "am I improving?" direction. Slope is in
+// percentage points per week.
+function weeklyTrendLine(weeks: WeeklyCleanRate[]): { slope: number; intercept: number } | null {
+  const idx: number[] = []
+  weeks.forEach((w, i) => {
+    if (w.rate !== null) idx.push(i)
+  })
+  if (idx.length < 3) return null
+  const n = idx.length
+  const sumX = idx.reduce((a, b) => a + b, 0)
+  const sumY = idx.reduce((a, i) => a + (weeks[i].rate as number), 0)
+  const sumXY = idx.reduce((a, i) => a + i * (weeks[i].rate as number), 0)
+  const sumXX = idx.reduce((a, i) => a + i * i, 0)
+  const denom = n * sumXX - sumX * sumX
+  if (denom === 0) return null
+  const slope = (n * sumXY - sumX * sumY) / denom
+  const intercept = (sumY - slope * sumX) / n
+  return { slope, intercept }
+}
+
+function hexToRgba(hex: string, alpha: number): string {
+  const clean = hex.trim().replace('#', '')
+  const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean
+  if (!/^[0-9a-fA-F]{6}$/.test(full)) return hex
+  const r = parseInt(full.slice(0, 2), 16)
+  const g = parseInt(full.slice(2, 4), 16)
+  const b = parseInt(full.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+// DPR-aware canvas line/area chart of weekly clean rate, reading the active
+// theme's CSS variables so it re-tints in light mode. The area is the green
+// weekly rate, the dashed amber line the overall trend, and the faint line
+// marks the 80% "excellent" benchmark.
+function ImprovementChart({ weeks, trendLine }: { weeks: WeeklyCleanRate[]; trendLine: { slope: number; intercept: number } | null }) {
+  const canvasRef = React.useRef<HTMLCanvasElement | null>(null)
+
+  React.useEffect(() => {
+    const c = canvasRef.current
+    if (!c) return
+    const ctx = c.getContext('2d')
+    if (!ctx) return
+
+    const draw = () => {
+      const dpr = window.devicePixelRatio || 1
+      const w = c.clientWidth
+      const h = c.clientHeight
+      if (w === 0 || h === 0) return
+      c.width = Math.round(w * dpr)
+      c.height = Math.round(h * dpr)
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.clearRect(0, 0, w, h)
+
+      const css = getComputedStyle(document.documentElement)
+      const primary = css.getPropertyValue('--primary') || '#6ED69E'
+      const tertiary = css.getPropertyValue('--tertiary') || '#FFB86B'
+      const outlineVariant = css.getPropertyValue('--outline-variant') || '#3F4944'
+      const onSurfaceVariant = css.getPropertyValue('--on-surface-variant') || '#BEC9C2'
+
+      const padL = 30
+      const padR = 6
+      const padT = 8
+      const padB = 18
+      const plotW = Math.max(1, w - padL - padR)
+      const plotH = Math.max(1, h - padT - padB)
+
+      const n = weeks.length
+      const xAt = (i: number) => padL + (n <= 1 ? plotW / 2 : (i / (n - 1)) * plotW)
+      const yAt = (rate: number) => padT + (1 - rate / 100) * plotH
+
+      // Gridlines + y-axis labels (0 / 50 / 100).
+      ctx.font = '10px Figtree, ui-sans-serif, sans-serif'
+      ctx.lineWidth = 0.5
+      for (const pct of [0, 50, 100]) {
+        const y = Math.round(yAt(pct)) + 0.5
+        ctx.strokeStyle = outlineVariant
+        ctx.globalAlpha = 0.45
+        ctx.beginPath()
+        ctx.moveTo(padL, y)
+        ctx.lineTo(w - padR, y)
+        ctx.stroke()
+        ctx.globalAlpha = 1
+        ctx.fillStyle = onSurfaceVariant
+        ctx.globalAlpha = 0.75
+        ctx.textAlign = 'right'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(`${pct}`, padL - 6, y)
+        ctx.globalAlpha = 1
+      }
+
+      // 80% "excellent" benchmark.
+      const y80 = Math.round(yAt(80)) + 0.5
+      ctx.strokeStyle = onSurfaceVariant
+      ctx.globalAlpha = 0.4
+      ctx.setLineDash([3, 4])
+      ctx.beginPath()
+      ctx.moveTo(padL, y80)
+      ctx.lineTo(w - padR, y80)
+      ctx.stroke()
+      ctx.setLineDash([])
+      ctx.globalAlpha = 0.7
+      ctx.fillStyle = onSurfaceVariant
+      ctx.textAlign = 'right'
+      ctx.textBaseline = 'alphabetic'
+      ctx.fillText('80 · excellent', w - padR, y80 - 4)
+      ctx.globalAlpha = 1
+
+      // Group consecutive data weeks into runs so the line/area break across
+      // untracked stretches instead of bridging them.
+      const segments: number[][] = []
+      let run: number[] = []
+      weeks.forEach((wk, i) => {
+        if (wk.rate !== null) {
+          if (run.length && i - run[run.length - 1] > 1) {
+            segments.push(run)
+            run = []
+          }
+          run.push(i)
+        } else if (run.length) {
+          segments.push(run)
+          run = []
+        }
+      })
+      if (run.length) segments.push(run)
+
+      const dotR = n <= 13 ? 2.5 : n <= 30 ? 1.6 : 0
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
+
+      for (const seg of segments) {
+        const firstX = xAt(seg[0])
+        const lastX = xAt(seg[seg.length - 1])
+
+        // Soft area fill beneath the line.
+        const grad = ctx.createLinearGradient(0, padT, 0, padT + plotH)
+        grad.addColorStop(0, hexToRgba(primary, 0.28))
+        grad.addColorStop(1, hexToRgba(primary, 0))
+        ctx.fillStyle = grad
+        ctx.beginPath()
+        ctx.moveTo(firstX, padT + plotH)
+        seg.forEach((i) => ctx.lineTo(xAt(i), yAt(weeks[i].rate as number)))
+        ctx.lineTo(lastX, padT + plotH)
+        ctx.closePath()
+        ctx.fill()
+
+        // The rate line itself.
+        ctx.strokeStyle = primary
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        seg.forEach((i, k) => {
+          const x = xAt(i)
+          const y = yAt(weeks[i].rate as number)
+          if (k === 0) ctx.moveTo(x, y)
+          else ctx.lineTo(x, y)
+        })
+        ctx.stroke()
+      }
+
+      // Dots (hidden once the series gets dense).
+      if (dotR > 0) {
+        ctx.fillStyle = primary
+        for (const seg of segments) {
+          for (const i of seg) {
+            ctx.beginPath()
+            ctx.arc(xAt(i), yAt(weeks[i].rate as number), dotR, 0, Math.PI * 2)
+            ctx.fill()
+          }
+        }
+      }
+
+      // Overall trend (dashed amber).
+      if (trendLine) {
+        const startRate = Math.max(0, Math.min(100, trendLine.intercept))
+        const endRate = Math.max(0, Math.min(100, trendLine.slope * (n - 1) + trendLine.intercept))
+        ctx.strokeStyle = tertiary
+        ctx.globalAlpha = 0.9
+        ctx.lineWidth = 1.5
+        ctx.setLineDash([5, 4])
+        ctx.beginPath()
+        ctx.moveTo(xAt(0), yAt(startRate))
+        ctx.lineTo(xAt(n - 1), yAt(endRate))
+        ctx.stroke()
+        ctx.setLineDash([])
+        ctx.globalAlpha = 1
+      }
+
+      // Week labels, adaptively spaced (never more than ~6).
+      ctx.fillStyle = onSurfaceVariant
+      ctx.globalAlpha = 0.7
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'top'
+      const stride = Math.max(1, Math.ceil(n / 6))
+      const labelIdx = new Set<number>()
+      for (let i = 0; i < n; i += stride) labelIdx.add(i)
+      labelIdx.add(n - 1)
+      labelIdx.forEach((i) => {
+        ctx.fillText(weeks[i].label, xAt(i), padT + plotH + 5)
+      })
+      ctx.globalAlpha = 1
+    }
+
+    draw()
+    const ro = new ResizeObserver(draw)
+    ro.observe(c)
+    return () => ro.disconnect()
+  }, [weeks, trendLine])
+
+  return <canvas ref={canvasRef} className="h-32 w-full" aria-hidden="true" />
+}
+
+function ChartLegend({ items }: { items: { color: string; dashed?: boolean; faint?: boolean; label: string }[] }) {
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+      {items.map((it) => (
+        <span key={it.label} className="inline-flex items-center gap-1.5 m3-label-small text-on-surface-variant">
+          <svg width="16" height="8" aria-hidden="true">
+            <line
+              x1="0"
+              y1="4"
+              x2="16"
+              y2="4"
+              stroke={it.color}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeDasharray={it.dashed ? '4 3' : undefined}
+              opacity={it.faint ? 0.5 : 1}
+            />
+          </svg>
+          {it.label}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function WeekBar({ label, win, fill }: { label: string; win: WeekWindow; fill: string }) {
+  return (
+    <div>
+      <div className="mb-1 flex items-baseline justify-between gap-2">
+        <span className="m3-label-small text-on-surface-variant">{label}</span>
+        <span className="m3-label-small tabular-nums text-on-surface-variant">
+          {win.rate === null ? 'no data yet' : `${win.rate}%`}
+          {win.total > 0 && <span className="opacity-60"> · {win.clean}/{win.total} days</span>}
+        </span>
+      </div>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-surface-container-low">
+        <div
+          className="h-full rounded-full transition-all duration-700"
+          style={{ width: `${win.rate ?? 0}%`, background: fill }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function ImprovementTrend({ stats, entries }: { stats: Stats; entries: Entries }) {
   const cleanPct = stats.cleanRatio
-  const trend = stats.weeklyTrend
-  const delta = trend?.delta ?? 0
-  const dir = delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat'
+  const weeks = React.useMemo(() => getWeeklyCleanRates(entries), [entries])
+  const dataWeeks = React.useMemo(() => weeks.filter((w) => w.rate !== null), [weeks])
+  const trendLine = React.useMemo(() => weeklyTrendLine(weeks), [weeks])
+  const thisWeek = React.useMemo(() => weekWindow(entries, 0), [entries])
+  const lastWeek = React.useMemo(() => weekWindow(entries, 7), [entries])
+
+  const bothWeeks = thisWeek.rate !== null && lastWeek.rate !== null
+  const weekDelta = bothWeeks ? (thisWeek.rate as number) - (lastWeek.rate as number) : 0
+  const weekDir = weekDelta > 0 ? 'up' : weekDelta < 0 ? 'down' : 'flat'
+  const hasWeekData = thisWeek.total > 0 || lastWeek.total > 0
+
+  let microcopy: string
+  if (trendLine && Math.abs(trendLine.slope) >= 0.4) {
+    microcopy =
+      trendLine.slope > 0
+        ? `Your weekly clean rate is drifting upward across the last ${weeks.length} week${weeks.length === 1 ? '' : 's'}. Momentum is building — keep going.`
+        : `Your weekly clean rate has dipped over the last ${weeks.length} week${weeks.length === 1 ? '' : 's'}. That happens — one rough stretch doesn’t undo your work; what matters is showing up again.`
+  } else if (bothWeeks) {
+    microcopy =
+      weekDelta > 0
+        ? 'Up versus last week. Momentum is building — keep going.'
+        : weekDelta < 0
+          ? 'Down versus last week. That happens. One rough stretch doesn’t undo your work — what matters is showing up again.'
+          : 'Holding steady compared to last week. Consistency is quiet progress.'
+  } else {
+    microcopy = 'Keep logging and this card will draw the shape of your progress, week by week.'
+  }
 
   return (
     <SectionCard
       title="Am I improving?"
-      info="Clean rate = clean days ÷ days you tracked, in the selected period. Research (UCL, 2010) shows missing the odd day barely affects long-term progress, so a rate in the 80s is excellent."
-      microcopy={
-        dir === 'up'
-          ? 'Up versus last week. Momentum is building — keep going.'
-          : dir === 'down'
-            ? 'Down versus last week. That happens. One rough stretch doesn’t undo your work — what matters is showing up again.'
-            : 'Holding steady compared to last week. Consistency is quiet progress.'
-      }
+      info="Clean rate = clean days ÷ days you tracked. The green line is your clean rate each week, the dashed amber line is the overall trend, and the faint line marks 80% — research (UCL, 2010) shows a rate in the 80s is excellent. The bars compare this week to last."
+      microcopy={microcopy}
     >
+      {/* Headline */}
       <div className="flex items-end justify-between gap-4">
         <div>
-          <div className="flex items-baseline gap-1">
+          <div className="flex items-baseline gap-1.5">
             <span className="stat-numeral-m3 text-5xl text-primary">{cleanPct}%</span>
+            <span className="m3-label-small text-on-surface-variant">clean days</span>
           </div>
-          <p className="mt-0.5 m3-label-small text-on-surface-variant">clean days, this period</p>
+          <p className="mt-0.5 m3-label-small text-on-surface-variant">
+            {stats.successCount} clean of {stats.totalMarks} tracked, this period
+          </p>
         </div>
+      </div>
 
-        {trend && (
-          <div className="flex flex-col items-end">
-            <span
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 m3-label-small"
-              style={{
-                background:
-                  dir === 'up'
-                    ? 'var(--success-container)'
-                    : dir === 'down'
-                      ? 'var(--surface-container-high)'
-                      : 'var(--surface-container-high)',
-                color: dir === 'up' ? 'var(--success)' : 'var(--on-surface-variant)',
-              }}
-            >
-              {dir === 'up' ? <TrendingUp className="h-3.5 w-3.5" /> : dir === 'down' ? <TrendingDown className="h-3.5 w-3.5" /> : <Minus className="h-3.5 w-3.5" />}
-              {Math.abs(delta)}%
-            </span>
-            <p className="mt-1 m3-label-small text-on-surface-variant">
-              this week {trend.thisWeek}% · last {trend.lastWeek}%
+      {/* Weekly trend chart */}
+      <div className="mt-4">
+        {dataWeeks.length < 2 ? (
+          <div className="flex items-center justify-center rounded-[var(--shape-md)] bg-surface-container-low px-4 py-6">
+            <p className="max-w-[15rem] text-center m3-body-small text-on-surface-variant">
+              Log days across a couple of weeks and your clean-rate trend will draw itself here.
             </p>
           </div>
+        ) : (
+          <>
+            <ImprovementChart weeks={weeks} trendLine={trendLine} />
+            <ChartLegend
+              items={[
+                { color: 'var(--primary)', label: 'Weekly clean rate' },
+                { color: 'var(--tertiary)', dashed: true, label: 'Trend' },
+                { color: 'var(--on-surface-variant)', dashed: true, faint: true, label: '80% · excellent' },
+              ]}
+            />
+          </>
         )}
       </div>
+
+      {/* This week vs last week */}
+      {hasWeekData && (
+        <div className="mt-4 space-y-2.5">
+          <WeekBar label="This week" win={thisWeek} fill="var(--primary)" />
+          <WeekBar
+            label="Last week"
+            win={lastWeek}
+            fill="color-mix(in srgb, var(--on-surface-variant) 55%, transparent)"
+          />
+          {bothWeeks && (
+            <div className="flex justify-end">
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 m3-label-small"
+                style={{
+                  background: weekDir === 'up' ? 'var(--success-container)' : 'var(--surface-container-high)',
+                  color: weekDir === 'up' ? 'var(--success)' : 'var(--on-surface-variant)',
+                }}
+              >
+                {weekDir === 'up' ? (
+                  <TrendingUp className="h-3.5 w-3.5" />
+                ) : weekDir === 'down' ? (
+                  <TrendingDown className="h-3.5 w-3.5" />
+                ) : (
+                  <Minus className="h-3.5 w-3.5" />
+                )}
+                {weekDelta > 0 ? '+' : ''}
+                {weekDelta}% vs last week
+              </span>
+            </div>
+          )}
+        </div>
+      )}
     </SectionCard>
   )
 }
