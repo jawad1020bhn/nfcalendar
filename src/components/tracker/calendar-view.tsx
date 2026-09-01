@@ -127,7 +127,9 @@ export function CalendarView() {
   }, [selectedDate, entries])
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
+      {/* Left pane: header + calendar + legend + summary + tip */}
+      <div className="flex flex-col">
       {/* Header */}
       <div className="animate-m3-stagger px-3 pt-2 pb-4">
         <div className="flex items-end justify-between">
@@ -261,92 +263,20 @@ export function CalendarView() {
         )}
       </div>
 
-      {/* Selected day detail */}
+      {/* Selected day detail — mobile: appears below the grid */}
       {selectedDate && (
-        <div className="mt-4 px-4 animate-container-expand">
-          <div className="m3-card p-5" style={{ background: 'var(--surface-container-high)' }}>
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <p className="m3-label-small text-on-surface-variant">
-                  {(() => { const d = parseDateStr(selectedDate)!; return d.toLocaleDateString('en-US', { weekday: 'long' }) })()}
-                </p>
-                <p className="font-display m3-title-large text-on-surface">
-                  {(() => { const d = parseDateStr(selectedDate)!; return `${MONTHS[d.getMonth()]} ${d.getDate()}` })()}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                {selectedEntry !== 0 && (
-                  <span className="rounded-full px-3 py-1 m3-label-small font-semibold"
-                    style={{ background: selectedEntry === 1 ? 'var(--success)' : selectedEntry === 2 ? 'var(--slip)' : 'var(--fail)', color: 'var(--on-surface)' }}>
-                    {['', 'Clean', 'Slip', 'Relapse'][selectedEntry]}
-                  </span>
-                )}
-                <button type="button" onClick={() => setSelectedDate(null)} className="m3-icon-btn" style={{ minHeight: '40px', minWidth: '40px' }} aria-label="Close detail">
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            {selectedStreakDay > 0 && (
-              <div className="mb-4 flex items-center gap-6 rounded-2xl bg-surface-container p-3">
-                <div>
-                  <p className="m3-label-small text-on-surface-variant">Streak day</p>
-                  <p className="font-display m3-headline-small text-on-surface">{selectedStreakDay}</p>
-                </div>
-                {MILESTONES[selectedStreakDay] && (
-                  <div className="border-l border-outline-variant pl-6">
-                    <p className="m3-label-small text-on-surface-variant">Milestone</p>
-                    <p className="font-display m3-title-medium" style={{ color: 'var(--gold)' }}>{MILESTONES[selectedStreakDay]}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {selectedRatings && (selectedRatings.mood || selectedRatings.energy || selectedRatings.sleep) && (
-              <div className="mb-4 flex items-center gap-6">
-                {(['mood', 'energy', 'sleep'] as const).map((k) => {
-                  const v = selectedRatings[k]; if (!v) return null
-                  const colors = { mood: 'var(--mood)', energy: 'var(--energy)', sleep: 'var(--sleep)' }
-                  const labels = { mood: 'Mood', energy: 'Energy', sleep: 'Sleep' }
-                  return (
-                    <div key={k} className="flex items-center gap-1.5">
-                      <span className="m3-label-small text-on-surface-variant">{labels[k]}</span>
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: colors[k], opacity: v / 5 }} />
-                      <span className="m3-label-small text-on-surface">{v}/5</span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-
-            {selectedNote && selectedNote.trim() && (
-              <div className="mb-4 flex items-start gap-2 rounded-2xl bg-surface-container p-3">
-                <span className="mt-1 h-2 w-2 shrink-0 rounded-full" style={{ background: 'var(--primary-container)' }} />
-                <p className="m3-body-medium text-on-surface line-clamp-3">{selectedNote}</p>
-              </div>
-            )}
-
-            <div className="grid grid-cols-3 gap-2">
-              <button type="button" onClick={() => { hapticSuccess(); setDay(selectedDate, 1) }}
-                className={cn('m3-pill-btn', selectedEntry === 1 ? 'm3-pill-btn-success' : 'm3-pill-btn-outlined')} style={{ minHeight: '48px' }}>
-                <Check className="h-4 w-4" /> Clean
-              </button>
-              <button type="button"
-                onClick={() => { if (canSlipSelected) { hapticSuccess(); setDay(selectedDate, 2) } }}
-                disabled={!canSlipSelected}
-                className={cn('m3-pill-btn', selectedEntry === 2 ? 'm3-pill-btn-slip' : 'm3-pill-btn-outlined', !canSlipSelected && 'opacity-40 cursor-not-allowed')} style={{ minHeight: '48px' }}>
-                <Minus className="h-4 w-4" /> {canSlipSelected ? 'Slip' : 'Locked'}
-              </button>
-              <button type="button" onClick={() => { hapticSuccess(); setDay(selectedDate, 3) }}
-                className={cn('m3-pill-btn', selectedEntry === 3 ? 'm3-pill-btn-danger' : 'm3-pill-btn-outlined')} style={{ minHeight: '48px' }}>
-                <X className="h-4 w-4" /> Relapse
-              </button>
-            </div>
-            <button type="button" onClick={() => { hapticLight(); openNote(selectedDate); setSelectedDate(null) }}
-              className="m3-pill-btn m3-pill-btn-text w-full mt-2" style={{ minHeight: '48px' }}>
-              <Pencil className="h-4 w-4" /> Edit note
-            </button>
-          </div>
+        <div className="mt-4 px-4 animate-container-expand lg:hidden">
+          <DayDetailCard
+            selectedDate={selectedDate}
+            selectedEntry={selectedEntry}
+            selectedNote={selectedNote}
+            selectedRatings={selectedRatings}
+            selectedStreakDay={selectedStreakDay}
+            canSlipSelected={canSlipSelected}
+            setDay={setDay}
+            openNote={openNote}
+            onClose={() => setSelectedDate(null)}
+          />
         </div>
       )}
 
@@ -357,10 +287,172 @@ export function CalendarView() {
             Jump to today
           </button>
         )}
-        <p className="text-center m3-body-small text-on-surface-variant">
+        <p className="text-center m3-body-small text-on-surface-variant lg:hidden">
           Tap to cycle, double-tap for note, long-press for details, swipe to navigate
         </p>
       </div>
+      </div>
+
+      {/* Right rail — desktop only: persistent day detail / month summary */}
+      <div className="hidden lg:block">
+        <div className="sticky top-8 space-y-4">
+          {selectedDate ? (
+            <DayDetailCard
+              selectedDate={selectedDate}
+              selectedEntry={selectedEntry}
+              selectedNote={selectedNote}
+              selectedRatings={selectedRatings}
+              selectedStreakDay={selectedStreakDay}
+              canSlipSelected={canSlipSelected}
+              setDay={setDay}
+              openNote={openNote}
+              onClose={() => setSelectedDate(null)}
+            />
+          ) : (
+            <div className="m3-card p-5" style={{ background: 'var(--surface-container-high)' }}>
+              <p className="m3-label-medium uppercase tracking-wider text-on-surface-variant">Day details</p>
+              <p className="mt-2 m3-body-small leading-relaxed text-on-surface-variant">
+                Select a day to edit its mark, write a note, or add mood, energy &amp; sleep ratings.
+              </p>
+
+              <div className="mt-4 rounded-2xl bg-surface-container p-4">
+                <p className="m3-label-small uppercase text-on-surface-variant">{MONTHS[month]} so far</p>
+                <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p className="stat-numeral-m3 text-2xl text-on-surface">{monthClean}</p>
+                    <p className="m3-label-small text-success">clean</p>
+                  </div>
+                  <div>
+                    <p className="stat-numeral-m3 text-2xl text-on-surface">{monthSlip}</p>
+                    <p className="m3-label-small" style={{ color: 'var(--slip)' }}>slips</p>
+                  </div>
+                  <div>
+                    <p className="stat-numeral-m3 text-2xl text-on-surface">{monthRelapse}</p>
+                    <p className="m3-label-small text-fail">resets</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <div className="m3-progress-track h-1.5 flex-1">
+                    <div
+                      className="m3-progress-fill h-full"
+                      style={{ width: `${monthCleanPct}%`, background: 'linear-gradient(90deg, var(--success), var(--primary))' }}
+                    />
+                  </div>
+                  <span className="m3-label-small tabular-nums text-on-surface-variant">{monthCleanPct}% clean</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DayDetailCard({
+  selectedDate,
+  selectedEntry,
+  selectedNote,
+  selectedRatings,
+  selectedStreakDay,
+  canSlipSelected,
+  setDay,
+  openNote,
+  onClose,
+}: {
+  selectedDate: string
+  selectedEntry: DayState
+  selectedNote: string | null
+  selectedRatings: { mood?: number; energy?: number; sleep?: number } | null
+  selectedStreakDay: number
+  canSlipSelected: boolean
+  setDay: (date: string, state: 1 | 2 | 3) => void
+  openNote: (date: string) => void
+  onClose: () => void
+}) {
+  return (
+    <div className="m3-card p-5" style={{ background: 'var(--surface-container-high)' }}>
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <p className="m3-label-small text-on-surface-variant">
+            {(() => { const d = parseDateStr(selectedDate)!; return d.toLocaleDateString('en-US', { weekday: 'long' }) })()}
+          </p>
+          <p className="font-display m3-title-large text-on-surface">
+            {(() => { const d = parseDateStr(selectedDate)!; return `${MONTHS[d.getMonth()]} ${d.getDate()}` })()}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {selectedEntry !== 0 && (
+            <span className="rounded-full px-3 py-1 m3-label-small font-semibold"
+              style={{ background: selectedEntry === 1 ? 'var(--success)' : selectedEntry === 2 ? 'var(--slip)' : 'var(--fail)', color: 'var(--on-surface)' }}>
+              {['', 'Clean', 'Slip', 'Relapse'][selectedEntry]}
+            </span>
+          )}
+          <button type="button" onClick={onClose} className="m3-icon-btn" style={{ minHeight: '40px', minWidth: '40px' }} aria-label="Close detail">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {selectedStreakDay > 0 && (
+        <div className="mb-4 flex items-center gap-6 rounded-2xl bg-surface-container p-3">
+          <div>
+            <p className="m3-label-small text-on-surface-variant">Streak day</p>
+            <p className="font-display m3-headline-small text-on-surface">{selectedStreakDay}</p>
+          </div>
+          {MILESTONES[selectedStreakDay] && (
+            <div className="border-l border-outline-variant pl-6">
+              <p className="m3-label-small text-on-surface-variant">Milestone</p>
+              <p className="font-display m3-title-medium" style={{ color: 'var(--gold)' }}>{MILESTONES[selectedStreakDay]}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {selectedRatings && (selectedRatings.mood || selectedRatings.energy || selectedRatings.sleep) && (
+        <div className="mb-4 flex items-center gap-6">
+          {(['mood', 'energy', 'sleep'] as const).map((k) => {
+            const v = selectedRatings[k]; if (!v) return null
+            const colors = { mood: 'var(--mood)', energy: 'var(--energy)', sleep: 'var(--sleep)' }
+            const labels = { mood: 'Mood', energy: 'Energy', sleep: 'Sleep' }
+            return (
+              <div key={k} className="flex items-center gap-1.5">
+                <span className="m3-label-small text-on-surface-variant">{labels[k]}</span>
+                <span className="h-2.5 w-2.5 rounded-full" style={{ background: colors[k], opacity: v / 5 }} />
+                <span className="m3-label-small text-on-surface">{v}/5</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {selectedNote && selectedNote.trim() && (
+        <div className="mb-4 flex items-start gap-2 rounded-2xl bg-surface-container p-3">
+          <span className="mt-1 h-2 w-2 shrink-0 rounded-full" style={{ background: 'var(--primary-container)' }} />
+          <p className="m3-body-medium text-on-surface line-clamp-3">{selectedNote}</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-3 gap-2">
+        <button type="button" onClick={() => { hapticSuccess(); setDay(selectedDate, 1) }}
+          className={cn('m3-pill-btn', selectedEntry === 1 ? 'm3-pill-btn-success' : 'm3-pill-btn-outlined')} style={{ minHeight: '48px' }}>
+          <Check className="h-4 w-4" /> Clean
+        </button>
+        <button type="button"
+          onClick={() => { if (canSlipSelected) { hapticSuccess(); setDay(selectedDate, 2) } }}
+          disabled={!canSlipSelected}
+          className={cn('m3-pill-btn', selectedEntry === 2 ? 'm3-pill-btn-slip' : 'm3-pill-btn-outlined', !canSlipSelected && 'opacity-40 cursor-not-allowed')} style={{ minHeight: '48px' }}>
+          <Minus className="h-4 w-4" /> {canSlipSelected ? 'Slip' : 'Locked'}
+        </button>
+        <button type="button" onClick={() => { hapticSuccess(); setDay(selectedDate, 3) }}
+          className={cn('m3-pill-btn', selectedEntry === 3 ? 'm3-pill-btn-danger' : 'm3-pill-btn-outlined')} style={{ minHeight: '48px' }}>
+          <X className="h-4 w-4" /> Relapse
+        </button>
+      </div>
+      <button type="button" onClick={() => { hapticLight(); openNote(selectedDate); onClose() }}
+        className="m3-pill-btn m3-pill-btn-text w-full mt-2" style={{ minHeight: '48px' }}>
+        <Pencil className="h-4 w-4" /> Edit note
+      </button>
     </div>
   )
 }

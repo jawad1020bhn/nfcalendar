@@ -194,41 +194,44 @@ export function StatsView() {
 
             <FirstThirtyDays stats={stats} />
 
-            <MomentumCard entries={entries} />
+            {/* Desktop: two-column masonry. Mobile keeps the single stack. */}
+            <div className="space-y-4 lg:columns-2 lg:gap-4 lg:space-y-0 lg:[&>*]:mb-4 lg:[&>*]:break-inside-avoid">
+              <MomentumCard entries={entries} />
 
-            <GlanceGrid stats={stats} timeWindow={timeWindow} />
+              <GlanceGrid stats={stats} timeWindow={timeWindow} />
 
-            <CheckInStreak entries={entries} />
+              <CheckInStreak entries={entries} />
 
-            <ThisWeek entries={entries} />
+              <ThisWeek entries={entries} />
 
-            <ImprovementTrend stats={stats} entries={windowedEntries} />
+              <ImprovementTrend stats={stats} entries={windowedEntries} />
 
-            <MonthOverMonth entries={entries} />
+              <MonthOverMonth entries={entries} />
 
-            <StreakGrowth entries={windowedEntries} />
+              <StreakGrowth entries={windowedEntries} />
 
-            <RecoveryCard stats={stats} />
+              <RecoveryCard stats={stats} />
 
-            <DayBreakdown stats={stats} timeWindow={timeWindow} />
+              <DayBreakdown stats={stats} timeWindow={timeWindow} />
 
-            <WeeklyRhythm entries={windowedEntries} />
+              <WeeklyRhythm entries={windowedEntries} />
 
-            <InsightsCard entries={entries} stats={stats} />
+              <InsightsCard entries={entries} stats={stats} />
 
-            {hasNotes && <PatternsCard entries={windowedEntries} notes={notes} stats={stats} />}
+              {hasNotes && <PatternsCard entries={windowedEntries} notes={notes} stats={stats} />}
 
-            {hasRatings && <WellbeingAverages ratings={ratings} />}
-            {hasRatings && <WellbeingByDayType entries={windowedEntries} ratings={ratings} />}
-            {hasRatings && <EnergyTrend ratings={ratings} />}
+              {hasRatings && <WellbeingAverages ratings={ratings} />}
+              {hasRatings && <WellbeingByDayType entries={windowedEntries} ratings={ratings} />}
+              {hasRatings && <EnergyTrend ratings={ratings} />}
 
-            {reflections.length > 0 && (
-              <SectionCard title="From your reflections" info="Tags pulled from your weekly check-ins.">
-                <ReflectionInsights reflections={reflections} />
-              </SectionCard>
-            )}
+              {reflections.length > 0 && (
+                <SectionCard title="From your reflections" info="Tags pulled from your weekly check-ins.">
+                  <ReflectionInsights reflections={reflections} />
+                </SectionCard>
+              )}
 
-            <FocusNext stats={stats} onOpenAchievements={ui.openAchievements} />
+              <FocusNext stats={stats} onOpenAchievements={ui.openAchievements} />
+            </div>
           </>
         )
       )}

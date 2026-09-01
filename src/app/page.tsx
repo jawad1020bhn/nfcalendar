@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { AppUIProvider, useAppUI } from '@/components/tracker/app-ui-context'
 import { BottomNav, QuickAddFAB } from '@/components/tracker/bottom-nav'
+import { DesktopSidebar } from '@/components/tracker/desktop-sidebar'
 import { TodayView } from '@/components/tracker/today-view'
 import { CalendarView } from '@/components/tracker/calendar-view'
 import { StatsView } from '@/components/tracker/stats-view'
@@ -110,10 +111,10 @@ function AppInner() {
       {/* Celebration burst overlay */}
       <CelebrationBurst trigger={celebration.trigger} x={celebration.x} y={celebration.y} />
 
-      {/* Top app bar — M3 small when scrolled, large when at top */}
+      {/* Top app bar — M3 small when scrolled, large when at top (hidden on desktop) */}
       <header
         className={cn(
-          'sheet-backdrop-scale sticky top-0 z-30 transition-all duration-200',
+          'sheet-backdrop-scale sticky top-0 z-30 transition-all duration-200 lg:hidden',
           scrolled ? 'bg-surface-container/95 backdrop-blur-md' : 'bg-background',
         )}
       >
@@ -143,7 +144,7 @@ function AppInner() {
       <main
         key={view}
         className={cn(
-          'sheet-backdrop-scale predictive-back animate-m3-fade-in pb-32 pt-2',
+          'sheet-backdrop-scale predictive-back animate-m3-fade-in pb-32 pt-2 lg:mx-auto lg:max-w-6xl lg:pb-16 lg:pl-64 lg:pr-8 lg:pt-8',
           backDrag > 0 && 'dragging',
         )}
         style={backDrag > 0 ? {
@@ -164,6 +165,8 @@ function AppInner() {
         <QuickAddFAB onClick={() => openNote(getTodayStr())} />
       )}
 
+      {/* Desktop sidebar + mobile bottom nav */}
+      <DesktopSidebar />
       <BottomNav />
       <SheetManager />
 
