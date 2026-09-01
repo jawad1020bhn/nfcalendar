@@ -47,6 +47,8 @@ export const DAYS_OF_WEEK_FULL = [
 
 // Roman milestones — only at meaningful streak checkpoints
 export const MILESTONES: Record<number, string> = {
+  3: "III",
+  5: "V",
   7: "VII",
   10: "X",
   15: "XV",
@@ -125,13 +127,19 @@ export type Achievement = {
 export const ACHIEVEMENTS: Achievement[] = [
   // Bronze
   { id: "first_mark", name: "First Mark", desc: "Mark your first day", icon: "1", tier: "bronze" },
+  { id: "day_three", name: "Three Days In", desc: "3-day streak", icon: "III", tier: "bronze" },
+  { id: "day_five", name: "Five Days Strong", desc: "5-day streak", icon: "V", tier: "bronze" },
   { id: "first_week", name: "First Week", desc: "7-day streak", icon: "7", tier: "bronze" },
   { id: "two_weeks", name: "Two Weeks", desc: "14-day streak", icon: "14", tier: "bronze" },
   { id: "kept_3", name: "3 Kept", desc: "3 clean days total", icon: "3", tier: "bronze" },
   { id: "kept_10", name: "10 Kept", desc: "10 clean days total", icon: "10", tier: "bronze" },
   { id: "first_note", name: "First Note", desc: "Write your first note", icon: "✎", tier: "bronze" },
+  { id: "first_reflection", name: "First Check-In", desc: "Complete your first weekly reflection", icon: "✒", tier: "bronze" },
   { id: "tagged", name: "Tagged", desc: "Use your first #tag", icon: "#", tier: "bronze" },
+  { id: "early_momentum", name: "In Rhythm", desc: "Log 5 days in a row", icon: "♪", tier: "bronze" },
+  { id: "first_weekend", name: "Weekend Cleared", desc: "A full Saturday & Sunday clean", icon: "☀", tier: "bronze" },
   // Silver
+  { id: "three_weeks", name: "Three Weeks", desc: "21-day streak", icon: "XXI", tier: "silver" },
   { id: "month_one", name: "Month One", desc: "30-day streak", icon: "30", tier: "silver" },
   { id: "kept_25", name: "25 Kept", desc: "25 clean days total", icon: "25", tier: "silver" },
   { id: "perfect_week", name: "Perfect Week", desc: "Every day of a clean calendar week", icon: "✓", tier: "silver" },

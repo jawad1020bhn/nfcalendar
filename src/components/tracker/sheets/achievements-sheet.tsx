@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useTrackerStore, escalateSlips } from '@/lib/store'
-import { calculateStats, type Stats } from '@/lib/tracker/stats'
+import { calculateStats, getLoggingStreak, type Stats } from '@/lib/tracker/stats'
 import { ACHIEVEMENTS, ACHIEVEMENT_TIERS, type AchievementTier } from '@/lib/tracker/types'
 import { useAppUI } from '../app-ui-context'
 import { cn } from '@/lib/utils'
@@ -14,10 +14,12 @@ export function AchievementsSheet() {
   const unlocked = useTrackerStore((s) => s.unlockedAchievements)
   const rawEntries = useTrackerStore((s) => s.entries)
   const notes = useTrackerStore((s) => s.notes)
+  const reflections = useTrackerStore((s) => s.reflections)
   const [selected, setSelected] = React.useState<string | null>(null)
 
   const entries = React.useMemo(() => escalateSlips(rawEntries), [rawEntries])
   const stats = React.useMemo(() => calculateStats(entries, notes), [entries, notes])
+  const logStreak = React.useMemo(() => getLoggingStreak(entries), [entries])
   const unlockedSet = new Set(unlocked)
   const unlockedCount = ACHIEVEMENTS.filter((a) => unlockedSet.has(a.id)).length
 
@@ -80,7 +82,7 @@ export function AchievementsSheet() {
                       </div>
                       {isSelected && (
                         <div className="mt-2 border-t border-outline-variant pt-2 text-[0.6rem] text-on-surface-variant">
-                          {getHint(a.id, stats)}
+                          {getHint(a.id, stats, logStreak, reflections.length)}
                         </div>
                       )}
                     </div>
@@ -95,13 +97,19 @@ export function AchievementsSheet() {
   )
 }
 
-function getHint(id: string, stats: Stats): string {
+function getHint(id: string, stats: Stats, logStreak: number, reflectionCount: number): string {
   const hints: Record<string, string> = {
     first_mark: `${stats.totalMarks} marks so far`,
+    day_three: `Best streak: ${stats.bestStreak} days`,
+    day_five: `Best streak: ${stats.bestStreak} days`,
     first_week: `Best streak: ${stats.bestStreak} days`,
     two_weeks: `Best streak: ${stats.bestStreak} days`,
     kept_3: `${stats.successCount}/3 clean days`,
     kept_10: `${stats.successCount}/10 clean days`,
+    first_reflection: `Check-ins written: ${reflectionCount}`,
+    early_momentum: `Check-in streak: ${logStreak} days`,
+    first_weekend: `Any full Saturday & Sunday clean`,
+    three_weeks: `Best: ${stats.bestStreak} days`,
     month_one: `Best: ${stats.bestStreak} days`,
     kept_25: `${stats.successCount}/25 clean days`,
     two_months: `Best: ${stats.bestStreak} days`,

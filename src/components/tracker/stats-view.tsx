@@ -16,7 +16,7 @@ import {
   type WeeklyCleanRate,
   type Stats,
 } from '@/lib/tracker/stats'
-import { type DayState, MONTHS_SHORT } from '@/lib/tracker/types'
+import { type DayState, MONTHS_SHORT, MILESTONES, MILESTONE_LIST } from '@/lib/tracker/types'
 import type { Reflection } from '@/lib/tracker/types'
 import { formatDateStr, parseDateStr } from '@/lib/tracker/dates'
 
@@ -40,6 +40,7 @@ import {
   Award,
   CalendarCheck,
   Target,
+  Check,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -191,11 +192,15 @@ export function StatsView() {
           <>
             <HeroStreak stats={stats} />
 
+            <FirstThirtyDays stats={stats} />
+
             <MomentumCard entries={entries} />
 
             <GlanceGrid stats={stats} timeWindow={timeWindow} />
 
             <CheckInStreak entries={entries} />
+
+            <ThisWeek entries={entries} />
 
             <ImprovementTrend stats={stats} entries={windowedEntries} />
 
@@ -352,6 +357,152 @@ function HeroStreak({ stats }: { stats: Stats }) {
         )}
       </div>
     </div>
+  )
+}
+
+// ----------------------------------------------------------------
+// 1b. First 30 days — the early milestone path (short-term journey)
+// ----------------------------------------------------------------
+
+function FirstThirtyDays({ stats }: { stats: Stats }) {
+  const streak = stats.currentStreak
+  const early = MILESTONE_LIST.filter((m) => m <= 30)
+  if (early.length === 0) return null
+  const nextVal = early.find((m) => m > streak) ?? null
+
+  // Position of the last passed node, for the filled progress line.
+  const lastPassedIdx = early.reduce((acc, m, i) => (streak >= m ? i : acc), -1)
+  const fillPct = lastPassedIdx < 0 ? 0 : (lastPassedIdx / (early.length - 1)) * 100
+
+  return (
+    <SectionCard
+      title="Your first 30 days"
+      info="The early milestones of your journey, one small win at a time. Each is a real checkpoint — no rush, just the next one."
+      microcopy={
+        nextVal
+          ? `You're ${streak} day${streak === 1 ? '' : 's'} in. Next: ${MILESTONES[nextVal]} · ${nextVal} days (${nextVal - streak} to go).`
+          : streak > 0
+            ? `You've cleared every early milestone. The first month is yours — keep the rhythm.`
+            : `Mark today clean to begin. Your first checkpoint is ${MILESTONES[early[0]]} · ${early[0]} days.`
+      }
+    >
+      <div className="relative py-1">
+        {/* Track + filled progress line behind the nodes */}
+        <div className="absolute left-0 right-0 top-[18px] h-0.5 -translate-y-1/2 rounded-full bg-surface-container-high" />
+        {fillPct > 0 && (
+          <div
+            className="absolute left-0 top-[18px] h-0.5 -translate-y-1/2 rounded-full bg-success transition-all duration-700"
+            style={{ width: `${fillPct}%` }}
+          />
+        )}
+        <div className="relative flex items-start justify-between">
+          {early.map((m) => {
+            const passed = streak >= m
+            const isNext = nextVal === m
+            return (
+              <div key={m} className="flex flex-col items-center gap-1.5">
+                <div
+                  className="relative z-10 flex h-9 w-9 items-center justify-center rounded-full font-display text-sm transition-all duration-500"
+                  style={
+                    passed
+                      ? { background: 'var(--success)', color: 'var(--on-surface)' }
+                      : isNext
+                        ? {
+                            background: 'var(--surface-container)',
+                            color: 'var(--primary)',
+                            boxShadow: 'inset 0 0 0 2px var(--primary)',
+                          }
+                        : { background: 'var(--surface-container-high)', color: 'var(--on-surface-variant)' }
+                  }
+                >
+                  {passed ? <Check className="h-4 w-4" /> : MILESTONES[m]}
+                </div>
+                <span
+                  className={cn(
+                    'm3-label-small tabular-nums',
+                    passed ? 'text-success' : isNext ? 'text-primary' : 'text-on-surface-variant',
+                  )}
+                >
+                  {m}d
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </SectionCard>
+  )
+}
+
+// ----------------------------------------------------------------
+// 1c. This week — the current Monday→Sunday at a glance
+// ----------------------------------------------------------------
+
+function ThisWeek({ entries }: { entries: Entries }) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const dow = today.getDay()
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1))
+
+  const letters = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+  const cells = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    const key = formatDateStr(d)
+    return { d, key, st: entries[key] ?? 0, letter: letters[i] }
+  })
+
+  let clean = 0
+  let tracked = 0
+  for (const c of cells) {
+    if (c.st !== 0) tracked += 1
+    if (c.st === 1) clean += 1
+  }
+
+  const microcopy =
+    tracked === 0
+      ? 'A fresh week. Mark today and this strip starts filling with your week.'
+      : clean === tracked
+        ? `Every tracked day this week has been clean (${clean}/${tracked}). A full clean week is within reach.`
+        : `${clean} of ${tracked} tracked day${tracked === 1 ? '' : 's'} clean this week. Every day is a new chance to keep the week going.`
+
+  return (
+    <SectionCard
+      title="This week"
+      info="Your current Monday-to-Sunday week at a glance. Green is clean, amber a slip, red a reset — today is ringed. A short horizon to keep the journey feeling close."
+      microcopy={microcopy}
+    >
+      <div className="flex justify-between">
+        {cells.map((c) => {
+          const isToday = c.d.getTime() === today.getTime()
+          const isFuture = c.d.getTime() > today.getTime()
+          const filled = c.st !== 0
+          const bg = c.st === 1 ? 'var(--success)' : c.st === 2 ? 'var(--slip)' : c.st === 3 ? 'var(--fail)' : 'var(--surface-container-high)'
+          return (
+            <div key={c.key} className="flex flex-col items-center gap-1.5">
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-colors duration-500"
+                style={{
+                  background: filled ? bg : isFuture ? 'transparent' : 'var(--surface-container-high)',
+                  color: filled ? 'var(--on-surface)' : 'var(--on-surface-variant)',
+                  border: isToday
+                    ? '2px solid var(--primary)'
+                    : isFuture && !filled
+                      ? '1px dashed var(--outline-variant)'
+                      : 'none',
+                }}
+              >
+                {c.d.getDate()}
+              </div>
+              <span className={cn('m3-label-small', isToday ? 'font-semibold text-primary' : 'text-on-surface-variant')}>
+                {c.letter}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </SectionCard>
   )
 }
 

@@ -1,5 +1,5 @@
 // Stats calculations for the tracker
-import { DayState, LEVELS, MILESTONES, MILESTONE_LIST, MONTHS_SHORT } from "./types";
+import { DayState, LEVELS, MILESTONES, MILESTONE_LIST, MONTHS_SHORT, type Reflection } from "./types";
 import { formatDateStr, getTodayDate, parseDateStr, getDaysInMonth } from "./dates";
 
 type Entries = Record<string, DayState>;
@@ -666,9 +666,11 @@ export const calculateStats = (entries: Entries, notes: Notes): Stats => {
 };
 
 // Achievement detection — returns array of newly unlocked IDs given entries/notes
+// (plus reflections for the first-check-in badge).
 export const checkAchievements = (
   entries: Entries,
   notes: Notes,
+  reflections?: Reflection[] | null,
 ): string[] => {
   const stats = calculateStats(entries, notes);
   const unlocked: string[] = [];
@@ -683,11 +685,35 @@ export const checkAchievements = (
 
   // ---- Bronze ----
   if (totalMarks >= 1) push("first_mark");
+  if (bestStreak >= 3) push("day_three");
+  if (bestStreak >= 5) push("day_five");
   if (bestStreak >= 7) push("first_week");
   if (bestStreak >= 14) push("two_weeks");
   if (totalCleanDays >= 3) push("kept_3");
   if (totalCleanDays >= 10) push("kept_10");
   if (Object.keys(notes).filter((k) => notes[k]?.trim()).length >= 1) push("first_note");
+  if (reflections && reflections.length >= 1) push("first_reflection");
+
+  // Early rhythm — 5 consecutive logged days (any state), the "habit behind
+  // the habit" that doesn't reset after a hard day.
+  if (getLoggingStreak(entries) >= 5) push("early_momentum");
+
+  // First fully-clean weekend — any Saturday+Sunday both marked clean.
+  {
+    let weekendCleared = false;
+    for (const dStr of getSortedDates(entries)) {
+      if (entries[dStr] !== 1) continue;
+      const dt = parseDateStr(dStr);
+      if (!dt || dt.getDay() !== 0) continue; // Sunday only
+      const sat = new Date(dt);
+      sat.setDate(sat.getDate() - 1);
+      if (entries[formatDateStr(sat)] === 1) {
+        weekendCleared = true;
+        break;
+      }
+    }
+    if (weekendCleared) push("first_weekend");
+  }
 
   const allTags = new Set<string>();
   for (const text of Object.values(notes)) {
@@ -696,6 +722,7 @@ export const checkAchievements = (
   if (allTags.size >= 1) push("tagged");
 
   // ---- Silver ----
+  if (bestStreak >= 21) push("three_weeks");
   if (bestStreak >= 30) push("month_one");
   if (totalCleanDays >= 25) push("kept_25");
   if (Object.keys(notes).filter((k) => notes[k]?.trim()).length >= 25) push("storyteller");
